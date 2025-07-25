@@ -7,8 +7,26 @@ export class User {
     @PrimaryGeneratedColumn()
     id:number;
 
+    @Column()
+    nombre: string;
+
+    @Column()
+    apellidos: string;
+
+    @Column({ unique: true })
+    cedula: string;
+
+    @Column({ nullable: true })
+    nis: string;
+
     @Column({unique:true})
     email:string;
+
+    @Column()
+    telefono: string;
+
+    @Column({ type: 'date' })
+    fechaNacimiento: Date;
 
     @Column()
     Password:string;
