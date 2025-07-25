@@ -1,7 +1,6 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserModule } from './user/user.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -16,7 +15,7 @@ import { UsersModule } from './users/users.module';
       autoLoadEntities: true,
       synchronize: true, // ❗️Solo para desarrollo (crea tablas automáticamente)
     }),
-    UserModule,
+    UsersModule,
     UsersModule,
   ],
 })
