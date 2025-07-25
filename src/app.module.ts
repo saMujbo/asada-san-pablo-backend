@@ -16,7 +16,6 @@ import { UsersModule } from './users/users.module';
       synchronize: true, // ❗️Solo para desarrollo (crea tablas automáticamente)
     }),
     UsersModule,
-    UsersModule,
   ],
 })
 export class AppModule {}
