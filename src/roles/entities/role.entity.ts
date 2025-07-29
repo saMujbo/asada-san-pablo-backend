@@ -13,6 +13,6 @@ export class Role {
     @Column()
     Description:string;
 
-    @ManyToMany(()=>User,user=>user.roles)
-    users:User[];
+    // @ManyToMany(()=>User,user=>user.roles)
+    // users:User[];
 }
