@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,23 +12,44 @@ export class UsersService {
       private readonly userRepo: Repository<User>,
     ){}
 
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  async create(createUserDto: CreateUserDto) {
+  const newUser = await this.userRepo.create(createUserDto); 
+  return await this.userRepo.save(newUser);           
+}
+
+  async findAll() {
+    return  await this.userRepo.find();
   }
 
-  findAll() {
-    return this.userRepo.find();
-  }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+  async findOne(id: number) {
+  const found = await this.userRepo.findOneBy({ id });
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
+  if (!found) {
+    throw new ConflictException(`User with id ${id} not found`);
+    }
+    return found;
+}
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
+  async update(id: number, updateUserDto: UpdateUserDto) {
+  const user = await this.userRepo.findOneBy({ id });
+
+  if (!user) {
+    throw new ConflictException(`User with id ${id} not found`);
+    }
+    const updatedUser = this.userRepo.merge(user, updateUserDto);
+  
+    return await this.userRepo.save(updatedUser);
+}
+
+async remove(id: number) {
+    const user = await this.userRepo.findOneBy({ id });
+
+  if (!user) {
+    throw new ConflictException(`User with id ${id} not found`);
+    }
+
+    return await this.userRepo.remove(user);
+}
+
 }

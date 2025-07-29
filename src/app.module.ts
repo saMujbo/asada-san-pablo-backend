@@ -12,7 +12,7 @@ import { AuthModule } from './auth/auth.module';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      password: 'JosDani_1007',
+      password: 'SAMUsqlB2024',
       database: 'redsanpablotest',
       autoLoadEntities: true,
       synchronize: true, // ❗️Solo para desarrollo (crea tablas automáticamente)
