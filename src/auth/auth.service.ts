@@ -18,11 +18,11 @@ export class AuthService {
   ){}
 
   async register(createAuthDto: RegisterAuth) {
-    const { password,confirmPassword,...rest } = createAuthDto;
-    if(password !== confirmPassword){
+    const { Password,confirmPassword,...rest } = createAuthDto;
+    if(Password !== confirmPassword){
       throw new Error('Las contraseñas no coinciden')
     }
-    const hashed= await hash(password,10);
+    const hashed= await hash(Password,10);
     const newUser = this.userRepo.create({...rest, Password:hashed});
     return this.userRepo.save(newUser);
   }
