@@ -4,6 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { AuthModule } from './auth/auth.module';
+import { Material } from './Gestion_de_Materiales/material/entities/material.entity';
+import { Proyecto } from './Gestion_de_Materiales/proyecto/entities/proyecto.entity';
+import { MaterialAsignado } from './Gestion_de_Materiales/material-asignado/entities/material-asignado.entity';
 
 @Module({
   imports: [
@@ -20,6 +23,9 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     RolesModule,
     AuthModule,
+    Material,
+    Proyecto,
+    MaterialAsignado,
   ],
 })
 export class AppModule {}
