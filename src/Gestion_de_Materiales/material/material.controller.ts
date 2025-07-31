@@ -9,7 +9,7 @@ import { MaterialsService } from './material.service';
 
 
 @ApiBearerAuth()
-@Controller('materials')
+@Controller('material')
 export class MaterialsController {
   constructor(private readonly materialsService: MaterialsService) {}
 
