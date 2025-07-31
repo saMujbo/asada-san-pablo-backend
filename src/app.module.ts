@@ -4,9 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { AuthModule } from './auth/auth.module';
-import { Material } from './Gestion_de_Materiales/material/entities/material.entity';
-import { Proyecto } from './Gestion_de_Materiales/proyecto/entities/proyecto.entity';
-import { MaterialAsignado } from './Gestion_de_Materiales/material-asignado/entities/material-asignado.entity';
+import { MaterialModule } from './Gestion_de_Materiales/material/material.module';
+import { ProyectoModule } from './Gestion_de_Materiales/proyecto/proyecto.module';
+import { MaterialAsignadoModule } from './Gestion_de_Materiales/material-asignado/material-asignado.module';
 
 @Module({
   imports: [
@@ -23,9 +23,9 @@ import { MaterialAsignado } from './Gestion_de_Materiales/material-asignado/enti
     UsersModule,
     RolesModule,
     AuthModule,
-    Material,
-    Proyecto,
-    MaterialAsignado,
+    MaterialModule,
+    ProyectoModule,
+    MaterialAsignadoModule,
   ],
 })
 export class AppModule {}
