@@ -4,22 +4,22 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 @Entity()
 export class Proyecto {
     @PrimaryGeneratedColumn()
-    id: number;
+    Id: number;
 
     @Column()
-    nombre: string;
+    Name: string;
 
     @Column({ nullable: true })
-    descripcion: string;
+    Description: string;
 
     @Column({ type: 'date' })
-    fechaInicio: Date;
+    FechaInicio: Date;
 
     @Column({ type: 'date', nullable: true })
-    fechaFin: Date;
+    FechaFin: Date;
 
     @Column({ default: 'planificado' })
-    estado: string;
+    Estate: string;
 
     @OneToMany(() => MaterialAsignado, (asignado) => asignado.proyecto)
     materialesAsignados: MaterialAsignado[];

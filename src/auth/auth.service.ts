@@ -9,6 +9,7 @@ import { RegisterAuth } from './dto/register-auth.dto';
 import { LogInOptions } from 'passport';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { JwtService } from '@nestjs/jwt';
+import { ForgotPassword } from './dto/forgotPassword-auth.dto';
 @Injectable()
 export class AuthService {
   constructor (
@@ -28,8 +29,8 @@ export class AuthService {
   }
 
   async login(userObjectLogin: LoginAuthDto) {
-    const { email, Password } = userObjectLogin;
-    const findUser = await this.userRepo.findOne({ where: { email } });
+    const { Email, Password } = userObjectLogin;
+    const findUser = await this.userRepo.findOne({ where: { Email } });
 
     if (!findUser) throw new HttpException('Usuario no encontrado', 404);
 
@@ -37,7 +38,7 @@ export class AuthService {
 
     if (!isPasswordValid) throw new HttpException('Contraseña invalida', 403);
 
-    const payload = { id: findUser.id, name: findUser.nombre };
+    const payload = { id: findUser.IDcard, name: findUser.Name };
     const token = this.jwtService.sign(payload);
 
     const data = {
@@ -46,5 +47,13 @@ export class AuthService {
     };
 
     return data;
+  }
+
+  async forgotPassword(userObjectForgot: ForgotPassword) {
+    const { IDcard, Email } = userObjectForgot;
+    const findUser = await this.userRepo.findOne({ where: { IDcard, Email } });
+    if (!findUser) throw new HttpException('Usuario no encontrado', 404);
+    
+    
   }
 }

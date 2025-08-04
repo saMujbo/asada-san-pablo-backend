@@ -4,7 +4,7 @@ import { IsEmail, MinLength, MaxLength } from 'class-validator';
 export class LoginAuthDto{
     @ApiProperty()
     @IsEmail()
-    email:string;
+    Email:string;
 
     @ApiProperty()
     @MinLength(4)

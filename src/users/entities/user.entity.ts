@@ -3,37 +3,39 @@ import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "t
 
 @Entity()
 export class User {
-
     @PrimaryGeneratedColumn()
-    id:number;
-
-    @Column()
-    nombre: string;
-
-    @Column()
-    apellidos: string;
+    Id:number;
 
     @Column({ unique: true })
-    cedula: string;
-
-    @Column({ nullable: true })
-    nis: string;
-
-    @Column({unique:true})
-    email:string;
+    IDcard: string;
+    
+    @Column()
+    Name: string;
 
     @Column()
-    telefono: string;
+    Surname1: string;
+
+    @Column()
+    Surname2: string;
+
+    @Column({ nullable: true })
+    Nis: string;
+
+    @Column({unique:true})
+    Email:string;
+
+    @Column()
+    PhoneNumber: string;
 
     @Column({ type: 'date' })
-    fechaNacimiento: Date;
+    Birthdate: Date;
 
     @Column()
     Password:string;
 
     // @Column()
     // confirmPassword: string;
-    @ManyToMany(()=>Role,role=> role.users)
+    @ManyToMany(()=>Role,role=> role.Users)
     @JoinTable()
-    roles:Role[]
+    Roles:Role[]
 }

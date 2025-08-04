@@ -1,54 +1,50 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsDate, IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from "class-validator";
+import {
+  IsString,
+  IsEmail,
+  IsDateString,
+  IsOptional,
+  IsNotEmpty,
+  Length,
+  Matches,
+  MinLength,
+  IsPhoneNumber,
+} from 'class-validator';
 
 export class CreateUserDto {
-    @ApiProperty()
-        @IsNotEmpty()
-        @IsString()
-        nombre:string;
-    
-        @ApiProperty()
-        @IsNotEmpty()
-        @IsString()
-        apellidos:string;
-    
-        @ApiProperty()
-        @IsNotEmpty()
-        @IsString()
-        cedula: string;
-    
-        @ApiProperty()
-        @IsString()
-        nis?: string;
-    
-        @ApiProperty()
-        @IsNotEmpty()
-        @IsEmail()
-        email: string;
-    
-        @ApiProperty()
-        @IsNotEmpty()
-        @IsString()
-        telefono: string;
-    
-        @ApiProperty({
-        type: String,
-        format: 'date',
-        example: '1995-07-29',
-        })
-        @IsNotEmpty()
-        @IsDate()
-        fechaNacimiento: Date;
-    
-        @ApiProperty()
-        @IsNotEmpty()
-        @MinLength(4)
-        @MaxLength(12)
-        Password: string;
-    
-        // @ApiProperty()
-        // @IsNotEmpty()
-        // @MinLength(4)
-        // @MaxLength(12)
-        // confirmPassword: string;
+  @IsString()
+  @IsNotEmpty()
+  IDcard: string;
+
+  @IsString()
+  @IsNotEmpty()
+  Name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  Surname1: string;
+
+  @IsString()
+  @IsNotEmpty()
+  Surname2: string;
+
+  @IsOptional()
+  @IsString()
+  Nis?: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  Email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[0-9]{8}$/, { message: 'PhoneNumber debe tener 8 dígitos numéricos' })
+  PhoneNumber: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  Birthdate: Date;
+
+  @IsString()
+  @MinLength(6)
+  Password: string;
 }

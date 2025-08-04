@@ -5,7 +5,7 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 @Entity()
 export class MaterialAsignado {
     @PrimaryGeneratedColumn()
-    id: number;
+    Id: number;
 
     @ManyToOne(() => Material, (material) => material.asignaciones, { eager: true })
     material: Material;
@@ -17,5 +17,5 @@ export class MaterialAsignado {
     fechaAsignacion: Date;
 
     @Column({ nullable: true })
-    observaciones: string;
+    Observations: string;
 }

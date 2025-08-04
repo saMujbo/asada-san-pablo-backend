@@ -4,25 +4,25 @@ import { IsString, IsOptional, IsBoolean } from 'class-validator';
 export class CreateMaterialDto {
     @ApiProperty()
     @IsString()
-    nombre: string;
+    Name: string;
 
     @ApiProperty()
     @IsOptional()
     @IsString()
-    descripcion?: string;
+    Description?: string;
 
     @ApiProperty()
     @IsString()
     @IsOptional()
-    unidadMedida: string;
+    UnidadMedida: string;
 
     @ApiProperty()
     @IsOptional()
     @IsString()
-    tipo?: string;
+    Type?: string;
 
     @ApiProperty()
     @IsOptional()
     @IsBoolean()
-    activo?: boolean;
+    Active?: boolean;
 }

@@ -4,22 +4,22 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 @Entity()
 export class Material {
     @PrimaryGeneratedColumn()
-    id: number;
+    Id: number;
 
     @Column()
-    nombre: string;
+    Name: string;
 
     @Column({ nullable: true })
-    descripcion: string;
+    Description: string;
 
     @Column()
-    unidadMedida: string;
+    UnitMeasurement: string;
 
     @Column({ nullable: true })
-    tipo: string; // Ej. "Tubería", "Accesorios"
+    Type: string; // Ej. "Tubería", "Accesorios"
 
     @Column({ default: true })
-    activo: boolean;
+    Active: boolean;
 
     @OneToMany(() => MaterialAsignado, (asignado) => asignado.material)
     asignaciones: MaterialAsignado[];

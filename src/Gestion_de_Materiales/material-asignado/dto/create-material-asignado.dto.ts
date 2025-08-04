@@ -5,18 +5,18 @@ export class CreateMaterialAsignadoDto {
 
     @ApiProperty()
     @IsInt()
-    materialId: number;
+    MaterialId: number;
 
     @ApiProperty()
     @IsInt()
-    proyectoId: number;
+    ProyectoId: number;
 
     @ApiProperty()
     @IsDateString()
-    fechaAsignacion: string;
+    FechaAsignacion: string;
 
     @ApiProperty()
     @IsOptional()
     @IsString()
-    observaciones?: string;
+    Observations?: string;
 }

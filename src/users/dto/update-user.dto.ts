@@ -38,16 +38,4 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
         @IsNotEmpty()
         @IsDate()
         fechaNacimiento: Date;
-    
-        @ApiProperty()
-        @IsNotEmpty()
-        @MinLength(4)
-        @MaxLength(12)
-        Password: string;
-    
-        @ApiProperty()
-        @IsNotEmpty()
-        @MinLength(4)
-        @MaxLength(12)
-        confirmPassword: string;
 }

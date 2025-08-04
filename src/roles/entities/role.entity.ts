@@ -5,7 +5,7 @@ import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 export class Role {
 
     @PrimaryGeneratedColumn()
-    id:number;
+    Id:number;
 
     @Column({unique:true})
     Rolname:string;
@@ -13,6 +13,6 @@ export class Role {
     @Column()
     Description:string;
 
-    @ManyToMany(()=>User,user=>user.roles)
-    users:User[];
+    @ManyToMany(()=>User,user=>user.Roles)
+    Users:User[];
 }
