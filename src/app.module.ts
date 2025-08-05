@@ -4,9 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { AuthModule } from './auth/auth.module';
-import { MaterialModule } from './Gestion_de_Materiales/material/material.module';
-import { ProyectoModule } from './Gestion_de_Materiales/proyecto/proyecto.module';
-import { MaterialAsignadoModule } from './Gestion_de_Materiales/material-asignado/material-asignado.module';
 import { MailServiceModule } from './mail-service/mail-service.module';
 
 @Module({
@@ -24,9 +21,6 @@ import { MailServiceModule } from './mail-service/mail-service.module';
     UsersModule,
     RolesModule,
     AuthModule,
-    MaterialModule,
-    ProyectoModule,
-    MaterialAsignadoModule,
     MailServiceModule,
   ],
 })

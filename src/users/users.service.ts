@@ -23,31 +23,31 @@ export class UsersService {
   }
 
 
-  async findOne(id: number) {
-  const found = await this.userRepo.findOneBy({ id });
+  async findOne(Id: number) {
+  const found = await this.userRepo.findOneBy({ Id });
 
   if (!found) {
-    throw new ConflictException(`User with id ${id} not found`);
+    throw new ConflictException(`User with Id ${Id} not found`);
     }
     return found;
 }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-  const user = await this.userRepo.findOneBy({ id });
+  async update(Id: number, updateUserDto: UpdateUserDto) {
+  const user = await this.userRepo.findOneBy({ Id });
 
   if (!user) {
-    throw new ConflictException(`User with id ${id} not found`);
+    throw new ConflictException(`User with Id ${Id} not found`);
     }
     const updatedUser = this.userRepo.merge(user, updateUserDto);
   
     return await this.userRepo.save(updatedUser);
 }
 
-async remove(id: number) {
-    const user = await this.userRepo.findOneBy({ id });
+async remove(Id: number) {
+    const user = await this.userRepo.findOneBy({ Id });
 
   if (!user) {
-    throw new ConflictException(`User with id ${id} not found`);
+    throw new ConflictException(`User with Id ${Id} not found`);
     }
 
     return await this.userRepo.remove(user);

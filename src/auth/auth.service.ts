@@ -19,8 +19,8 @@ export class AuthService {
   ){}
 
   async register(createAuthDto: RegisterAuth) {
-    const { Password,confirmPassword,...rest } = createAuthDto;
-    if(Password !== confirmPassword){
+    const { Password,ConfirmPassword,...rest } = createAuthDto;
+    if(Password !== ConfirmPassword){
       throw new Error('Las contraseñas no coinciden')
     }
     const hashed= await hash(Password,10);

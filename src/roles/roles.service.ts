@@ -21,32 +21,32 @@ export class RolesService {
     return await this.roleRepo.find();
   }
 
-  async findOne(id: number) {
-    const role = await this.roleRepo.findOneBy({ id });
+  async findOne(Id: number) {
+    const role = await this.roleRepo.findOneBy({ Id });
 
     if (!role) {
-      throw new NotFoundException(`Role with id ${id} not found`);
+      throw new NotFoundException(`Role with Id ${Id} not found`);
     }
 
     return role;
   }
 
-  async update(id: number, updateRoleDto: UpdateRoleDto) {
-    const role = await this.roleRepo.findOneBy({ id });
+  async update(Id: number, updateRoleDto: UpdateRoleDto) {
+    const role = await this.roleRepo.findOneBy({ Id });
 
     if (!role) {
-      throw new NotFoundException(`Role with id ${id} not found`);
+      throw new NotFoundException(`Role with Id ${Id} not found`);
     }
 
     const updatedRole = this.roleRepo.merge(role, updateRoleDto);
     return await this.roleRepo.save(updatedRole);
   }
 
-  async remove(id: number) {
-    const role = await this.roleRepo.findOneBy({ id });
+  async remove(Id: number) {
+    const role = await this.roleRepo.findOneBy({ Id });
 
     if (!role) {
-      throw new NotFoundException(`Role with id ${id} not found`);
+      throw new NotFoundException(`Role with Id ${Id} not found`);
     }
 
     return await this.roleRepo.remove(role);

@@ -1,46 +1,49 @@
 import { PartialType } from "@nestjs/mapped-types";
 import { LoginAuthDto } from "./login-auth.dto";
-import { IsDate, IsDateString, IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from "class-validator";
+import { IsDate, IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class RegisterAuth extends PartialType(LoginAuthDto){ 
     @ApiProperty()
-    @IsNotEmpty()
     @IsString()
-    nombre:string;
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    apellidos:string;
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    cedula: string;
-
-    @ApiProperty()
-    @IsString()
-    nis?: string;
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsEmail()
-    email: string;
-
-    @ApiProperty()
-    @IsNotEmpty()
-    @IsString()
-    telefono: string;
-
-    @ApiProperty({
-    type: String,
-    format: 'date',
-    example: '1995-07-29',
-    })
-    @IsNotEmpty()
-    @IsDate()
-    fechaNacimiento: Date;
+      @IsNotEmpty()
+      IDcard: string;
+    
+      @ApiProperty()
+      @IsString()
+      @IsNotEmpty()
+      Name: string;
+    
+      @ApiProperty()
+      @IsString()
+      @IsNotEmpty()
+      Surname1: string;
+    
+      @ApiProperty()
+      @IsString()
+      @IsNotEmpty()
+      Surname2: string;
+    
+      @ApiProperty()
+      @IsOptional()
+      @IsString()
+      Nis?: string;
+    
+      @ApiProperty()
+      @IsEmail()
+      @IsNotEmpty()
+      Email: string;
+    
+      @ApiProperty()
+      @IsString()
+      @IsNotEmpty()
+      @Matches(/^[0-9]{8}$/, { message: 'PhoneNumber debe tener 8 dígitos numéricos' })
+      PhoneNumber: string;
+    
+      @ApiProperty()
+      @IsDateString()
+      @IsNotEmpty()
+      Birthdate: Date;
 
     @ApiProperty()
     @IsNotEmpty()
@@ -52,5 +55,5 @@ export class RegisterAuth extends PartialType(LoginAuthDto){
     @IsNotEmpty()
     @MinLength(4)
     @MaxLength(12)
-    confirmPassword: string;
+    ConfirmPassword: string;
 }
