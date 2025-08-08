@@ -33,9 +33,7 @@ export class User {
     @Column()
     Password:string;
 
-    // @Column()
-    // confirmPassword: string;
-    @ManyToMany(()=>Role,role=> role.Users)
-    @JoinTable()
-    Roles:Role[]
+    @ManyToMany(()=>Role)
+    @JoinTable({ name: 'user_roles_role' })
+    Roles:Role[];
 }

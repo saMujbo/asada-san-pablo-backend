@@ -13,13 +13,14 @@ export class UsersService {
     ){}
 
   async create(createUserDto: CreateUserDto) {
-    
-  const newUser = await this.userRepo.create(createUserDto); 
-  return await this.userRepo.save(newUser);           
-}
+    const newUser = await this.userRepo.create(createUserDto); 
+    return await this.userRepo.save(newUser);           
+  }
 
   async findAll() {
-    return  await this.userRepo.find();
+    return await this.userRepo.find({
+      relations: ['Roles'], // Carga los roles asociados
+    });
   }
 
 

@@ -4,10 +4,8 @@ import {
   IsDateString,
   IsOptional,
   IsNotEmpty,
-  Length,
   Matches,
   MinLength,
-  IsPhoneNumber,
 } from 'class-validator';
 
 export class CreateUserDto {
