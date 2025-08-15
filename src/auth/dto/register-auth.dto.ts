@@ -6,48 +6,53 @@ import { ApiProperty } from "@nestjs/swagger";
 export class RegisterAuth extends PartialType(LoginAuthDto){ 
     @ApiProperty()
     @IsString()
-      @IsNotEmpty()
-      IDcard: string;
+    @IsNotEmpty()
+    IDcard: string;
+
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    Name: string;
     
-      @ApiProperty()
-      @IsString()
-      @IsNotEmpty()
-      Name: string;
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    Surname1: string;
     
-      @ApiProperty()
-      @IsString()
-      @IsNotEmpty()
-      Surname1: string;
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    Surname2: string;
     
-      @ApiProperty()
-      @IsString()
-      @IsNotEmpty()
-      Surname2: string;
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    Nis?: string;
     
-      @ApiProperty()
-      @IsOptional()
-      @IsString()
-      Nis?: string;
+    @ApiProperty()
+    @IsEmail()
+    @IsNotEmpty()
+    Email: string;
     
-      @ApiProperty()
-      @IsEmail()
-      @IsNotEmpty()
-      Email: string;
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    @Matches(/^[0-9]{8}$/, { message: 'PhoneNumber debe tener 8 dígitos numéricos' })
+    PhoneNumber: string;
     
-      @ApiProperty()
-      @IsString()
-      @IsNotEmpty()
-      @Matches(/^[0-9]{8}$/, { message: 'PhoneNumber debe tener 8 dígitos numéricos' })
-      PhoneNumber: string;
-    
-      @ApiProperty()
-      @IsDateString()
-      @IsNotEmpty()
-      Birthdate: Date;
+    @ApiProperty()
+    @IsDateString()
+    @IsNotEmpty()
+    Birthdate: Date;
+
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    Address: string;
 
     @ApiProperty()
     @IsNotEmpty()
-    @MinLength(4)
+    @MinLength(6)
     @MaxLength(12)
     Password: string;
 

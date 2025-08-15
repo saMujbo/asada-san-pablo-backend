@@ -43,6 +43,10 @@ export class CreateUserDto {
   Birthdate: Date;
 
   @IsString()
+  @IsNotEmpty()
+  Address: string;
+
+  @IsString()
   @MinLength(6)
   Password: string;
 }

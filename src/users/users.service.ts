@@ -4,6 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -23,6 +24,27 @@ export class UsersService {
     });
   }
 
+  async findAllPagination({ page, limit }: PaginationDto) {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.userRepo.findAndCount({
+      relations: ['Roles'],            // ojo: normalmente en minúsculas si así está el nombre
+      skip,
+      take: limit
+    });
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        pageCount: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
+    };
+}
 
   async findOne(Id: number) {
   const found = await this.userRepo.findOneBy({ Id });

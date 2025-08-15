@@ -31,6 +31,9 @@ export class User {
     Birthdate: Date;
 
     @Column()
+    Address: string;
+
+    @Column()
     Password:string;
 
     @ManyToMany(()=>Role)
