@@ -28,7 +28,7 @@ export class UsersService {
     const skip = (page - 1) * limit;
 
     const [data, total] = await this.userRepo.findAndCount({
-      relations: ['Roles'],            // ojo: normalmente en minúsculas si así está el nombre
+      relations: ['Roles'],
       skip,
       take: limit
     });
@@ -49,10 +49,9 @@ export class UsersService {
   async findOne(Id: number) {
   const found = await this.userRepo.findOneBy({ Id });
 
-  if (!found) {
-    throw new ConflictException(`User with Id ${Id} not found`);
-    }
-    return found;
+  if (!found) throw new ConflictException(`User with Id ${Id} not found`);
+
+  return found;
 }
 
   async update(Id: number, updateUserDto: UpdateUserDto) {
