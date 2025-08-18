@@ -5,17 +5,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { ForgotPassword } from 'src/auth/dto/forgotPassword-auth.dto';
 
 @Injectable()
 export class UsersService {
   constructor (
       @InjectRepository(User)
       private readonly userRepo: Repository<User>,
-    ){}
+  ){}
 
   async create(createUserDto: CreateUserDto) {
     const newUser = await this.userRepo.create(createUserDto); 
-    return await this.userRepo.save(newUser);           
+    return await this.userRepo.save(newUser);
   }
 
   async findAll() {
@@ -44,7 +45,7 @@ export class UsersService {
         hasPrevPage: page > 1,
       },
     };
-}
+  }
 
   async findOne(Id: number) {
   const found = await this.userRepo.findOneBy({ Id });
@@ -52,7 +53,16 @@ export class UsersService {
   if (!found) throw new ConflictException(`User with Id ${Id} not found`);
 
   return found;
-}
+  }
+
+  async findByEmail(Email: string) {
+    return await this.userRepo.findOne({ where: { Email }, relations: ['Roles'] });
+  }
+
+  async findByIDcardEmail(userObjectForgot: ForgotPassword) {
+    const { IDcard, Email } = userObjectForgot;
+    return await this.userRepo.findOne({ where: { IDcard, Email } });
+  }
 
   async update(Id: number, updateUserDto: UpdateUserDto) {
   const user = await this.userRepo.findOneBy({ Id });
