@@ -8,6 +8,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Roles } from 'src/auth/auth-roles/roles.decorator';
 import { Role } from 'src/auth/auth-roles/roles.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { GetUser } from 'src/auth/get-user.decorator';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -32,10 +33,10 @@ export class UsersController {
     return this.usersService.findAllPagination(pagination);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id', ParseIntPipe) id: number) {
+  //   return this.usersService.findOne(id);
+  // }
 
   @Patch(':id')
   update(
@@ -48,5 +49,11 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMe(@GetUser('Id') id: number) { // OJO con mayúscula/minúscula
+    return this.usersService.findOne(id);
   }
 }

@@ -13,7 +13,7 @@ import { MailServiceModule } from './mail-service/mail-service.module';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      password: 'JosDani_1007',
+      password: '12345678',
       database: 'redsanpablotest',
       autoLoadEntities: true,
       synchronize: true, // ❗️Solo para desarrollo (crea tablas automáticamente)

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -74,5 +74,11 @@ async remove(Id: number) {
 
     return await this.userRepo.remove(user);
 }
+
+async findMe(Id: number) {
+    const user = await this.userRepo.findOne({ where: { Id }, relations: ['Roles'] });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
 
 }
