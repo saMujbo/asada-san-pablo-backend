@@ -4,6 +4,11 @@ import { UpdateMailServiceDto } from './dto/update-mail-service.dto';
 
 @Injectable()
 export class MailServiceService {
+
+  async sendForgotpasswordEmail(createMailServiceDto:CreateMailServiceDto){
+    
+  }
+
   create(createMailServiceDto: CreateMailServiceDto) {
     return 'This action adds a new mailService';
   }

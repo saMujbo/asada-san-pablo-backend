@@ -1,1 +1,8 @@
-export class CreateMailServiceDto {}
+export class CreateMailServiceDto {
+    to:string;
+
+    subject:string;
+
+    message?:string;
+
+}
