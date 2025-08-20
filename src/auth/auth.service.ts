@@ -1,21 +1,21 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { hash, compare } from 'bcrypt'
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from 'src/users/entities/user.entity';
 import { RegisterAuth } from './dto/register-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ForgotPassword } from './dto/forgotPassword-auth.dto';
-import { Role } from 'src/roles/entities/role.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { RolesService } from 'src/roles/roles.service';
 import { UsersService } from 'src/users/users.service';
+import { ConfigService } from '@nestjs/config';
+import { MailServiceService } from 'src/mail-service/mail-service.service';
 @Injectable()
 export class AuthService {
   constructor (
     private readonly userRepo: UsersService,
     private readonly roleRepo: RolesService,
+    private readonly mailClient: MailServiceService,
+    private readonly configService: ConfigService,
     private jwtService: JwtService
   ){}
 
@@ -65,10 +65,42 @@ export class AuthService {
   }
 
   async forgotPassword(userObjectForgot: ForgotPassword) {
-    const findUser = await this.userRepo.findByIDcardEmail(userObjectForgot);
-    if (!findUser) throw new HttpException('Usuario no encontrado', 404);
-    
-    
-  }
+    const userToEdit = await this.userRepo.findByIDcardEmail(userObjectForgot);
+    if (userToEdit) {
+      const payload = await {
+        Email: userToEdit.Email,
+        id: userToEdit.Id,
+        jti: uuidv4(),
+      };
 
+      if (!userToEdit) {
+        throw new NotFoundException('Correo electronico no encontrado!');
+      }
+
+      //AGREGAR ESTADO A USER
+
+      // if (!userToEdit.enabled) {
+      //   throw new UnauthorizedException(
+      //     'Usuario inactivo, contacte al administrador de Recurso Humano',
+      //   );
+      // }
+
+      const token = await this.jwtService.signAsync(payload, {
+        expiresIn: '10m',
+      });
+      const FrontendRecoverURL = `${await this.configService.get('FrontEndBaseURL')}/auth/login`;
+      const url = `${FrontendRecoverURL}?token=${token}`;
+
+      this.mailClient.sendForgotpasswordEmail({
+        to: userObjectForgot.Email,
+        subject: 'Recuperación de constraseña',
+        RecoverPasswordURL: url,
+      });
+    }
+
+    return {
+      message:
+        'Si el usuario es válido, recibirá un email en breve para la recuperación.',
+    };
+  }
 }

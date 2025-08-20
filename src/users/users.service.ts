@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -61,7 +61,11 @@ export class UsersService {
 
   async findByIDcardEmail(userObjectForgot: ForgotPassword) {
     const { IDcard, Email } = userObjectForgot;
-    return await this.userRepo.findOne({ where: { IDcard, Email } });
+    const user = await this.userRepo.findOne({ where: { Email } });
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    return user;
   }
 
   async update(Id: number, updateUserDto: UpdateUserDto) {

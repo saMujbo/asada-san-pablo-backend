@@ -1,14 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { CreateMailServiceDto } from './dto/create-mail-service.dto';
 import { UpdateMailServiceDto } from './dto/update-mail-service.dto';
+import { MailerService } from '@nestjs-modules/mailer';
+import { ConfigService } from '@nestjs/config';
+import { RecoverPasswordMail } from './templates/ForgotPassword';
 
 @Injectable()
 export class MailServiceService {
+  constructor(
+    private readonly mailService: MailerService,
+    private readonly configService: ConfigService,
+  ) {}
 
-  async sendForgotpasswordEmail(createMailServiceDto:CreateMailServiceDto){
-    
+  async sendForgotpasswordEmail(createMailServiceDto: CreateMailServiceDto){
+    try {
+      await this.mailService.sendMail({
+        from: 'RedSanPablo',
+        to: createMailServiceDto.to,
+        subject: createMailServiceDto.subject,
+        text: createMailServiceDto?.message,
+        html: await RecoverPasswordMail(createMailServiceDto.RecoverPasswordURL),
+        attachments: [
+          {
+            filename: 'ASADALogo',
+            path: './src/mail-client/assets/LogoRedSanPablo.svg',
+            cid: 'logoImage',
+          },
+        ],
+      });
+    } catch (error) {
+      console.error('Error al enviar el correo electrónico');
+    }
   }
-
   create(createMailServiceDto: CreateMailServiceDto) {
     return 'This action adds a new mailService';
   }

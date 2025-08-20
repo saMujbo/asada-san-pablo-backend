@@ -9,7 +9,7 @@ export class MailServiceController {
 
   @Post()
   create(@Body() createMailServiceDto: CreateMailServiceDto) {
-    return this.mailServiceService.create(createMailServiceDto);
+    return this.mailServiceService.sendForgotpasswordEmail(createMailServiceDto);
   }
 
   @Get()

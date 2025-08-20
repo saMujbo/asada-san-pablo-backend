@@ -10,10 +10,16 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RolesModule } from 'src/roles/roles.module';
 import { UsersModule } from 'src/users/users.module';
+import { MailerService } from '@nestjs-modules/mailer';
+import { MailServiceModule } from 'src/mail-service/mail-service.module';
 
 @Module({
   imports:[
     ConfigModule,
+    UsersModule,
+    RolesModule,
+    MailServiceModule,
+
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],
@@ -23,8 +29,6 @@ import { UsersModule } from 'src/users/users.module';
         signOptions: { expiresIn: '10h' },
       }),
     }),
-    UsersModule,
-    RolesModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
