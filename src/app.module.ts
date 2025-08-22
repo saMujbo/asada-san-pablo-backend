@@ -5,9 +5,16 @@ import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { AuthModule } from './auth/auth.module';
 import { MailServiceModule } from './mail-service/mail-service.module';
+import { ConfigModule } from '@nestjs/config';
+import configuration from './config/configuration';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,                  // disponible en toda la app
+      load: [configuration],           // mapea tus vars a un objeto
+      envFilePath: ['.env'],           // ruta(s) del .env
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
