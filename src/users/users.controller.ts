@@ -3,11 +3,11 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Roles } from 'src/auth/auth-roles/roles.decorator';
 import { Role } from 'src/auth/auth-roles/roles.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -19,13 +19,13 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(RolesGuard)
   @Get()
   findAll() {
     return this.usersService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Get('pagination')
   @Roles(Role.ADMIN) // Only allow ADMIN role to access this endpoint
   findAllPagination(@Query() pagination: PaginationDto) {

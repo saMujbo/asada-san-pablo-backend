@@ -70,6 +70,7 @@ export class AuthService {
 
     return data;
   }
+
   async forgotPassword(userObjectForgot: ForgotPassword) {
     const userToEdit = await this.userService.findByIDcardEmail(userObjectForgot);
     if (userToEdit) {
@@ -83,13 +84,11 @@ export class AuthService {
         throw new NotFoundException('Correo electronico no encontrado!');
       }
 
-      //AGREGAR ESTADO A USER
-
-      // if (!userToEdit.enabled) {
-      //   throw new UnauthorizedException(
-      //     'Usuario inactivo, contacte al administrador de Recurso Humano',
-      //   );
-      // }
+      if (!userToEdit.IsActive) {
+        throw new UnauthorizedException(
+          'Usuario inactivo, contacte al administrador de Recurso Humano',
+        );
+      }
 
       const token = await this.jwtService.signAsync(payload, {
         expiresIn: '10m',
@@ -108,6 +107,16 @@ export class AuthService {
       message:
         'Si el usuario es válido, recibirá un email en breve para la recuperación.',
     };
+  }
+
+  async resetPassword(userId: number, newPassword: string) {
+    const userToEdit = await this.userService.findOne(userId);
+
+    if (!userToEdit) {
+      throw new NotFoundException('Usurio no encontrado!');
+    }
+
+    return this.userService.updatePassword(userId, newPassword);
   }
 
   async changePassword(UserId: number, OldPassword: string, NewPassword: string){

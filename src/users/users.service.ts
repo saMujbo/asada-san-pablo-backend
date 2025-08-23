@@ -15,7 +15,6 @@ export class UsersService {
       @InjectRepository(User)
       private readonly userRepo: Repository<User>,
       private readonly rolesService: RolesService,
-      
   ){}
 
   async create(createUserDto: CreateUserDto) {
@@ -52,11 +51,11 @@ export class UsersService {
   }
 
   async findOne(Id: number) {
-  const found = await this.userRepo.findOneBy({ Id });
+    const found = await this.userRepo.findOneBy({ Id });
 
-  if (!found) throw new ConflictException(`User with Id ${Id} not found`);
+    if (!found) throw new ConflictException(`User with Id ${Id} not found`);
 
-  return found;
+    return found;
   }
 
   async findByEmail(Email: string) {
@@ -114,9 +113,10 @@ async removeRolesFromUser(userId:number,roleId:number){
   };
 };
 
-    async hashPassword(password: string, salt: number) {
+  async hashPassword(password: string, salt: number) {
     return await bcrypt.hash(password, salt);
   }
+
   async updatePassword(UserId:number, NewPassword: string){
     try{  
       const user = await this.findOne(UserId);

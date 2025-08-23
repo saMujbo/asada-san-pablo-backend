@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailServiceModule } from './mail-service/mail-service.module';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import configuration from './config/configuration';
       autoLoadEntities: true,
       synchronize: true, // ❗️Solo para desarrollo (crea tablas automáticamente)
     }),
+    CacheModule.register({ isGlobal: true }),
     UsersModule,
     RolesModule,
     AuthModule,
