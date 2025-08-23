@@ -6,12 +6,14 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ForgotPassword } from 'src/auth/dto/forgotPassword-auth.dto';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class UsersService {
   constructor (
       @InjectRepository(User)
       private readonly userRepo: Repository<User>,
+      private readonly rolesService: RolesService,
   ){}
 
   async create(createUserDto: CreateUserDto) {
@@ -89,4 +91,24 @@ async remove(Id: number) {
     return await this.userRepo.remove(user);
 }
 
+async removeRolesFromUser(userId:number,roleId:number){
+  const user = await this.userRepo.findOne({
+    where: { Id : userId },
+    relations: ['Roles'],
+  });
+  if(!user){
+    throw new ConflictException(`User with Id ${userId} not found`);
+  }
+  const role = await this.rolesService.findOne(roleId);
+  if (!role) {
+    throw new NotFoundException(`Role with Id ${roleId} not found`);
+  }
+  user.Roles = user.Roles.filter(r => r.Id !== roleId);
+
+  await this.userRepo.save(user);
+  return {
+    message: `Role ${role.Rolname} removed from user ${user.Id}`,
+    user,
+  };
+};
 }
