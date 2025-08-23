@@ -1,5 +1,5 @@
-import { HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { hash, compare } from 'bcrypt'
+import { HttpException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { RegisterAuth } from './dto/register-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -9,40 +9,47 @@ import { RolesService } from 'src/roles/roles.service';
 import { UsersService } from 'src/users/users.service';
 import { ConfigService } from '@nestjs/config';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
+import { ChangepasswordDto } from './dto/changePassword.dto';
 @Injectable()
 export class AuthService {
   constructor (
-    private readonly userRepo: UsersService,
-    private readonly roleRepo: RolesService,
+    private readonly userService: UsersService,
+    private readonly roleService: RolesService,
     private readonly mailClient: MailServiceService,
     private readonly configService: ConfigService,
     private jwtService: JwtService
   ){}
-
+      async comparePasswords(passwordToCompare: string, mainPassword: string) {
+      const IsCorrectPassword = await bcrypt.compare(
+      passwordToCompare,
+      mainPassword,
+    );
+    return IsCorrectPassword;
+  }
   async register(createAuthDto: RegisterAuth) {
     const { Password,ConfirmPassword,...rest } = createAuthDto;
     if(Password !== ConfirmPassword){
       throw new Error('Las contraseñas no coinciden')
     }
-    const hashed= await hash(Password,10);
+    const hashed= await bcrypt.hash(Password,10);
 
-    const defaultRole = await this.roleRepo.findByName('GUEST');
+    const defaultRole = await this.roleService.findByName('GUEST');
 
     if (!defaultRole) {
       throw new Error('❌ Rol por defecto "USER" no existe en la base de datos');
     }
 
-    const newUser = this.userRepo.create({...rest, Password:hashed, Roles: [defaultRole]});
+    const newUser = this.userService.create({...rest, Password:hashed, Roles: [defaultRole]});
     return newUser;
   }
 
   async login(userObjectLogin: LoginAuthDto) {
     const { Email, Password } = userObjectLogin;
-    const findUser = await this.userRepo.findByEmail(Email);
+    const findUser = await this.userService.findByEmail(Email);
 
     if (!findUser) throw new HttpException('Usuario no encontrado', 404);
 
-    const isPasswordValid = await compare(Password, findUser.Password);
+    const isPasswordValid = await bcrypt.compare(Password, findUser.Password);
 
     if (!isPasswordValid) throw new HttpException('Contraseña invalida', 403);
 
@@ -63,9 +70,8 @@ export class AuthService {
 
     return data;
   }
-
   async forgotPassword(userObjectForgot: ForgotPassword) {
-    const userToEdit = await this.userRepo.findByIDcardEmail(userObjectForgot);
+    const userToEdit = await this.userService.findByIDcardEmail(userObjectForgot);
     if (userToEdit) {
       const payload = await {
         Email: userToEdit.Email,
@@ -102,5 +108,21 @@ export class AuthService {
       message:
         'Si el usuario es válido, recibirá un email en breve para la recuperación.',
     };
+  }
+
+  async changePassword(UserId:number, passwordDto:ChangepasswordDto){
+    const userToEdit = await this.userService.findOne(UserId)
+
+    if (!userToEdit) {
+      throw new NotFoundException('Usurio no encontrado!');
+    }
+    const IsCorrectPassword = await this.comparePasswords(
+      passwordDto.OldPassword,
+      userToEdit.Password,
+    );
+    if(!IsCorrectPassword){
+      throw new UnauthorizedException('Contraseña actual invalida');
+    }
+    return this.userService.updatePassword(UserId,passwordDto.NewPassword);
   }
 }

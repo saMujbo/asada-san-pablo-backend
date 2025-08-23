@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,6 +7,7 @@ import { User } from './entities/user.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ForgotPassword } from 'src/auth/dto/forgotPassword-auth.dto';
 import { RolesService } from 'src/roles/roles.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +15,7 @@ export class UsersService {
       @InjectRepository(User)
       private readonly userRepo: Repository<User>,
       private readonly rolesService: RolesService,
+      
   ){}
 
   async create(createUserDto: CreateUserDto) {
@@ -111,4 +113,20 @@ async removeRolesFromUser(userId:number,roleId:number){
     user,
   };
 };
+
+    async hashPassword(password: string, salt: number) {
+    return await bcrypt.hash(password, salt);
+  }
+  async updatePassword(UserId:number, NewPassword: string){
+    try{  
+      const user = await this.findOne(UserId);
+      user.Password = await this.hashPassword(NewPassword,10);
+      return await this.userRepo.save(user);
+    } catch (error){
+      throw new InternalServerErrorException({
+        message:
+          'Error al actualizar la contraseña del usuario: ' + error.message,
+      });
+    }
+  }
 }
