@@ -54,7 +54,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@GetUser('Id') id: number) { // OJO con mayúscula/minúscula
-    return this.usersService.findOne(id);
+    return this.usersService.findMe(id);
   }
 
   @UseGuards(JwtAuthGuard)
