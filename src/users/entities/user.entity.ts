@@ -33,6 +33,9 @@ export class User {
     @Column()
     Address: string;
 
+    @Column({default: true})
+    IsActive: boolean;
+
     @Column()
     Password:string;
 
