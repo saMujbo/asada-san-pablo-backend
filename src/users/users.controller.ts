@@ -49,4 +49,12 @@ export class UsersController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
   }
+
+    @Delete(':userId/roles/:roleId')
+    async removeRoleFromUser(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('roleId', ParseIntPipe) roleId: number,
+  ) {
+    return this.usersService.removeRolesFromUser(userId, roleId);
+  }
 }
