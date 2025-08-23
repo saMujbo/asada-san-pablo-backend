@@ -1,4 +1,4 @@
-import {Controller,Get,Post,Body,Patch,Param,Delete,ParseIntPipe, UseGuards, Query,} from '@nestjs/common';
+import {Controller,Get,Post,Body,Patch,Param,Delete,ParseIntPipe, UseGuards, Query, Put, Req,} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -55,5 +55,11 @@ export class UsersController {
   @Get('me')
   async getMe(@GetUser('Id') id: number) { // OJO con mayúscula/minúscula
     return this.usersService.findOne(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('me')
+  async updateMe(@GetUser('Id') id: number, @Body() dto: UpdateUserDto) {
+    return this.usersService.updateMe(id, dto);
   }
 }

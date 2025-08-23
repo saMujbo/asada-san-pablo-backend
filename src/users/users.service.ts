@@ -91,4 +91,37 @@ async findMe(Id: number) {
     return user;
   }
 
+  async updateMe(Id: number, dto: UpdateUserDto) {
+    const user = await this.userRepo.findOne({ where: { Id } });
+
+    if (!user) {
+      throw new ConflictException(`User with Id ${Id} not found`);
+    }
+
+    // Asigna solo campos permitidos si vienen definidos
+    // if (dto.Name !== undefined) user.Name = dto.Name;
+    // if (dto.Surname1 !== undefined) user.Surname1 = dto.Surname1;
+    // if (dto.Surname2 !== undefined) user.Surname2 = dto.Surname2;
+    if (dto.Address !== undefined) user.Address = dto.Address;
+    if (dto.PhoneNumber !== undefined) user.PhoneNumber = dto.PhoneNumber;
+    if (dto.Birthdate !== undefined) user.Birthdate = dto.Birthdate as any;
+    
+
+    const saved = await this.userRepo.save(user);
+
+    // Re-carga con relaciones si quieres devolver Roles
+    const withRelations = await this.userRepo.findOne({
+      where: { Id: saved.Id },
+      relations: ['Roles'],
+    });
+
+    // Sanea antes de retornar (por si tu entidad expone Password)
+    if (withRelations && (withRelations as any).Password !== undefined) {
+      delete (withRelations as any).Password;
+    }
+
+    return withRelations ?? saved;
+  }
 }
+
+
