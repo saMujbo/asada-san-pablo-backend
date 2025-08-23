@@ -110,19 +110,19 @@ export class AuthService {
     };
   }
 
-  async changePassword(UserId:number, passwordDto:ChangepasswordDto){
+  async changePassword(UserId: number, OldPassword: string, NewPassword: string){
     const userToEdit = await this.userService.findOne(UserId)
 
     if (!userToEdit) {
       throw new NotFoundException('Usurio no encontrado!');
     }
     const IsCorrectPassword = await this.comparePasswords(
-      passwordDto.OldPassword,
+      OldPassword,
       userToEdit.Password,
     );
     if(!IsCorrectPassword){
       throw new UnauthorizedException('Contraseña actual invalida');
     }
-    return this.userService.updatePassword(UserId,passwordDto.NewPassword);
+    return this.userService.updatePassword(UserId,NewPassword);
   }
 }
