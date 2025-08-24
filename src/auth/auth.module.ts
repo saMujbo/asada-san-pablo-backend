@@ -11,6 +11,7 @@ import { RolesModule } from 'src/roles/roles.module';
 import { UsersModule } from 'src/users/users.module';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailServiceModule } from 'src/mail-service/mail-service.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports:[
@@ -18,6 +19,11 @@ import { MailServiceModule } from 'src/mail-service/mail-service.module';
     UsersModule,
     RolesModule,
     MailServiceModule,
+
+    CacheModule.register({
+      isGlobal: true, // opcional: disponible en toda la app
+      ttl: 0,         // lo manejamos manualmente
+    }),
 
     JwtModule.registerAsync({
       global: true,

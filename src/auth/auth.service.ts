@@ -1,4 +1,4 @@
-import { HttpException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { HttpException, Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RegisterAuth } from './dto/register-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ChangepasswordDto } from './dto/changePassword.dto';
 import { resetPasswordDto } from './dto/resetPassword.dto';
+import { Cache } from 'cache-manager';
 @Injectable()
 export class AuthService {
   constructor (
@@ -18,7 +19,8 @@ export class AuthService {
     private readonly roleService: RolesService,
     private readonly mailClient: MailServiceService,
     private readonly configService: ConfigService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    @Inject('CACHE_MANAGER') private cacheManager: Cache,
   ){}
 
   async comparePasswords(passwordToCompare: string, mainPassword: string) {
@@ -77,11 +79,11 @@ export class AuthService {
   async forgotPassword(userObjectForgot: ForgotPassword) {
     const userToEdit = await this.userService.findByIDcardEmail(userObjectForgot);
     if (userToEdit) {
-      const payload = await {
-        Email: userToEdit.Email,
-        id: userToEdit.Id,
-        jti: uuidv4(),
-      };
+    //   const payload = await {
+        // Email: userToEdit.Email,
+        // id: userToEdit.Id,
+    //     jti: uuidv4( ),
+    //   };
 
       if (!userToEdit) {
         throw new NotFoundException('Correo electronico no encontrado!');
@@ -92,6 +94,12 @@ export class AuthService {
           'Usuario inactivo, contacte al administrador de Recurso Humano',
         );
       }
+    const jti = uuidv4();
+
+    const payload = {   
+      id: userToEdit.Id, 
+      email: userToEdit.Email, 
+      jti };
 
       const token = await this.jwtService.signAsync(payload, {
         expiresIn: '10m',
@@ -112,20 +120,43 @@ export class AuthService {
     };
   }
 
-  async resetPassword(userId: number, userObjectReset: resetPasswordDto) {
-    const { NewPassword,ConfirmPassword } = userObjectReset;
-    if(NewPassword !== ConfirmPassword){
-      throw new Error('Las contraseñas no coinciden')
-    }
+async resetPassword(token: string, userObjectReset: resetPasswordDto) {
+  const { NewPassword, ConfirmPassword } = userObjectReset;
 
-    const userToEdit = await this.userService.findOne(userId);
-
-    if (!userToEdit) {
-      throw new NotFoundException('Usurio no encontrado!');
-    }
-
-    return this.userService.updatePassword(userId, NewPassword);
+  // 1. Validar que las contraseñas coincidan
+  if (NewPassword !== ConfirmPassword) {
+    throw new Error('Las contraseñas no coinciden');
   }
+
+  // 2. Verificar y decodificar el token
+  let payload: any;
+  try {
+    payload = await this.jwtService.verifyAsync(token);
+  } catch (e) {
+    throw new UnauthorizedException('Token inválido o expirado');
+  }
+
+  // 3. Validar si el jti sigue activo en cache
+  const jtiKey = `reset:${payload.jti}`;
+  const exists = await this.cacheManager.get(jtiKey);
+
+  if (!exists) {
+    throw new UnauthorizedException('Token ya fue usado o no es válido');
+  }
+
+  // 4. Eliminar el jti para que no se pueda volver a usar
+  await this.cacheManager.del(jtiKey);
+
+  // 5. Buscar al usuario
+  const userToEdit = await this.userService.findOne(payload.id);
+  if (!userToEdit) {
+    throw new NotFoundException('Usuario no encontrado!');
+  }
+
+  // 6. Actualizar la contraseña
+  return this.userService.updatePassword(payload.id, NewPassword);
+}
+
 
   async changePassword(UserId: number, OldPassword: string, NewPassword: string){
     const userToEdit = await this.userService.findOne(UserId)
