@@ -5,9 +5,9 @@ import { RegisterAuth } from './dto/register-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { ForgotPassword } from './dto/forgotPassword-auth.dto';
 import { ChangepasswordDto } from './dto/changePassword.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { TokenGuard } from './guards/token.guard';
 import { resetPasswordDto } from './dto/resetPassword.dto';
+import { AuthGuard } from './guards/auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -34,7 +34,7 @@ export class AuthController {
     );
   }
 
-  @UseGuards(AuthGuard('jwt'), TokenGuard)
+  @UseGuards(AuthGuard, TokenGuard)
   @Put('reset-password')
   async resetPassword(@Req() req, @Body() userObjectReset: resetPasswordDto) {
     return this.authService.resetPassword(

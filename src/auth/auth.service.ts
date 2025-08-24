@@ -79,12 +79,6 @@ export class AuthService {
   async forgotPassword(userObjectForgot: ForgotPassword) {
     const userToEdit = await this.userService.findByIDcardEmail(userObjectForgot);
     if (userToEdit) {
-    //   const payload = await {
-        // Email: userToEdit.Email,
-        // id: userToEdit.Id,
-    //     jti: uuidv4( ),
-    //   };
-
       if (!userToEdit) {
         throw new NotFoundException('Correo electronico no encontrado!');
       }
@@ -120,43 +114,21 @@ export class AuthService {
     };
   }
 
-async resetPassword(token: string, userObjectReset: resetPasswordDto) {
-  const { NewPassword, ConfirmPassword } = userObjectReset;
+  async resetPassword(userId: number, dto: resetPasswordDto) {
+    const { NewPassword, ConfirmPassword } = dto;
 
-  // 1. Validar que las contraseñas coincidan
-  if (NewPassword !== ConfirmPassword) {
-    throw new Error('Las contraseñas no coinciden');
+    if (NewPassword !== ConfirmPassword) {
+      throw new Error('Las contraseñas no coinciden');
+    }
+
+    const user = await this.userService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado!');
+    }
+
+    // Aquí hashea y actualiza la contraseña
+    return this.userService.updatePassword(userId, NewPassword);
   }
-
-  // 2. Verificar y decodificar el token
-  let payload: any;
-  try {
-    payload = await this.jwtService.verifyAsync(token);
-  } catch (e) {
-    throw new UnauthorizedException('Token inválido o expirado');
-  }
-
-  // 3. Validar si el jti sigue activo en cache
-  const jtiKey = `reset:${payload.jti}`;
-  const exists = await this.cacheManager.get(jtiKey);
-
-  if (!exists) {
-    throw new UnauthorizedException('Token ya fue usado o no es válido');
-  }
-
-  // 4. Eliminar el jti para que no se pueda volver a usar
-  await this.cacheManager.del(jtiKey);
-
-  // 5. Buscar al usuario
-  const userToEdit = await this.userService.findOne(payload.id);
-  if (!userToEdit) {
-    throw new NotFoundException('Usuario no encontrado!');
-  }
-
-  // 6. Actualizar la contraseña
-  return this.userService.updatePassword(payload.id, NewPassword);
-}
-
 
   async changePassword(UserId: number, OldPassword: string, NewPassword: string){
     const userToEdit = await this.userService.findOne(UserId)
