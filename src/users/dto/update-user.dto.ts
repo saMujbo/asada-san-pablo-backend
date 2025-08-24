@@ -5,30 +5,30 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
     @ApiProperty()
-        @IsNotEmpty()
-        @IsString()
-        nombre:string;
+        // @IsNotEmpty()
+        // @IsString()
+        // nombre:string;
     
-        @ApiProperty()
-        @IsNotEmpty()
-        @IsString()
-        apellidos:string;
+        // @ApiProperty()
+        // @IsNotEmpty()
+        // @IsString()
+        // apellidos:string;
     
-        @ApiProperty()
-        @IsNotEmpty()
-        @IsString()
-        cedula: string;
+        // @ApiProperty()
+        // @IsNotEmpty()
+        // @IsString()
+        // cedula: string;
 
     
-        @ApiProperty()
-        @IsNotEmpty()
-        @IsEmail()
-        email: string;
+        // @ApiProperty()
+        // @IsNotEmpty()
+        // @IsEmail()
+        // email: string;
     
         @ApiProperty()
         @IsNotEmpty()
         @IsString()
-        telefono: string;
+        PhoneNumber: string;
     
         @ApiProperty({
         type: String,
@@ -37,5 +37,10 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
         })
         @IsNotEmpty()
         @IsDate()
-        fechaNacimiento: Date;
+        Birthdate: Date;
+
+        @ApiProperty()
+        @IsNotEmpty()
+        @IsString()
+        Address: string;
 }

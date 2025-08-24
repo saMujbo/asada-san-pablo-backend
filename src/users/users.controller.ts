@@ -1,4 +1,4 @@
-import {Controller,Get,Post,Body,Patch,Param,Delete,ParseIntPipe, UseGuards, Query,} from '@nestjs/common';
+import {Controller,Get,Post,Body,Patch,Param,Delete,ParseIntPipe, UseGuards, Query, Put, Req,} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -7,7 +7,6 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Roles } from 'src/auth/auth-roles/roles.decorator';
 import { Role } from 'src/auth/auth-roles/roles.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { AuthGuard } from '@nestjs/passport';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -32,10 +31,10 @@ export class UsersController {
     return this.usersService.findAllPagination(pagination);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id', ParseIntPipe) id: number) {
+  //   return this.usersService.findOne(id);
+  // }
 
   @Patch(':id')
   update(
@@ -48,13 +47,5 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
-  }
-
-    @Delete(':userId/roles/:roleId')
-    async removeRoleFromUser(
-    @Param('userId', ParseIntPipe) userId: number,
-    @Param('roleId', ParseIntPipe) roleId: number,
-  ) {
-    return this.usersService.removeRolesFromUser(userId, roleId);
   }
 }
