@@ -10,6 +10,7 @@ import { UsersService } from 'src/users/users.service';
 import { ConfigService } from '@nestjs/config';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ChangepasswordDto } from './dto/changePassword.dto';
+import { resetPasswordDto } from './dto/resetPassword.dto';
 @Injectable()
 export class AuthService {
   constructor (
@@ -19,13 +20,15 @@ export class AuthService {
     private readonly configService: ConfigService,
     private jwtService: JwtService
   ){}
-      async comparePasswords(passwordToCompare: string, mainPassword: string) {
-      const IsCorrectPassword = await bcrypt.compare(
+
+  async comparePasswords(passwordToCompare: string, mainPassword: string) {
+    const IsCorrectPassword = await bcrypt.compare(
       passwordToCompare,
       mainPassword,
     );
     return IsCorrectPassword;
   }
+
   async register(createAuthDto: RegisterAuth) {
     const { Password,ConfirmPassword,...rest } = createAuthDto;
     if(Password !== ConfirmPassword){
@@ -93,7 +96,7 @@ export class AuthService {
       const token = await this.jwtService.signAsync(payload, {
         expiresIn: '10m',
       });
-      const FrontendRecoverURL = `${await this.configService.get('FrontEndBaseURL')}/auth/login`;
+      const FrontendRecoverURL = `${await this.configService.get('FrontEndBaseURL')}/auth/reset-password`;
       const url = `${FrontendRecoverURL}?token=${token}`;
 
       this.mailClient.sendForgotpasswordEmail({
@@ -109,14 +112,19 @@ export class AuthService {
     };
   }
 
-  async resetPassword(userId: number, newPassword: string) {
+  async resetPassword(userId: number, userObjectReset: resetPasswordDto) {
+    const { NewPassword,ConfirmPassword } = userObjectReset;
+    if(NewPassword !== ConfirmPassword){
+      throw new Error('Las contraseñas no coinciden')
+    }
+
     const userToEdit = await this.userService.findOne(userId);
 
     if (!userToEdit) {
       throw new NotFoundException('Usurio no encontrado!');
     }
 
-    return this.userService.updatePassword(userId, newPassword);
+    return this.userService.updatePassword(userId, NewPassword);
   }
 
   async changePassword(UserId: number, OldPassword: string, NewPassword: string){

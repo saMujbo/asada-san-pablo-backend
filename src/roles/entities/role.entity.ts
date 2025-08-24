@@ -2,7 +2,6 @@ import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Role {
-
     @PrimaryGeneratedColumn()
     Id:number;
 
@@ -11,7 +10,4 @@ export class Role {
 
     @Column()
     Description:string;
-
-    // @ManyToMany(()=>User,(user)=>user.Roles)
-    // Users:User[];
 }
