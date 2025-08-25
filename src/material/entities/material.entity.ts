@@ -4,8 +4,8 @@ import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 export class Material {
     @PrimaryGeneratedColumn()
     Id:number;
-
-    @Column()
+    
+    @Column({unique:true})
     Name:string;
 
     @Column()
@@ -13,4 +13,5 @@ export class Material {
 
     @Column({default: true})
     IsActive: boolean;
+
 }

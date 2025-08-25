@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { MaterialService } from './material.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
@@ -28,7 +28,7 @@ export class MaterialController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.materialService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number ) {
+    return this.materialService.remove(id);
   }
 }

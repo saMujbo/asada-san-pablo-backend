@@ -19,12 +19,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     UsersModule,
     RolesModule,
     MailServiceModule,
-
-    CacheModule.register({
-      isGlobal: true, // opcional: disponible en toda la app
-      ttl: 0,         // lo manejamos manualmente
-    }),
-
+    
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],

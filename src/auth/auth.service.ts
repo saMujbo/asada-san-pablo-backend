@@ -11,7 +11,8 @@ import { ConfigService } from '@nestjs/config';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ChangepasswordDto } from './dto/changePassword.dto';
 import { resetPasswordDto } from './dto/resetPassword.dto';
-import { Cache } from 'cache-manager';
+
+
 @Injectable()
 export class AuthService {
   constructor (
@@ -20,7 +21,6 @@ export class AuthService {
     private readonly mailClient: MailServiceService,
     private readonly configService: ConfigService,
     private jwtService: JwtService,
-    @Inject('CACHE_MANAGER') private cacheManager: Cache,
   ){}
 
   async comparePasswords(passwordToCompare: string, mainPassword: string) {
