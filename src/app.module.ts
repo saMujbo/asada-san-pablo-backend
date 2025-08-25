@@ -8,6 +8,7 @@ import { MailServiceModule } from './mail-service/mail-service.module';
 import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration';
 import { CacheModule } from '@nestjs/cache-manager';
+import { MaterialModule } from './material/material.module';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { CacheModule } from '@nestjs/cache-manager';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      password: 'JosDani_1007',
+      password: 'SAMUsqlB2024',
       database: 'redsanpablotest',
       autoLoadEntities: true,
       synchronize: true, // ❗️Solo para desarrollo (crea tablas automáticamente)
@@ -31,6 +32,7 @@ import { CacheModule } from '@nestjs/cache-manager';
     RolesModule,
     AuthModule,
     MailServiceModule,
+    MaterialModule,
   ],
 })
 export class AppModule {}

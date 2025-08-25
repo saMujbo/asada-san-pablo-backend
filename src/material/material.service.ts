@@ -4,7 +4,6 @@ import { UpdateMaterialDto } from './dto/update-material.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Material } from './entities/material.entity';
 import { Repository } from 'typeorm';
-import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class MaterialService {
@@ -24,8 +23,14 @@ export class MaterialService {
     return `This action returns a #${id} material`;
   }
 
-  update(id: number, updateMaterialDto: UpdateMaterialDto) {
-    return `This action updates a #${id} material`;
+  async update(id: number, updateMaterialDto: UpdateMaterialDto) {
+    const material = await this.materialRepo.findOneBy({Id:id});
+    if(!material){
+      throw new ConflictException(`User with Id ${id} not found`);
+    }
+    const materialupdate = this.materialRepo.merge(material, updateMaterialDto);
+  
+    return await this.materialRepo.save(materialupdate);
   }
 
   async remove(id: number) {
