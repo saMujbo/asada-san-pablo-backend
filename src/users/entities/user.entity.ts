@@ -27,8 +27,8 @@ export class User {
     @Column()
     PhoneNumber: string;
 
-    @Column({ type: 'date' })
-    Birthdate: Date;
+    @Column({ type: "date" })
+    Birthdate: string;
 
     @Column()
     Address: string;
