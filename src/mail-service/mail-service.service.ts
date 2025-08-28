@@ -15,7 +15,6 @@ export class MailServiceService {
 
   async sendForgotpasswordEmail(createMailServiceDto: CreateMailServiceDto){
     try {
-      const logoPath = path.join(__dirname, 'assets', 'LogoRedSanPablo.png');
 
       await this.mailService.sendMail({
         from: 'RedSanPablo',
@@ -23,13 +22,13 @@ export class MailServiceService {
         subject: createMailServiceDto.subject,
         text: createMailServiceDto?.message,
         html: await RecoverPasswordMail(createMailServiceDto.RecoverPasswordURL),
-        // attachments: [
-        //   {
-        //     filename: 'LogoRedSanPablo.png',
-        //     path: logoPath,
-        //     cid: 'logoSanPablo',
-        //   },
-        // ],
+        attachments: [
+          {
+            filename: 'LogoRedSanPablo',
+            path: './src/mail-service/assets/LogoRedSanPablo.png',
+            cid: 'logoImage',
+          },
+        ],
       });
     } catch (error) {
       console.error('Error al enviar el correo electrónico'+ error);

@@ -88,7 +88,7 @@
         <tr>
             <td>
             <div class="header">
-                <h1>Municipalidad de Nandayure</h1>
+                <h1>ASADA San Pablo</h1>
                 <img
                 src="cid:logoImage"
                 alt="Logo"
@@ -100,7 +100,7 @@
                 <p>Estimado usuario,</p>
                 <p>
                 Hemos recibido una solicitud para cambiar la contraseña de su
-                cuenta en la Municipalidad. Si no realizó esta solicitud, puede
+                cuenta en la plataforma RedSanPablo. Si no realizó esta solicitud, puede
                 ignorar este mensaje. De lo contrario, haga clic en el enlace a
                 continuación para recuperar su contraseña:
                 </p>
@@ -112,7 +112,7 @@
             </div>
             <div class="footer">
                 <p>
-                © 2024 Municipalidad de Nandayure. Todos los derechos reservados.
+                © 2025 ASADA San Pablo, Nandayure. Todos los derechos reservados.
                 </p>
             </div>
             </td>
