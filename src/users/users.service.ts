@@ -1,6 +1,5 @@
 import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -8,6 +7,8 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ForgotPassword } from 'src/auth/dto/forgotPassword-auth.dto';
 import { RolesService } from 'src/roles/roles.service';
 import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { string } from 'yargs';
 
 @Injectable()
 export class UsersService {
@@ -81,13 +82,19 @@ export class UsersService {
   }
 
   async update(Id: number, updateUserDto: UpdateUserDto) {
-  const user = await this.userRepo.findOneBy({ Id });
+  const user = await this.userRepo.findOne({ where:{ Id} });
 
-  if (!user) {
-    throw new ConflictException(`User with Id ${Id} not found`);
+  if (!user) {throw new ConflictException(`User with Id ${Id} not found`);}
+
+  if (updateUserDto.Birthdate) {
+    const d = new Date(updateUserDto.Birthdate);
+    if (isNaN(d.getTime())) {
+      throw new NotFoundException('Birthdate is not a valid date');
     }
+    user.Birthdate = d;
+  }
+
     const updatedUser = this.userRepo.merge(user, updateUserDto);
-  
     return await this.userRepo.save(updatedUser);
 }
 

@@ -8,6 +8,7 @@ import {
   IsNotEmpty,
   Matches,
   MinLength,
+  Length,
 } from 'class-validator';
 import { Role } from 'src/roles/entities/role.entity';
 
@@ -54,7 +55,7 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   Surname2: string;
-
+  
   @ApiProperty()
   @IsOptional()
   @IsString()

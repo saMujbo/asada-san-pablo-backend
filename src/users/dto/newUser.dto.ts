@@ -8,6 +8,7 @@
     IsNotEmpty,
     Matches,
     MinLength,
+    Length,
     } from 'class-validator';
     import { Role } from 'src/roles/entities/role.entity';
 
@@ -54,7 +55,8 @@
     @IsString()
     @IsNotEmpty()
     Surname2: string;
-
+    @IsOptional() @IsString() @Length(1, 255)
+    ProfilePhoto?: string;
     @ApiProperty()
     @IsOptional()
     @IsString()

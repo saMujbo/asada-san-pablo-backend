@@ -18,6 +18,9 @@ export class User {
     @Column()
     Surname2: string;
 
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    ProfilePhoto: string | null 
+
     @Column({ nullable: true })
     Nis: string;
 
@@ -28,7 +31,7 @@ export class User {
     PhoneNumber: string;
 
     @Column({ type: "date" })
-    Birthdate: string;
+    Birthdate: Date;
 
     @Column()
     Address: string;
