@@ -17,8 +17,17 @@ export class UsersService {
       private readonly rolesService: RolesService,
   ){}
 
-  async create(createUserDto: CreateUserDto) {
+  async createRegister(createUserDto: CreateUserDto) {
+  
     const newUser = await this.userRepo.create(createUserDto); 
+    return await this.userRepo.save(newUser);
+  }
+  
+    async create(createUserDto: CreateUserDto) {
+    const {Password, ...rest}= createUserDto;
+      const hashed= await bcrypt.hash(Password,10);
+
+    const newUser = await this.userRepo.create({...rest,Password:hashed}); 
     return await this.userRepo.save(newUser);
   }
 
@@ -29,7 +38,7 @@ export class UsersService {
   }
 
   async findAllPagination({ page, limit }: PaginationDto) {
-    const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit; 
 
     const [data, total] = await this.userRepo.findAndCount({
       relations: ['Roles'],

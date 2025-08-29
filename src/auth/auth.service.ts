@@ -38,13 +38,13 @@ export class AuthService {
     }
     const hashed= await bcrypt.hash(Password,10);
 
-    const defaultRole = await this.roleService.findByName('GUEST');
+    const defaultRole = await this.roleService.findOne(3);
 
     if (!defaultRole) {
       throw new Error('❌ Rol por defecto "USER" no existe en la base de datos');
     }
 
-    const newUser = this.userService.create({...rest, Password:hashed, Roles: [defaultRole]});
+    const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
     return newUser;
   }
 
