@@ -9,6 +9,7 @@ import { RolesService } from 'src/roles/roles.service';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { string } from 'yargs';
+import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -108,26 +109,57 @@ async remove(Id: number) {
     return await this.userRepo.remove(user);
 }
 
-async removeRolesFromUser(userId:number,roleId:number){
+async removeRolesFromUser(updateRoles:UpdateRolesUserDto){ 
+    const { Id, RoleId } = updateRoles;
+
+    const user = await this.userRepo.findOne({
+      where: { Id : Id },
+      relations: ['Roles']
+    });
+    if(!user){
+      throw new ConflictException(`User with Id ${Id} not found`);
+    }
+    const role = await this.rolesService.findOne(RoleId);
+    if (!role) {
+      throw new NotFoundException(`Role with Id ${RoleId} not found`);
+    }
+    user.Roles = user.Roles.filter(r => r.Id !== RoleId);
+
+    await this.userRepo.save(user);
+    return {
+      message: `Role ${role.Rolname} removed from user ${user.Id}`,
+      user,
+    };
+}
+
+async AddRolesFromUser(updateRoles:UpdateRolesUserDto){
+  const { Id, RoleId } = updateRoles;
+
   const user = await this.userRepo.findOne({
-    where: { Id : userId },
+    where: { Id : Id },
     relations: ['Roles'],
   });
+  
   if(!user){
-    throw new ConflictException(`User with Id ${userId} not found`);
+    throw new ConflictException(`User with Id ${Id} not found`);
   }
-  const role = await this.rolesService.findOne(roleId);
+  const role = await this.rolesService.findOne(RoleId);
   if (!role) {
-    throw new NotFoundException(`Role with Id ${roleId} not found`);
+    throw new NotFoundException(`Role with Id ${RoleId} not found`);
   }
-  user.Roles = user.Roles.filter(r => r.Id !== roleId);
-
+  
+  user.Roles = user.Roles ?? [];
+  user.Roles = user.Roles.filter(r => r.Id !== RoleId);
+  user.Roles.push(role);
+  // if (!user.Roles.find(r => r.Id === RoleId)) {
+  // user.Roles.push(role); // agrega el rol solo si no lo tiene
   await this.userRepo.save(user);
+
   return {
-    message: `Role ${role.Rolname} removed from user ${user.Id}`,
+    message: `Role ${role.Rolname} uptade from user ${user.Id}`,
     user,
   };
-};
+}
 
   async hashPassword(password: string, salt: number) {
     return await bcrypt.hash(password, salt);
@@ -145,4 +177,39 @@ async removeRolesFromUser(userId:number,roleId:number){
       });
     }
   }
+
+  async findMe(Id: number) {
+    const user = await this.userRepo.findOne({ where: { Id }, relations: ['Roles'] });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
+  async updateMe(Id: number, dto: UpdateUserDto) {
+    const user = await this.userRepo.findOne({ where: { Id } });
+
+    if (!user) {
+      throw new ConflictException(`User with Id ${Id} not found`);
+    }
+
+    if (dto.Address !== undefined) user.Address = dto.Address;
+    if (dto.PhoneNumber !== undefined) user.PhoneNumber = dto.PhoneNumber;
+    if (dto.Birthdate !== undefined) user.Birthdate = dto.Birthdate as any;
+    
+
+    const saved = await this.userRepo.save(user);
+
+    // Re-carga con relaciones si quieres devolver Roles
+    const withRelations = await this.userRepo.findOne({
+      where: { Id: saved.Id },
+      relations: ['Roles'],
+    });
+
+    // Sanea antes de retornar (por si tu entidad expone Password)
+    if (withRelations && (withRelations as any).Password !== undefined) {
+      delete (withRelations as any).Password;
+    }
+
+    return withRelations ?? saved;
+  }
+
 }

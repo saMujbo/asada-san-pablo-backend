@@ -1,29 +1,61 @@
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+// auth/guards/token.guard.ts
 import {
-    CanActivate,
-    ExecutionContext,
-    Inject,
-    Injectable,
-    UnauthorizedException,
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import type { Request } from 'express';
 
 @Injectable()
 export class TokenGuard implements CanActivate {
-    constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly cfg: ConfigService,
+  ) {}
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
-        const { user } = context.switchToHttp().getRequest();
-        const tokenId = user.jti;
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
+    const req = ctx.switchToHttp().getRequest<Request & { user?: any }>();
 
-        // Verifica si el token ya fue usado
-        const tokenWasUsed = await this.cacheManager.get(tokenId);
+    // DEBUG seguro (nunca accedas a propiedades del payload aquí)
+    // console.log('Auth IN :: auth=', req.headers.authorization, ' query.token=', req.query?.token);
 
-        if (tokenWasUsed) throw new UnauthorizedException('El link ya venció o fue usado')
-        
-        // Marca el token como usado
-        await this.cacheManager.set(tokenId, 'used', 600000);
-
-        return true;
+    const token = this.extractToken(req);
+    if (!token) {
+      throw new UnauthorizedException('token ausente');
     }
+
+    try {
+      const payload = await this.jwt.verifyAsync(token, {
+        secret: this.cfg.get<string>('JWT_SECRET'),
+      });
+
+      // DEBUG seguro: usa optional chaining
+      // console.log('payload OK :: id=', payload?.id, 'jti=', payload?.jti);
+
+      req.user = payload; // <- lo que consumirá @GetUser(...)
+      return true;
+    } catch (e: any) {
+      // console.log('verify error:', e?.message);
+      throw new UnauthorizedException('token inválido o expirado');
+    }
+  }
+
+  private extractToken(req: Request): string | undefined {
+    // 1) Authorization: Bearer ...
+    const h = req.headers.authorization;
+    if (typeof h === 'string' && h.startsWith('Bearer ')) {
+      return h.slice(7).trim();
+    }
+    // 2) ?token=...
+    const q = req.query?.token;
+    if (typeof q === 'string' && q.length > 0) return q;
+    // 3) Cookie 'token' (opcional)
+    // const c = (req as any).cookies?.token;
+    // if (typeof c === 'string' && c.length > 0) return c;
+
+    return undefined;
+  }
 }

@@ -81,7 +81,7 @@
 
     @ApiProperty()
     @IsString()
-    @IsNotEmpty()
+    
     Address: string;
 
     @ApiProperty()

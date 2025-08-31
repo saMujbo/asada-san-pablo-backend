@@ -80,7 +80,7 @@ export class CreateUserDto {
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty()
+  
   Address: string;
 
   @ApiProperty()
