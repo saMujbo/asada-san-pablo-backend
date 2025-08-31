@@ -74,7 +74,7 @@ export class UsersService {
 
   async findByIDcardEmail(userObjectForgot: ForgotPassword) {
     const { IDcard, Email } = userObjectForgot;
-    const user = await this.userRepo.findOne({ where: { Email } });
+    const user = await this.userRepo.findOne({ where: { IDcard ,Email } });
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
     }

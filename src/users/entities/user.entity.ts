@@ -19,7 +19,7 @@ export class User {
     Surname2: string;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
-    ProfilePhoto: string | null 
+    ProfilePhoto: string | null;
 
     @Column({ nullable: true })
     Nis: string;

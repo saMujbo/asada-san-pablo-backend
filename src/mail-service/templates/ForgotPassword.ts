@@ -66,7 +66,7 @@
             margin: 20px auto;
             padding: 15px;
             text-align: center;
-            background-color: #3498db;
+            background-color: #091540;
             color: #ffffff;
             text-decoration: none;
             font-size: 18px;
@@ -74,7 +74,7 @@
             transition: background-color 0.3s;
         }
         a:hover {
-            background-color: #2980b9;
+            background-color: #1789FC;
         }
         .footer {
             margin-top: 30px;
@@ -104,7 +104,7 @@
                 ignorar este mensaje. De lo contrario, haga clic en el enlace a
                 continuación para recuperar su contraseña:
                 </p>
-                <a href="${ResetPasswordURL}">Recuperar Contraseña</a>
+                <a href="${ResetPasswordURL}" style="background-color:#091540; color:#ffffff !important;" >Recuperar Contraseña</a>
                 <p>
                 Este enlace es válido por 10 minutos y un solo uso. Si necesita asistencia
                 adicional, no dude en contactarnos.
