@@ -5,6 +5,8 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
 import { RecoverPasswordMail } from './templates/ForgotPassword';
 import * as path from 'path';
+import { WelcomeMailASADA } from './templates/WelcomeMesage';
+import { WelcomeMailASADADto } from './dto/welcome-mail-service.dto';
 
 @Injectable()
 export class MailServiceService {
@@ -34,7 +36,26 @@ export class MailServiceService {
       console.error('Error al enviar el correo electrónico'+ error);
     }
   }
-
+async sendWelcomeEmail(welcomeMailASADADto: WelcomeMailASADADto) {
+  try {
+    await this.mailService.sendMail({
+      from: 'RedSanPablo',
+      to: welcomeMailASADADto.to,               // correo destino
+      subject: welcomeMailASADADto.subject,     // asunto, ej: "Bienvenido a RedSanPablo"
+      text: welcomeMailASADADto?.message,       // versión de texto plano opcional
+      html: await WelcomeMailASADA(welcomeMailASADADto.Name,welcomeMailASADADto.LoginURL),
+      attachments: [
+        {
+          filename: 'LogoRedSanPablo.png',
+          path: './src/mail-service/assets/LogoRedSanPablo.png',
+          cid: 'logoImage', // debe coincidir con el cid del <img src="cid:logoImage">
+        },
+      ],
+    });
+  } catch (error) {
+    console.error('Error al enviar correo de bienvenida: ' + error);
+  }
+}
 
   create(createMailServiceDto: CreateMailServiceDto) {
     return 'This action adds a new mailService';

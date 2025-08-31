@@ -45,6 +45,17 @@ export class AuthService {
     }
 
     const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
+    try {
+    await this.mailClient.sendWelcomeEmail({
+      to: createAuthDto.Email,
+      subject: '¡Bienvenido a RedSanPablo!',
+      message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
+      LoginURL: 'https://redsnapablo/login',
+      Name: createAuthDto.Name,
+    });
+  } catch (error) {
+    console.error('Error al enviar correo de bienvenida:', error);
+  }
     return newUser;
   }
 
