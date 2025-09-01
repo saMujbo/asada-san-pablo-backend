@@ -184,6 +184,11 @@ async AddRolesFromUser(updateRoles:UpdateRolesUserDto){
     return user;
   }
 
+  checkIfNull(data: string | undefined | null | number) {
+    if (data !== undefined && data != null && data !== '') return true;
+    return false;
+  }
+
   async updateMe(Id: number, dto: UpdateUserDto) {
     const user = await this.userRepo.findOne({ where: { Id } });
 
@@ -191,8 +196,8 @@ async AddRolesFromUser(updateRoles:UpdateRolesUserDto){
       throw new ConflictException(`User with Id ${Id} not found`);
     }
 
-    if (dto.Address !== undefined || dto.Address == "") user.Address = dto.Address;
-    if (dto.PhoneNumber !== undefined || dto.PhoneNumber == "") user.PhoneNumber = dto.PhoneNumber;
+    if (dto.Address !== undefined && dto.Address != null && dto.Address !== '') user.Address = dto.Address;
+    if (dto.PhoneNumber !== undefined && dto.PhoneNumber != null && dto.PhoneNumber !== '') user.PhoneNumber = dto.PhoneNumber;
     if (dto.Birthdate !== undefined) user.Birthdate = dto.Birthdate as any;
     
 
