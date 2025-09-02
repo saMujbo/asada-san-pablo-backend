@@ -25,9 +25,9 @@ export class UsersService {
     return await this.userRepo.save(newUser);
   }
   
-    async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto) {
     const {Password, ...rest}= createUserDto;
-      const hashed= await bcrypt.hash(Password,10);
+    const hashed= await bcrypt.hash(Password,10);
 
     const newUser = await this.userRepo.create({...rest,Password:hashed}); 
     return await this.userRepo.save(newUser);
@@ -39,14 +39,35 @@ export class UsersService {
     });
   }
 
-  async findAllPagination({ page, limit }: PaginationDto) {
-    const skip = (page - 1) * limit; 
+  async findAllPagination({ page, limit, name, roleId }: PaginationDto) {
+    const skip = (page - 1) * limit;
 
-    const [data, total] = await this.userRepo.findAndCount({
-      relations: ['Roles'],
-      skip,
-      take: limit
-    });
+    const qb = this.userRepo
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.Roles', 'role')
+      .skip(skip)
+      .take(limit);
+
+    // Filtro combinado: si vienen ambos, aplica ambos.
+    if (name) {
+      // Búsqueda case-insensitive compatible (LOWER + LIKE)
+      qb.andWhere(
+        `(LOWER(user.Name) LIKE :name 
+          OR LOWER(user.Surname1) LIKE :name 
+          OR LOWER(user.Surname2) LIKE :name 
+          OR LOWER(user.Email) LIKE :name)`,
+        { name: `%${name.toLowerCase()}%` }
+      );
+    }
+
+    if (roleId !== undefined) {
+      qb.andWhere('role.id = :roleId', { roleId });
+    }
+
+    // Orden sugerido (ajusta a tu preferencia)
+    qb.orderBy('user.Name', 'ASC').addOrderBy('user.Surname1', 'ASC');
+
+    const [data, total] = await qb.getManyAndCount();
 
     return {
       data,
@@ -54,7 +75,7 @@ export class UsersService {
         total,
         page,
         limit,
-        pageCount: Math.ceil(total / limit),
+        pageCount: Math.ceil(total / limit) || 1,
         hasNextPage: page * limit < total,
         hasPrevPage: page > 1,
       },
@@ -100,13 +121,15 @@ export class UsersService {
 }
 
 async remove(Id: number) {
-    const user = await this.userRepo.findOneBy({ Id });
+  const user = await this.userRepo.findOneBy({ Id });
 
   if (!user) {
     throw new ConflictException(`User with Id ${Id} not found`);
-    }
+  }
 
-    return await this.userRepo.remove(user);
+  user.IsActive = false;
+
+  return await this.userRepo.save(user);
 }
 
 async removeRolesFromUser(updateRoles:UpdateRolesUserDto){ 

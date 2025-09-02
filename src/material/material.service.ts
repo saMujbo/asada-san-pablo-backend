@@ -19,8 +19,11 @@ export class MaterialService {
     return await this.materialRepo.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} material`;
+  async findOne(Id: number) {
+    const found = await this.materialRepo.findOneBy({Id});
+    if(!found) throw new ConflictException(`Material with Id ${Id} not found`);
+
+    return found;
   }
 
   async update(id: number, updateMaterialDto: UpdateMaterialDto) {
@@ -38,6 +41,7 @@ export class MaterialService {
     if(!material){
       throw new ConflictException(`User with Id ${id} not found`);
     }
-    return await this.materialRepo.remove(material);
+    material.IsActive = false;
+    return await this.materialRepo.save(material);
   }
 }

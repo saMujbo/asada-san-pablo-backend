@@ -18,8 +18,8 @@ export class MaterialController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.materialService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.materialService.findOne(id);
   }
 
   @Put(':id')
