@@ -6,9 +6,8 @@ import { toDateOnly } from 'src/utils/ToDateOnly';
 
 
 export class UpdateUserDto{
-
         @ApiProperty()
-        @IsOptional() @IsString() @Length(1, 255)
+        @IsOptional() @IsString()
         ProfilePhoto?: string; 
 
         @Transform(({ value }) => toDateOnly(value))

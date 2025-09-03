@@ -219,6 +219,7 @@ async AddRolesFromUser(updateRoles:UpdateRolesUserDto){
       throw new ConflictException(`User with Id ${Id} not found`);
     }
 
+    if (dto.ProfilePhoto !== undefined && dto.ProfilePhoto != null && dto.ProfilePhoto !== '') user.ProfilePhoto = dto.ProfilePhoto;
     if (dto.Address !== undefined && dto.Address != null && dto.Address !== '') user.Address = dto.Address;
     if (dto.PhoneNumber !== undefined && dto.PhoneNumber != null && dto.PhoneNumber !== '') user.PhoneNumber = dto.PhoneNumber;
     if (dto.Birthdate !== undefined) user.Birthdate = dto.Birthdate as any;

@@ -13,7 +13,6 @@ import {
 import { Role } from 'src/roles/entities/role.entity';
 import { toDateOnly } from 'src/utils/ToDateOnly';
 
-
 export class CreateUserDto {
   @ApiProperty()
   @IsString()
