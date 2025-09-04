@@ -13,5 +13,4 @@ export class Material {
 
     @Column({default: true})
     IsActive: boolean;
-
 }

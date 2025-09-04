@@ -45,12 +45,13 @@ export class AuthService {
     }
 
     const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
+    const url = `${await this.configService.get('FrontEndBaseURL')}/login`;
     try {
     await this.mailClient.sendWelcomeEmail({
       to: createAuthDto.Email,
       subject: '¡Bienvenido a RedSanPablo!',
       message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
-      LoginURL: 'https://redsnapablo/login',
+      LoginURL: url,
       Name: createAuthDto.Name,
     });
   } catch (error) {
