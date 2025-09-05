@@ -5,7 +5,7 @@ import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { AuthModule } from './auth/auth.module';
 import { MailServiceModule } from './mail-service/mail-service.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { CacheModule } from '@nestjs/cache-manager';
 import { MaterialModule } from './material/material.module';
@@ -17,15 +17,19 @@ import { MaterialModule } from './material/material.module';
       load: [configuration],           // mapea tus vars a un objeto
       envFilePath: ['.env'],           // ruta(s) del .env
     }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'JosDani_1007',
-      database: 'redsanpablotest',
-      autoLoadEntities: true,
-      synchronize: true, // ❗️Solo para desarrollo (crea tablas automáticamente)
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: config.get<'mysql'>('DB_TYPE'),
+        host: config.get<string>('DB_HOST'),
+        port: config.get<number>('DB_PORT'),
+        username: config.get<string>('DB_USERNAME'),
+        password: config.get<string>('DB_PASSWORD'),
+        database: config.get<string>('DB_NAME'),
+        autoLoadEntities: true,
+        synchronize: true,
+      }),
     }),
     CacheModule.register({ isGlobal: true }),
     UsersModule,
