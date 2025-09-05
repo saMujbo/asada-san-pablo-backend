@@ -5,10 +5,7 @@ import { Transform } from 'class-transformer';
 import { toDateOnly } from 'src/utils/ToDateOnly';
 
 
-export class UpdateUserDto{
-        @ApiProperty()
-        @IsOptional() @IsString()
-        ProfilePhoto?: string; 
+export class UpdateUserDto{ 
 
         @Transform(({ value }) => toDateOnly(value))
         @Matches(/^\d{4}-\d{2}-\d{2}$/, {
