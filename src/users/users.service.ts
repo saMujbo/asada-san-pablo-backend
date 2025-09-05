@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,6 +10,8 @@ import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { string } from 'yargs';
 import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
+import { UpdateEmailDto } from './dto/updateEmail-user';
+import { use } from 'passport';
 
 @Injectable()
 export class UsersService {
@@ -83,11 +85,11 @@ export class UsersService {
   }
 
   async findOne(Id: number) {
-    const found = await this.userRepo.findOneBy({ Id });
+      const found = await this.userRepo.findOneBy({ Id });
 
-    if (!found) throw new ConflictException(`User with Id ${Id} not found`);
+      if (!found) throw new ConflictException(`User with Id ${Id} not found`);
 
-    return found;
+      return found;
   }
 
   async findByEmail(Email: string) {
@@ -95,50 +97,74 @@ export class UsersService {
   }
 
   async findByIDcardEmail(userObjectForgot: ForgotPassword) {
-    const { IDcard, Email } = userObjectForgot;
-    const user = await this.userRepo.findOne({ where: { IDcard ,Email } });
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-    return user;
+      const { IDcard, Email } = userObjectForgot;
+      const user = await this.userRepo.findOne({ where: { IDcard ,Email } });
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+      return user;
   }
 
   async update(Id: number, updateUserDto: UpdateUserDto) {
-  const user = await this.userRepo.findOne({ where:{ Id} });
+    const user = await this.userRepo.findOne({ where:{ Id} });
 
-  if (!user) {throw new ConflictException(`User with Id ${Id} not found`);}
+    if (!user) {throw new ConflictException(`User with Id ${Id} not found`);}
 
-  if (updateUserDto.Birthdate) {
-    const d = new Date(updateUserDto.Birthdate);
-    if (isNaN(d.getTime())) {
-      throw new NotFoundException('Birthdate is not a valid date');
+    if (updateUserDto.Birthdate) {
+      const d = new Date(updateUserDto.Birthdate);
+      if (isNaN(d.getTime())) {
+        throw new NotFoundException('Birthdate is not a valid date');
+      }
+      user.Birthdate = d;
     }
-    user.Birthdate = d;
+
+      const updatedUser = this.userRepo.merge(user, updateUserDto);
+      return await this.userRepo.save(updatedUser);
   }
 
-    const updatedUser = this.userRepo.merge(user, updateUserDto);
-    return await this.userRepo.save(updatedUser);
-}
+  async remove(Id: number) {
+    const user = await this.userRepo.findOneBy({ Id });
 
-async remove(Id: number) {
-  const user = await this.userRepo.findOneBy({ Id });
+    if (!user) {
+      throw new ConflictException(`User with Id ${Id} not found`);
+    }
 
-  if (!user) {
-    throw new ConflictException(`User with Id ${Id} not found`);
+    user.IsActive = false;
+
+    return await this.userRepo.save(user);
   }
 
-  user.IsActive = false;
+  async removeRolesFromUser(updateRoles:UpdateRolesUserDto){ 
+      const { Id, RoleId } = updateRoles;
 
-  return await this.userRepo.save(user);
-}
+      const user = await this.userRepo.findOne({
+        where: { Id : Id },
+        relations: ['Roles']
+      });
+      if(!user){
+        throw new ConflictException(`User with Id ${Id} not found`);
+      }
+      const role = await this.rolesService.findOne(RoleId);
+      if (!role) {
+        throw new NotFoundException(`Role with Id ${RoleId} not found`);
+      }
+      user.Roles = user.Roles.filter(r => r.Id !== RoleId);
 
-async removeRolesFromUser(updateRoles:UpdateRolesUserDto){ 
+      await this.userRepo.save(user);
+      return {
+        message: `Role ${role.Rolname} removed from user ${user.Id}`,
+        user,
+      };
+  }
+
+  async AddRolesFromUser(updateRoles:UpdateRolesUserDto){
     const { Id, RoleId } = updateRoles;
 
     const user = await this.userRepo.findOne({
       where: { Id : Id },
-      relations: ['Roles']
+      relations: ['Roles'],
     });
+    
     if(!user){
       throw new ConflictException(`User with Id ${Id} not found`);
     }
@@ -146,43 +172,19 @@ async removeRolesFromUser(updateRoles:UpdateRolesUserDto){
     if (!role) {
       throw new NotFoundException(`Role with Id ${RoleId} not found`);
     }
+    
+    user.Roles = user.Roles ?? [];
     user.Roles = user.Roles.filter(r => r.Id !== RoleId);
-
+    user.Roles.push(role);
+    // if (!user.Roles.find(r => r.Id === RoleId)) {
+    // user.Roles.push(role); // agrega el rol solo si no lo tiene
     await this.userRepo.save(user);
+
     return {
-      message: `Role ${role.Rolname} removed from user ${user.Id}`,
+      message: `Role ${role.Rolname} uptade from user ${user.Id}`,
       user,
     };
-}
-
-async AddRolesFromUser(updateRoles:UpdateRolesUserDto){
-  const { Id, RoleId } = updateRoles;
-
-  const user = await this.userRepo.findOne({
-    where: { Id : Id },
-    relations: ['Roles'],
-  });
-  
-  if(!user){
-    throw new ConflictException(`User with Id ${Id} not found`);
   }
-  const role = await this.rolesService.findOne(RoleId);
-  if (!role) {
-    throw new NotFoundException(`Role with Id ${RoleId} not found`);
-  }
-  
-  user.Roles = user.Roles ?? [];
-  user.Roles = user.Roles.filter(r => r.Id !== RoleId);
-  user.Roles.push(role);
-  // if (!user.Roles.find(r => r.Id === RoleId)) {
-  // user.Roles.push(role); // agrega el rol solo si no lo tiene
-  await this.userRepo.save(user);
-
-  return {
-    message: `Role ${role.Rolname} uptade from user ${user.Id}`,
-    user,
-  };
-}
 
   async hashPassword(password: string, salt: number) {
     return await bcrypt.hash(password, salt);
@@ -238,6 +240,27 @@ async AddRolesFromUser(updateRoles:UpdateRolesUserDto){
     }
 
     return withRelations ?? saved;
+  }
+
+  async updateMyEmail(Id: number, { OldEmail, NewEmail }: UpdateEmailDto) {
+    const user = await this.userRepo.findOne({ where: { Id } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const current = (user.Email ?? '').trim().toLowerCase();
+    const old = (OldEmail ?? '').trim().toLowerCase();
+    const next = (NewEmail ?? '').trim().toLowerCase();
+
+    console.log(current + ' ' + old + '   ' + next);
+    if (!next) throw new BadRequestException('NewEmail is required');
+    if (current !== old) throw new ConflictException('The old email does not match the current email');
+    if (next === current) throw new ConflictException('The new email is the same as the current one');
+
+    const exists = await this.userRepo.exists({ where: { Email: next } });
+    if (exists) throw new ConflictException('Email already in use');
+
+    user.Email = next;
+    await this.userRepo.save(user);
+    return { message: 'Email updated', email: user.Email };
   }
 
 }

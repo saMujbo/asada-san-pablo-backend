@@ -12,6 +12,7 @@ import { GetUser } from 'src/auth/get-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { TokenGuard } from 'src/auth/guards/token.guard';
+import { UpdateEmailDto } from './dto/updateEmail-user';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -77,5 +78,10 @@ export class UsersController {
     return await  this.usersService.update(id, updateUserDto);
   }
 
+  @UseGuards(TokenGuard)
+  @Put('update/email')
+  async updateMyEmail( @GetUser('id') id: number, @Body() dto: UpdateEmailDto ){
+    return await this.usersService.updateMyEmail(id, dto);
+  }
 
 }

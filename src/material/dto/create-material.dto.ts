@@ -14,4 +14,8 @@ import { IsBoolean, IsOptional, IsString } from 'class-validator';
     @IsOptional()
     @IsBoolean()
     IsActive?: boolean; 
+
+    @ApiProperty()
+    @IsString()
+    Unit:string;
     }

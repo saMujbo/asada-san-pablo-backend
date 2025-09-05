@@ -13,4 +13,7 @@ export class Material {
 
     @Column({default: true})
     IsActive: boolean;
+
+    @Column({ length: 20, default: "unidad" })
+    Unit: string; // "unidad", "m", "kg", "litro", etc.
 }
