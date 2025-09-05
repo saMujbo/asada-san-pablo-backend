@@ -3,9 +3,10 @@ import { IsDateString,IsNotEmpty,IsOptional, IsString, Length, Matches} from 'cl
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { toDateOnly } from 'src/utils/ToDateOnly';
-
-
-export class UpdateUserDto{ 
+export class UpdateUserDto{
+        // @ApiProperty()
+        // @IsOptional() @IsString()
+        // ProfilePhoto?: string; 
 
         @Transform(({ value }) => toDateOnly(value))
         @Matches(/^\d{4}-\d{2}-\d{2}$/, {
@@ -20,6 +21,7 @@ export class UpdateUserDto{
         PhoneNumber?: string;
 
         @ApiProperty()
+        @IsOptional()
         @IsString()
         Address?: string;
 }
