@@ -9,6 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { CacheModule } from '@nestjs/cache-manager';
 import { MaterialModule } from './material/material.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { MaterialModule } from './material/material.module';
     AuthModule,
     MailServiceModule,
     MaterialModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}
