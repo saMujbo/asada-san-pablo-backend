@@ -2,10 +2,10 @@ import { ConflictException, Controller, Injectable } from '@nestjs/common';
 import { CreateUnitMeasureDto } from './dto/create-unit_measure.dto';
 import { UpdateUnitMeasureDto } from './dto/update-unit_measure.dto';
 import { UnitMeasure } from './entities/unit_measure.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
-@Controller('unit_measure')
+@Injectable()
 export class UnitMeasureService {
   constructor (
     @InjectRepository(UnitMeasure)
