@@ -10,5 +10,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     ],
   controllers: [UnitMeasureController],
   providers: [UnitMeasureService],
+  exports: [UnitMeasureService],
 })
 export class UnitMeasureModule {}

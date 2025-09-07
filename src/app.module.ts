@@ -9,9 +9,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CategoriesModule } from './categories/categories.module';
-import { UnitMeasure } from './unit_measure/entities/unit_measure.entity';
-import { ProductModule } from './product/product.module';
-import { MaterialModule } from './material/material.module';
+import { UnitMeasureModule } from './unit_measure/unit_measure.module';
 
 @Module({
   imports: [
@@ -41,8 +39,7 @@ import { MaterialModule } from './material/material.module';
     MailServiceModule,
     MaterialModule,
     CategoriesModule,
-    UnitMeasure,
-    ProductModule
+    UnitMeasureModule
   ],
 })
 export class AppModule {}

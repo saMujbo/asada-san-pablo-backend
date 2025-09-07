@@ -5,8 +5,4 @@ export class CreateUnitMeasureDto {
     @ApiProperty()
     @IsString() 
     Name:string;
-
-    @ApiProperty()
-    @IsBoolean()
-    IsActive:boolean;
 }
