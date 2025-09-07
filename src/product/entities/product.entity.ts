@@ -1,14 +1,22 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
-export class Material {
+export class Product {
 
     @PrimaryGeneratedColumn()
     Id:number;
 
-    @Column()
+    @Column({unique:true})
     Name:string;
 
+    @Column()
+    Type:string;
+
+    @Column()
+    Observation:string;
+
     @Column({ default: true })
-    IsActive: boolean;
+    IsActive:boolean; 
+    
+
 }

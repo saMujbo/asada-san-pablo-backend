@@ -8,9 +8,10 @@ import { MailServiceModule } from './mail-service/mail-service.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { CacheModule } from '@nestjs/cache-manager';
-import { MaterialModule } from './material/material.module';
 import { CategoriesModule } from './categories/categories.module';
 import { UnitMeasure } from './unit_measure/entities/unit_measure.entity';
+import { ProductModule } from './product/product.module';
+import { MaterialModule } from './material/material.module';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { UnitMeasure } from './unit_measure/entities/unit_measure.entity';
     MailServiceModule,
     MaterialModule,
     CategoriesModule,
-    UnitMeasure
+    UnitMeasure,
+    ProductModule
   ],
 })
 export class AppModule {}

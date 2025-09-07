@@ -6,8 +6,8 @@ import { Material } from './entities/material.entity';
 
 @Module({
   imports:[
-    TypeOrmModule.forFeature([Material]),
-  ],
+        TypeOrmModule.forFeature([Material]),
+      ],
   controllers: [MaterialController],
   providers: [MaterialService],
 })

@@ -7,12 +7,15 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class MaterialService {
-  @InjectRepository(Material)
-  private readonly materialRepo: Repository<Material>
+  constructor(
+    @InjectRepository(Material)
+    private readonly materialRepo: Repository<Material>
+  ){}
 
   async create(createMaterialDto: CreateMaterialDto) {
-    const newMaterial = await this.materialRepo.create(createMaterialDto);
-    return await this.materialRepo.save(newMaterial);
+    const newMaterial = await this.materialRepo.create(createMaterialDto)
+
+    return await this.materialRepo.save(newMaterial)
   }
 
   async findAll() {
@@ -20,28 +23,28 @@ export class MaterialService {
   }
 
   async findOne(Id: number) {
-    const found = await this.materialRepo.findOneBy({Id});
-    if(!found) throw new ConflictException(`Material with Id ${Id} not found`);
-
-    return found;
+    const foundMaterial = await this.materialRepo.findOneBy({Id});
+    
+        if(!foundMaterial) throw new ConflictException(`Material with Id ${Id} not found`);
+          return foundMaterial;
   }
 
-  async update(id: number, updateMaterialDto: UpdateMaterialDto) {
-    const material = await this.materialRepo.findOneBy({Id:id});
-    if(!material){
-      throw new ConflictException(`User with Id ${id} not found`);
-    }
-    const materialupdate = this.materialRepo.merge(material, updateMaterialDto);
+  async update(Id: number, updateMaterialDto: UpdateMaterialDto) {
+        const updateMaterial = await this.materialRepo.findOne({where:{Id}});
+
+if(!updateMaterial) throw new ConflictException(`Product with Id ${Id} not found`)
   
-    return await this.materialRepo.save(materialupdate);
+  const productUpdate = this.materialRepo.merge(updateMaterial,updateMaterialDto);
+  
+  return await this.materialRepo.save(productUpdate);
   }
 
-  async remove(id: number) {
-    const material = await this.materialRepo.findOneBy({ Id: id })
-    if(!material){
-      throw new ConflictException(`User with Id ${id} not found`);
+  async remove(Id: number) {
+    const removeMaterial = await this.materialRepo.findOneBy({Id})
+    if(!removeMaterial){
+    throw new ConflictException(`Product with Id ${Id} not found`);
     }
-    material.IsActive = false;
-    return await this.materialRepo.save(material);
+    removeMaterial.IsActive= false;
+    return await this.materialRepo.save(removeMaterial);
   }
 }
