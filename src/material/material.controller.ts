@@ -1,8 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { MaterialService } from './material.service';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/auth-roles/roles.decorator';
+import { Role } from 'src/auth/auth-roles/roles.enum';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(Role.ADMIN) 
+@ApiBearerAuth()
 @Controller('material')
 export class MaterialController {
   constructor(private readonly materialService: MaterialService) {}

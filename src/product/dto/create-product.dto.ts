@@ -1,17 +1,28 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsString } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateProductDto {
-@ApiProperty()
-@IsString()
-Name:string;
+    @ApiProperty()
+    @IsString() @IsNotEmpty()
+    Name: string;
 
-@ApiProperty()
-@IsString()
-Type:string;
+    @ApiProperty()
+    @IsString() @IsNotEmpty()
+    Type: string;
 
-@ApiProperty()
-@IsString()
-Observation:string;
+    @ApiProperty()
+    @IsString() @IsOptional()
+    Observation: string;
 
+    @ApiProperty()
+    @IsInt() @Min(1)
+    CategoryId: number;
+
+    @ApiProperty()
+    @IsInt() @Min(1)
+    MaterialId: number;
+
+    @ApiProperty()
+    @IsInt() @Min(1)
+    UnitMeasureId: number;
 }

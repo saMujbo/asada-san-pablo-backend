@@ -9,7 +9,6 @@ import { Role } from 'src/auth/auth-roles/roles.enum';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/auth/get-user.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { UpdateEmailDto } from './dto/updateEmail-user';

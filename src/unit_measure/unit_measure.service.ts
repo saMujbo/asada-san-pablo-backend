@@ -22,7 +22,9 @@ export class UnitMeasureService {
   }
 
   async findOne(Id: number) {
-    const found = await this.unitRepo.findOneBy({Id});
+    const found = await this.unitRepo.findOne({
+      where: { Id, IsActive: true },
+    });
 
     if(!found) throw new ConflictException(`Unit measure with Id ${Id} not found`);
     

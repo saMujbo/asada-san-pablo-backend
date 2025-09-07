@@ -23,20 +23,22 @@ export class MaterialService {
   }
 
   async findOne(Id: number) {
-    const foundMaterial = await this.materialRepo.findOneBy({Id});
+    const foundMaterial = await this.materialRepo.findOne({
+      where: { Id, IsActive: true },
+    });
     
-        if(!foundMaterial) throw new ConflictException(`Material with Id ${Id} not found`);
-          return foundMaterial;
+    if(!foundMaterial) throw new ConflictException(`Material with Id ${Id} not found`);
+    return foundMaterial;
   }
 
   async update(Id: number, updateMaterialDto: UpdateMaterialDto) {
-        const updateMaterial = await this.materialRepo.findOne({where:{Id}});
+    const updateMaterial = await this.materialRepo.findOne({where:{Id}});
 
-if(!updateMaterial) throw new ConflictException(`Product with Id ${Id} not found`)
-  
-  const productUpdate = this.materialRepo.merge(updateMaterial,updateMaterialDto);
-  
-  return await this.materialRepo.save(productUpdate);
+    if(!updateMaterial) throw new ConflictException(`Product with Id ${Id} not found`)
+    
+    const productUpdate = this.materialRepo.merge(updateMaterial,updateMaterialDto);
+    
+    return await this.materialRepo.save(productUpdate);
   }
 
   async remove(Id: number) {

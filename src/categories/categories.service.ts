@@ -22,7 +22,9 @@ export class CategoriesService {
   }
 
   async findOne(Id: number) {
-    const categoryFound = await this.categoryRepo.findOneBy({ Id });
+    const categoryFound = await this.categoryRepo.findOne({ 
+      where: { Id, IsActive: true },
+     });
     
     if (!categoryFound) throw new ConflictException(`User with Id ${Id} not found`);
     

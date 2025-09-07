@@ -10,5 +10,6 @@ import { Material } from './entities/material.entity';
       ],
   controllers: [MaterialController],
   providers: [MaterialService],
+  exports:[MaterialService]
 })
 export class MaterialModule {}
