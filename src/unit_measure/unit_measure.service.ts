@@ -4,6 +4,7 @@ import { UpdateUnitMeasureDto } from './dto/update-unit_measure.dto';
 import { UnitMeasure } from './entities/unit_measure.entity';
 import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { changeState } from 'src/utils/changeState';
 
 @Injectable()
 export class UnitMeasureService {
@@ -36,9 +37,12 @@ export class UnitMeasureService {
 
     if(!updateUnit){throw new ConflictException(`Unit measure with Id ${Id} not found`);}
 
-    const unitUpdate =  this.unitRepo.merge(updateUnit,updateUnitMeasureDto);
+    if(updateUnitMeasureDto.Name !== undefined && updateUnitMeasureDto.Name != null && updateUnitMeasureDto.Name !='')
+      updateUnit.Name = updateUnitMeasureDto.Name;
+    if (updateUnitMeasureDto.IsActive !== undefined && updateUnitMeasureDto.IsActive != null) 
+      updateUnit.IsActive = updateUnitMeasureDto.IsActive;
 
-    return await this.unitRepo.save(unitUpdate);
+    return await this.unitRepo.save(updateUnit);
   }
   
 
@@ -50,6 +54,12 @@ export class UnitMeasureService {
     }
     unit_measure.IsActive =false;
     return await this.unitRepo.save(unit_measure);
+  }
+  async reactive(Id:number){
+    const updateActive = await this.findOne(Id);
+    changeState(updateActive.IsActive);
+
+    return await this.unitRepo.save(updateActive);
   }
 }
 

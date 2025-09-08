@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards, Put } from '@nestjs/common';
 import { UnitMeasureService } from './unit_measure.service';
 import { CreateUnitMeasureDto } from './dto/create-unit_measure.dto';
 import { UpdateUnitMeasureDto } from './dto/update-unit_measure.dto';
@@ -30,7 +30,7 @@ export class UnitMeasureController {
     return this.unitMeasureService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id',ParseIntPipe) id: number,
   @Body() updateUnitMeasureDto: UpdateUnitMeasureDto) {
     return this.unitMeasureService.update(id, updateUnitMeasureDto);

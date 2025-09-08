@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { CategoriesPaginationDto } from './dto/categoriesPaginationDto';
+import { changeState } from 'src/utils/changeState';
 
 @Injectable()
 export class CategoriesService {
@@ -80,6 +81,8 @@ export class CategoriesService {
       updateObjectCategory.Name !== '') foundCategory.Name = updateObjectCategory.Name;
     if (updateObjectCategory.Description !== undefined && updateObjectCategory.Description != null && 
       updateObjectCategory.Description !== '') foundCategory.Description = updateObjectCategory.Description;
+    if (updateObjectCategory.IsActive !== undefined && updateObjectCategory.IsActive != null) 
+      foundCategory.IsActive = updateObjectCategory.IsActive;
 
     return await this.categoryRepo.save(foundCategory);
   }
@@ -90,5 +93,12 @@ export class CategoriesService {
     categoryToRemove.IsActive = false;
 
     return await this.categoryRepo.save(categoryToRemove);
+  }
+
+  async reactivate(Id: number) {
+    const updateActive = await this.findOne(Id);
+    changeState(updateActive.IsActive);
+  
+    return await this.categoryRepo.save(updateActive);
   }
 }

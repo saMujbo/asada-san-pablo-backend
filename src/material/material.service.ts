@@ -4,6 +4,7 @@ import { UpdateMaterialDto } from './dto/update-material.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Material } from './entities/material.entity';
 import { Repository } from 'typeorm';
+import { changeState } from 'src/utils/changeState';
 
 @Injectable()
 export class MaterialService {
@@ -34,11 +35,14 @@ export class MaterialService {
   async update(Id: number, updateMaterialDto: UpdateMaterialDto) {
     const updateMaterial = await this.materialRepo.findOne({where:{Id}});
 
-    if(!updateMaterial) throw new ConflictException(`Product with Id ${Id} not found`)
+    if(!updateMaterial) throw new ConflictException(`Product with Id ${Id} not found`);
     
-    const productUpdate = this.materialRepo.merge(updateMaterial,updateMaterialDto);
+    if(updateMaterialDto.Name !== undefined && updateMaterialDto.Name != null && updateMaterialDto.Name != '')
+      updateMaterial.Name = updateMaterialDto.Name;
+    if (updateMaterialDto.IsActive !== undefined && updateMaterialDto.IsActive != null) 
+      updateMaterial.IsActive = updateMaterialDto.IsActive;
     
-    return await this.materialRepo.save(productUpdate);
+    return await this.materialRepo.save(updateMaterial);
   }
 
   async remove(Id: number) {
@@ -48,5 +52,12 @@ export class MaterialService {
     }
     removeMaterial.IsActive= false;
     return await this.materialRepo.save(removeMaterial);
+  }
+
+  async reactive(Id: number){
+    const updateActive = await this.findOne(Id);
+    changeState(updateActive.IsActive);
+
+    return await this.materialRepo.save(updateActive);
   }
 }

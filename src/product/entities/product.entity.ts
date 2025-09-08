@@ -26,7 +26,6 @@ export class Product {
     @Column({ default: true })
     IsActive: boolean;
 
-    // --- Relaciones (ManyToOne) ---
     @Index()
     @ManyToOne(() => Category, (category) => category.Products, {
         nullable: false,

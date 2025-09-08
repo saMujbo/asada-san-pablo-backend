@@ -12,6 +12,8 @@ import { string } from 'yargs';
 import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { UpdateEmailDto } from './dto/updateEmail-user';
 import { use } from 'passport';
+import { changeState } from 'src/utils/changeState';
+import { UpdateMeDto } from './dto/updateMeDto';
 
 @Injectable()
 export class UsersService {
@@ -110,16 +112,13 @@ export class UsersService {
 
     if (!user) {throw new ConflictException(`User with Id ${Id} not found`);}
 
-    if (updateUserDto.Birthdate) {
-      const d = new Date(updateUserDto.Birthdate);
-      if (isNaN(d.getTime())) {
-        throw new NotFoundException('Birthdate is not a valid date');
-      }
-      user.Birthdate = d;
-    }
-
-      const updatedUser = this.userRepo.merge(user, updateUserDto);
-      return await this.userRepo.save(updatedUser);
+    if (updateUserDto.Address !== undefined && updateUserDto.Address != null && updateUserDto.Address !== '') user.Address = updateUserDto.Address;
+    if (updateUserDto.PhoneNumber !== undefined && updateUserDto.PhoneNumber != null && updateUserDto.PhoneNumber !== '') user.PhoneNumber = updateUserDto.PhoneNumber;
+    if (updateUserDto.Birthdate !== undefined) user.Birthdate = updateUserDto.Birthdate as any;
+    if (updateUserDto.IsActive !== undefined && updateUserDto.IsActive != null) 
+      user.IsActive = updateUserDto.IsActive;
+    
+    return await this.userRepo.save(user);
   }
 
   async remove(Id: number) {
@@ -128,10 +127,15 @@ export class UsersService {
     if (!user) {
       throw new ConflictException(`User with Id ${Id} not found`);
     }
-
     user.IsActive = false;
-
     return await this.userRepo.save(user);
+  }
+  
+  async reactive(Id: number){
+    const updateActive = await this.findOne(Id);
+    changeState(updateActive.IsActive);
+
+    return await this.userRepo.save(updateActive);
   }
 
   async removeRolesFromUser(updateRoles:UpdateRolesUserDto){ 
@@ -214,7 +218,7 @@ export class UsersService {
     return false;
   }
 
-  async updateMe(Id: number, dto: UpdateUserDto) {
+  async updateMe(Id: number, dto: UpdateMeDto) {
     const user = await this.userRepo.findOne({ where: { Id } });
 
     if (!user) {
@@ -225,7 +229,6 @@ export class UsersService {
     if (dto.PhoneNumber !== undefined && dto.PhoneNumber != null && dto.PhoneNumber !== '') user.PhoneNumber = dto.PhoneNumber;
     if (dto.Birthdate !== undefined) user.Birthdate = dto.Birthdate as any;
     
-
     const saved = await this.userRepo.save(user);
 
     // Re-carga con relaciones si quieres devolver Roles
