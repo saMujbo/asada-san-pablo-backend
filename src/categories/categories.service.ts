@@ -26,25 +26,26 @@ export class CategoriesService {
     return await this.categoryRepo.find();
   }
 
-  async search({ page = 1, limit = 10, name }: CategoriesPaginationDto) {
-    // sanea y limita page/limit
+  async search({ page = 1, limit = 10, name, state }: CategoriesPaginationDto) {
     const pageNum = Math.max(1, Number(page) || 1);
     const take = Math.min(100, Math.max(1, Number(limit) || 10));
     const skip = (pageNum - 1) * take;
 
-    const qb = this.categoryRepo
-      .createQueryBuilder('category')
+    const qb = this.categoryRepo.createQueryBuilder('category')
       .skip(skip)
       .take(take);
 
-    // filtro por nombre (case-insensitive con LOWER + LIKE)
     if (name?.trim()) {
       qb.andWhere('LOWER(category.Name) LIKE :name', {
         name: `%${name.trim().toLowerCase()}%`,
       });
     }
 
-    // orden por nombre
+    // se aplica solo si viene definido (true o false)
+    if (state) {
+      qb.andWhere('category.IsActive = :state', { state });
+    }
+
     qb.orderBy('category.Name', 'ASC');
 
     const [data, total] = await qb.getManyAndCount();
@@ -63,12 +64,13 @@ export class CategoriesService {
   }
 
 
+
   async findOne(Id: number) {
     const categoryFound = await this.categoryRepo.findOne({ 
       where: { Id, IsActive: true },
     });
     
-    if (!categoryFound) throw new ConflictException(`User with Id ${Id} not found`);
+    if (!categoryFound) throw new ConflictException(`Category with Id ${Id} not found`);
     
     return categoryFound;
   }

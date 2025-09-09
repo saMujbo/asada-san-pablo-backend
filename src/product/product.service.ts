@@ -20,14 +20,14 @@ export class ProductService {
     @Inject(forwardRef(() => MaterialService))
     private readonly materialService: MaterialService,
     @Inject(forwardRef(() => UnitMeasureService))
-    private readonly unitmeasure: UnitMeasureService
+    private readonly unitmeasureService: UnitMeasureService
   ){}
   
   async create(createProductDto: CreateProductDto) {
     const [category, material, unit] = await Promise.all([
       this.categoryService.findOne(createProductDto.CategoryId),
       this.materialService.findOne(createProductDto.MaterialId),
-      this.unitmeasure.findOne(createProductDto.UnitMeasureId),
+      this.unitmeasureService.findOne(createProductDto.UnitMeasureId),
     ]);
 
     const newProduct = this.productRepo.create({
@@ -135,9 +135,9 @@ export class ProductService {
     if (updateProductDto.CategoryId !== undefined)
       updateProduct.Category = await this.categoryService.findOne(updateProductDto.CategoryId);
     if (updateProductDto.MaterialId !== undefined)
-      updateProduct.Material = await this.categoryService.findOne(updateProductDto.MaterialId);
+      updateProduct.Material = await this.materialService.findOne(updateProductDto.MaterialId);
     if (updateProductDto.UnitMeasureId !== undefined)
-      updateProduct.UnitMeasure = await this.categoryService.findOne(updateProductDto.UnitMeasureId);
+      updateProduct.UnitMeasure = await this.unitmeasureService.findOne(updateProductDto.UnitMeasureId);
     
     
     return await this.productRepo.save(updateProduct);
