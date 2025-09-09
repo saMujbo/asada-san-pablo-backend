@@ -1,16 +1,19 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Material } from './entities/material.entity';
 import { Repository } from 'typeorm';
 import { changeState } from 'src/utils/changeState';
+import { ProductService } from 'src/product/product.service';
 
 @Injectable()
 export class MaterialService {
   constructor(
     @InjectRepository(Material)
-    private readonly materialRepo: Repository<Material>
+    private readonly materialRepo: Repository<Material>,
+    @Inject(forwardRef(() => ProductService))
+  private readonly productSv: ProductService,
   ){}
 
   async create(createMaterialDto: CreateMaterialDto) {
@@ -28,7 +31,7 @@ export class MaterialService {
       where: { Id, IsActive: true },
     });
     
-    if(!foundMaterial) throw new ConflictException(`Material with Id ${Id} not found`);
+    if(!foundMaterial) throw new NotFoundException(`Material with Id ${Id} not found`);
     return foundMaterial;
   }
 
@@ -36,6 +39,14 @@ export class MaterialService {
     const updateMaterial = await this.materialRepo.findOne({where:{Id}});
 
     if(!updateMaterial) throw new ConflictException(`Product with Id ${Id} not found`);
+
+    const hasProducts = await this.productSv.isOnMaterial(Id);
+
+    if (hasProducts && updateMaterialDto.IsActive === false) {
+      throw new BadRequestException(
+        `No se puede desactivar el material ${Id} porque está asociado a al menos un producto.`
+      );
+    }
     
     if(updateMaterialDto.Name !== undefined && updateMaterialDto.Name != null && updateMaterialDto.Name != '')
       updateMaterial.Name = updateMaterialDto.Name;
@@ -46,12 +57,19 @@ export class MaterialService {
   }
 
   async remove(Id: number) {
-    const removeMaterial = await this.materialRepo.findOneBy({Id})
-    if(!removeMaterial){
-    throw new ConflictException(`Product with Id ${Id} not found`);
+    const material = await this.findOne(Id);
+
+    // ¿Hay algún producto que referencie este material?
+    const hasProducts = await this.productSv.isOnMaterial(Id);
+
+    if (hasProducts) {
+      throw new BadRequestException(
+        `No se puede desactivar el material ${Id} porque está asociado a al menos un producto.`
+      );
     }
-    removeMaterial.IsActive= false;
-    return await this.materialRepo.save(removeMaterial);
+
+    material.IsActive = false;
+    return await this.materialRepo.save(material);
   }
 
   async reactive(Id: number){

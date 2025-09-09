@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,11 +10,12 @@ import { UnitMeasureModule } from 'src/unit_measure/unit_measure.module';
 @Module({
   imports:[
       TypeOrmModule.forFeature([Product]),
-      CategoriesModule,
-      MaterialModule,
-      UnitMeasureModule
+      forwardRef(() => CategoriesModule),
+      forwardRef(() => MaterialModule),
+      forwardRef(() => UnitMeasureModule),
     ],
   controllers: [ProductController],
   providers: [ProductService],
+  exports: [ProductService]
 })
 export class ProductModule {}
