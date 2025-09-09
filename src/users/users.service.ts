@@ -87,7 +87,7 @@ export class UsersService {
   }
 
   async findOne(Id: number) {
-      const found = await this.userRepo.findOneBy({ Id });
+      const found = await this.userRepo.findOne({where: {Id},  relations: ['Roles'] });
 
       if (!found) throw new ConflictException(`User with Id ${Id} not found`);
 
