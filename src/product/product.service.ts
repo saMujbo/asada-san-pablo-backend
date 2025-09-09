@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
@@ -15,8 +15,11 @@ export class ProductService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
+    @Inject(forwardRef(() => CategoriesService))
     private readonly categoryService: CategoriesService,
+    @Inject(forwardRef(() => MaterialService))
     private readonly materialService: MaterialService,
+    @Inject(forwardRef(() => UnitMeasureService))
     private readonly unitmeasure: UnitMeasureService
   ){}
   
@@ -153,4 +156,26 @@ export class ProductService {
 
     return await this.productRepo.save(updateActive);
   }
+
+  async isOnCategory(Id: number) {
+    const hasActiveProducts = await this.productRepo.exist({
+      where: { Category: { Id }, IsActive: true },
+    });
+    return hasActiveProducts;
+  }
+
+  async isOnMaterial(Id: number) {
+    const hasActiveProducts = await this.productRepo.exist({
+      where: { Material: { Id }, IsActive: true },
+    });
+    return hasActiveProducts;
+  }
+
+  async isOnUnit(Id: number) {
+    const hasActiveProducts = await this.productRepo.exist({
+      where: { UnitMeasure: { Id }, IsActive: true },
+    });
+    return hasActiveProducts;
+  }
+
 }

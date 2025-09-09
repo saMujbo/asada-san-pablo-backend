@@ -1,16 +1,19 @@
-import { ConflictException, Controller, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Controller, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateUnitMeasureDto } from './dto/create-unit_measure.dto';
 import { UpdateUnitMeasureDto } from './dto/update-unit_measure.dto';
 import { UnitMeasure } from './entities/unit_measure.entity';
 import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { changeState } from 'src/utils/changeState';
+import { ProductService } from 'src/product/product.service';
 
 @Injectable()
 export class UnitMeasureService {
   constructor (
     @InjectRepository(UnitMeasure)
-    private readonly unitRepo: Repository<UnitMeasure>
+    private readonly unitRepo: Repository<UnitMeasure>,
+    @Inject(forwardRef(() => ProductService))
+    private readonly productSv: ProductService,
   ){}
 
   async create(createUnitMeasureDto: CreateUnitMeasureDto) {
@@ -37,6 +40,14 @@ export class UnitMeasureService {
 
     if(!updateUnit){throw new ConflictException(`Unit measure with Id ${Id} not found`);}
 
+    const hasProducts = await this.productSv.isOnUnit(Id);
+
+    if (hasProducts && updateUnitMeasureDto.IsActive === false) {
+      throw new BadRequestException(
+        `No se puede desactivar la unidad de medida ${Id} porque está asociado a al menos un producto.`
+      );
+    }
+
     if(updateUnitMeasureDto.Name !== undefined && updateUnitMeasureDto.Name != null && updateUnitMeasureDto.Name !='')
       updateUnit.Name = updateUnitMeasureDto.Name;
     if (updateUnitMeasureDto.IsActive !== undefined && updateUnitMeasureDto.IsActive != null) 
@@ -47,14 +58,20 @@ export class UnitMeasureService {
   
 
   async remove(Id: number) {
-    const unit_measure = await this.unitRepo.findOneBy({Id})
-    if(!unit_measure){
+    const unit_measure = await this.findOne(Id);
 
-    throw new ConflictException(`Unit measure with Id ${Id} not found`);
+    const hasProducts = await this.productSv.isOnUnit(Id);
+    
+    if (hasProducts) {
+      throw new BadRequestException(
+        `No se puede desactivar la unidad de medida ${Id} porque está asociado a al menos un producto.`
+      );
     }
-    unit_measure.IsActive =false;
+    
+    unit_measure.IsActive = false;
     return await this.unitRepo.save(unit_measure);
   }
+
   async reactive(Id:number){
     const updateActive = await this.findOne(Id);
     changeState(updateActive.IsActive);

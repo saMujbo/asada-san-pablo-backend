@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,12 +6,15 @@ import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { CategoriesPaginationDto } from './dto/categoriesPaginationDto';
 import { changeState } from 'src/utils/changeState';
+import { ProductService } from 'src/product/product.service';
 
 @Injectable()
 export class CategoriesService {
   constructor (
     @InjectRepository(Category)
     private readonly categoryRepo: Repository<Category>,
+    @Inject(forwardRef(() => ProductService))
+        private readonly productSv: ProductService,
   ){}
 
   async create(createObjectCategory: CreateCategoryDto) {
@@ -74,7 +77,15 @@ export class CategoriesService {
     const foundCategory = await this.categoryRepo.findOne({ where: { Id } });
 
     if (!foundCategory) {
-      throw new ConflictException(`User with Id ${Id} not found`);
+      throw new ConflictException(`Category with Id ${Id} not found`);
+    }
+
+    const hasProducts = await this.productSv.isOnCategory(Id);
+    
+    if (hasProducts && updateObjectCategory.IsActive === false) {
+      throw new BadRequestException(
+        `No se puede desactivar la categoría ${Id} porque está asociado a al menos un producto.`
+      );
     }
 
     if (updateObjectCategory.Name !== undefined && updateObjectCategory.Name != null && 
@@ -90,8 +101,15 @@ export class CategoriesService {
   async remove(Id: number) {
     const categoryToRemove = await this.findOne(Id);
 
-    categoryToRemove.IsActive = false;
+    const hasProducts = await this.productSv.isOnCategory(Id);
+    
+    if (hasProducts) {
+      throw new BadRequestException(
+        `No se puede desactivar la categoría ${Id} porque está asociado a al menos un producto.`
+      );
+    }
 
+    categoryToRemove.IsActive = false;
     return await this.categoryRepo.save(categoryToRemove);
   }
 
