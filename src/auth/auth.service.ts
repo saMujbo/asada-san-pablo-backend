@@ -11,6 +11,9 @@ import { ConfigService } from '@nestjs/config';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ChangepasswordDto } from './dto/changePassword.dto';
 import { resetPasswordDto } from './dto/resetPassword.dto';
+import { AdminCreateUserDto } from 'src/users/dto/admin-user.dto';
+import { generateRandomPassword } from 'src/utils/passwordrandom';
+import { Roles } from './auth-roles/roles.decorator';
 
 
 @Injectable()
@@ -47,17 +50,45 @@ export class AuthService {
     const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
     const url = `${await this.configService.get('FrontEndBaseURL')}/login`;
     try {
-    await this.mailClient.sendWelcomeEmail({
+    await this.mailClient.sendWelcomeTempPasswordEmail({
       to: createAuthDto.Email,
       subject: '¡Bienvenido a RedSanPablo!',
       message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
       LoginURL: url,
       Name: createAuthDto.Name,
+      temPasswordL: ''
     });
   } catch (error) {
     console.error('Error al enviar correo de bienvenida:', error);
   }
     return newUser;
+  }
+  async adminCreateUser(adminCreateUserDto: AdminCreateUserDto){
+    const {...rest } = adminCreateUserDto;
+    const defaultRole = await this.roleService.findOne(2);
+
+    if (!defaultRole) {
+      throw new Error('❌ Rol por defecto "GUEST" no existe en la base de datos');
+    }
+
+    const plainTempPassword = generateRandomPassword(8);
+    const hashed = await bcrypt.hash(plainTempPassword, 10);
+
+  const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
+    const url = `${await this.configService.get('FrontEndBaseURL')}/login`;
+    try {
+    await this.mailClient.sendWelcomeTempPasswordEmail({
+      to: adminCreateUserDto.Email,
+      subject: '¡Bienvenido a RedSanPablo!',
+      message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
+      LoginURL: url,
+      Name: adminCreateUserDto.Name,
+      temPasswordL: plainTempPassword
+    });
+  } catch (error) {
+    console.error('Error al enviar correo de bienvenida:', error);
+  }
+  return newUser;
   }
 
   async login(userObjectLogin: LoginAuthDto) {

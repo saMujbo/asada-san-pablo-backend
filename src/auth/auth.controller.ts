@@ -8,6 +8,7 @@ import { ChangepasswordDto } from './dto/changePassword.dto';
 import { TokenGuard } from './guards/token.guard';
 import { resetPasswordDto } from './dto/resetPassword.dto';
 import { AuthGuard } from './guards/auth.guard';
+import { AdminCreateUserDto } from 'src/users/dto/admin-user.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -18,7 +19,10 @@ export class AuthController {
   register(@Body() registerAuthDto: RegisterAuth) {
     return this.authService.register(registerAuthDto);
   }
-
+  @Post('admin/create-user')
+  adminCreateuser(@Body()adminUserDto: AdminCreateUserDto){
+    return this.authService.adminCreateUser(adminUserDto)
+  }
   @Post('forgot-password')
   @HttpCode(200)
   fogotPassword(@Body() forgotObjectUser: ForgotPassword) {
