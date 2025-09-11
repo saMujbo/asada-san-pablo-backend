@@ -44,12 +44,12 @@ export class RolesService {
   async update(Id: number, updateRoleDto: UpdateRoleDto) {
     const role = await this.roleRepo.findOneBy({ Id });
 
-    if (!role) {
-      throw new NotFoundException(`Role with Id ${Id} not found`);
-    }
+    if (!role) {throw new NotFoundException(`Role with Id ${Id} not found`);}
 
-    const updatedRole = this.roleRepo.merge(role, updateRoleDto);
-    return await this.roleRepo.save(updatedRole);
+    if(updateRoleDto.Rolname !== undefined && updateRoleDto.Rolname != null && updateRoleDto.Rolname !=='') role.Rolname = updateRoleDto.Rolname;
+    if(updateRoleDto.Description !== undefined && updateRoleDto.Description != null && updateRoleDto.Description !=='')role.Description = updateRoleDto.Description;
+
+    return await this.roleRepo.save(role);
   }
 
   async remove(Id: number) {
