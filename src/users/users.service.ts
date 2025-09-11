@@ -43,7 +43,7 @@ export class UsersService {
     });
   }
 
-  async findAllPagination({ page, limit, name, roleId }: PaginationDto) {
+  async findAllPagination({ page, limit, name, roleId,state }: PaginationDto) {
     const skip = (page - 1) * limit;
 
     const qb = this.userRepo
@@ -68,6 +68,10 @@ export class UsersService {
       qb.andWhere('role.id = :roleId', { roleId });
     }
 
+    if (state) {
+      qb.andWhere('category.IsActive = :state', { state });
+    }
+    
     // Orden sugerido (ajusta a tu preferencia)
     qb.orderBy('user.Name', 'ASC').addOrderBy('user.Surname1', 'ASC');
 

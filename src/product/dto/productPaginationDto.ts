@@ -50,4 +50,9 @@ export class ProductPaginationDto {
     // convierte "" en undefined
     @Transform(({ value }) => (value === '' || value === null ? undefined : value))
     unitId?: number;
+
+    @ApiPropertyOptional({description: 'Filtro por estado (true o false)'})
+    @IsOptional()
+    @IsString()
+    state?: string;
 }

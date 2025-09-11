@@ -53,6 +53,7 @@ export class ProductService {
     categoryId,
     materialId,
     unitId,
+    state
   }: ProductPaginationDto) {
     const pageNum = Math.max(1, Number(page) || 1);
     const take = Math.min(100, Math.max(1, Number(limit) || 10));
@@ -93,7 +94,9 @@ export class ProductService {
       qb.andWhere('unit.Id = :unitId', { unitId });
       // Alternativa: qb.andWhere('product.UnitMeasureId = :unitId', { unitId });
     }
-
+    if(state){
+      qb.andWhere('product.IsActive = :state',{state})
+  }
     qb.orderBy('product.Name', 'ASC');
     // qb.distinct(true); // actívalo si en el futuro agregas joins 1:N que dupliquen filas
 
