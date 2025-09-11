@@ -31,22 +31,22 @@ export class UnitMeasureService {
     const take = Math.min(100, Math.max(1,Number(limit)||10));
     const skip = (pageNum -1)* take; 
   
-    const qb = this.unitRepo.createQueryBuilder('material')
+    const qb = this.unitRepo.createQueryBuilder('unit-measure')
     .skip(skip)
     .take(take);
   
         if (name?.trim()) {
-        qb.andWhere('LOWER(category.Name) LIKE :name', {
+        qb.andWhere('LOWER(unit-measure.Name) LIKE :name', {
           name: `%${name.trim().toLowerCase()}%`,
         });
       }
   
       // se aplica solo si viene definido (true o false)
       if (state) {
-        qb.andWhere('category.IsActive = :state', { state });
+        qb.andWhere('unit-measure.IsActive = :state', { state });
       }
   
-          qb.orderBy('category.Name', 'ASC');
+          qb.orderBy('unit-measure.Name', 'ASC');
   
       const [data, total] = await qb.getManyAndCount();
   
@@ -62,6 +62,7 @@ export class UnitMeasureService {
         },
       };
   }
+
   async findOne(Id: number) {
     const found = await this.unitRepo.findOne({
       where: { Id, IsActive: true },
