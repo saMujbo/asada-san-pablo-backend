@@ -23,7 +23,7 @@ export class UnitMeasureService {
   }
 
   async findAll() {
-    return await this.unitRepo.find();
+    return await this.unitRepo.find({ where: { IsActive: true } });
   }
 
   async search({ page =1, limit = 10,name,state}:UnitMeasurePaginationDto){

@@ -42,7 +42,7 @@ export class ProductService {
   }
 
   async findAll() {
-    return this.productRepo.find({ relations: ['Category', 'Material', 'UnitMeasure'] });
+    return this.productRepo.find({ relations: ['Category', 'Material', 'UnitMeasure'], where: { IsActive: true } });
   }
 
   // products.service.ts

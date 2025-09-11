@@ -24,7 +24,7 @@ export class MaterialService {
   }
 
   async findAll() {
-    return await this.materialRepo.find();
+    return await this.materialRepo.find({ where: { IsActive: true } });
   }
 async search({ page =1, limit = 10,name,state}:MaterialPaginationDto){
   const pageNum = Math.max(1, Number(page)||1);
