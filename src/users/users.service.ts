@@ -43,7 +43,7 @@ export class UsersService {
     });
   }
 
-  async findAllPagination({ page, limit, name, roleId,state }: PaginationDto) {
+  async search({ page, limit, name, roleId,state }: PaginationDto) {
     const skip = (page - 1) * limit;
 
     const qb = this.userRepo

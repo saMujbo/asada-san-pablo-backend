@@ -6,6 +6,7 @@ import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { changeState } from 'src/utils/changeState';
 import { ProductService } from 'src/product/product.service';
+import { UnitMeasurePaginationDto } from './dto/unit_measureDto';
 
 @Injectable()
 export class UnitMeasureService {
@@ -25,6 +26,42 @@ export class UnitMeasureService {
     return await this.unitRepo.find();
   }
 
+  async search({ page =1, limit = 10,name,state}:UnitMeasurePaginationDto){
+    const pageNum = Math.max(1, Number(page)||1);
+    const take = Math.min(100, Math.max(1,Number(limit)||10));
+    const skip = (pageNum -1)* take; 
+  
+    const qb = this.unitRepo.createQueryBuilder('material')
+    .skip(skip)
+    .take(take);
+  
+        if (name?.trim()) {
+        qb.andWhere('LOWER(category.Name) LIKE :name', {
+          name: `%${name.trim().toLowerCase()}%`,
+        });
+      }
+  
+      // se aplica solo si viene definido (true o false)
+      if (state) {
+        qb.andWhere('category.IsActive = :state', { state });
+      }
+  
+          qb.orderBy('category.Name', 'ASC');
+  
+      const [data, total] = await qb.getManyAndCount();
+  
+      return {
+        data,
+        meta: {
+          total,
+          page: pageNum,
+          limit: take,
+          pageCount: Math.max(1, Math.ceil(total / take)),
+          hasNextPage: pageNum * take < total,
+          hasPrevPage: pageNum > 1,
+        },
+      };
+  }
   async findOne(Id: number) {
     const found = await this.unitRepo.findOne({
       where: { Id, IsActive: true },

@@ -6,6 +6,7 @@ import { Material } from './entities/material.entity';
 import { Repository } from 'typeorm';
 import { changeState } from 'src/utils/changeState';
 import { ProductService } from 'src/product/product.service';
+import { MaterialPaginationDto } from './dto/pagination-material.st';
 
 @Injectable()
 export class MaterialService {
@@ -25,6 +26,42 @@ export class MaterialService {
   async findAll() {
     return await this.materialRepo.find();
   }
+async search({ page =1, limit = 10,name,state}:MaterialPaginationDto){
+  const pageNum = Math.max(1, Number(page)||1);
+  const take = Math.min(100, Math.max(1,Number(limit)||10));
+  const skip = (pageNum -1)* take; 
+
+  const qb = this.materialRepo.createQueryBuilder('material')
+  .skip(skip)
+  .take(take);
+
+      if (name?.trim()) {
+      qb.andWhere('LOWER(category.Name) LIKE :name', {
+        name: `%${name.trim().toLowerCase()}%`,
+      });
+    }
+
+    // se aplica solo si viene definido (true o false)
+    if (state) {
+      qb.andWhere('category.IsActive = :state', { state });
+    }
+
+        qb.orderBy('category.Name', 'ASC');
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page: pageNum,
+        limit: take,
+        pageCount: Math.max(1, Math.ceil(total / take)),
+        hasNextPage: pageNum * take < total,
+        hasPrevPage: pageNum > 1,
+      },
+    };
+}
 
   async findOne(Id: number) {
     const foundMaterial = await this.materialRepo.findOne({
