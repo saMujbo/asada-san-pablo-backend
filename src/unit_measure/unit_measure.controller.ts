@@ -7,7 +7,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/auth-roles/roles.decorator';
 import { Role } from 'src/auth/auth-roles/roles.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
-import { UnitMeasurePaginationDto } from './dto/unit_measureDto';
+import { UnitMeasurePaginationDto } from './dto/unit_measurePaginationDto';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(Role.ADMIN) 

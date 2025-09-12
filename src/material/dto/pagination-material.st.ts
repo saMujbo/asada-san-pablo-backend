@@ -35,5 +35,5 @@
         return undefined;
         })
         @IsBoolean()
-        state?: boolean;
+        state?: string;
         }

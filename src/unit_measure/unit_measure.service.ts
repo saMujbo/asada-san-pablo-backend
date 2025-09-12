@@ -6,7 +6,7 @@ import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { changeState } from 'src/utils/changeState';
 import { ProductService } from 'src/product/product.service';
-import { UnitMeasurePaginationDto } from './dto/unit_measureDto';
+import { UnitMeasurePaginationDto } from './dto/unit_measurePaginationDto';
 
 @Injectable()
 export class UnitMeasureService {
