@@ -51,11 +51,11 @@ export class Product {
     @JoinColumn({ name: "UnitMeasureId" })
     UnitMeasure: UnitMeasure;
 
-        @Index()
+    @Index()
     @ManyToOne(() => Supplier, (supplier) => supplier.Products, {
         nullable: false,
         onDelete: "RESTRICT",
     })
     @JoinColumn({ name: "SupplierId" })
-    Supplier: Category;
+    Supplier: Supplier;
 }

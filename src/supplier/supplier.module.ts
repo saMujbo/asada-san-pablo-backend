@@ -7,8 +7,8 @@ import { ProductModule } from 'src/product/product.module';
 
 @Module({
   imports: [
-        TypeOrmModule.forFeature([Supplier]),
-        forwardRef(() => ProductModule),
+    TypeOrmModule.forFeature([Supplier]),
+    forwardRef(() => ProductModule),
   ],
   controllers: [SupplierController],
   providers: [SupplierService],

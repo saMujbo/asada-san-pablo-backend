@@ -51,6 +51,14 @@ export class ProductPaginationDto {
     @Transform(({ value }) => (value === '' || value === null ? undefined : value))
     unitId?: number;
 
+    @ApiPropertyOptional({ description: 'ID de proveedor para filtrar' })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    // convierte "" en undefined
+    @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+    supplierId?: number;
+
     @ApiPropertyOptional({description: 'Filtro por estado (true o false)'})
     @IsOptional()
     @IsString()

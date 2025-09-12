@@ -9,6 +9,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductPaginationDto } from './dto/productPaginationDto';
 import { changeState } from 'src/utils/changeState';
+import { SupplierService } from 'src/supplier/supplier.service';
 
 @Injectable()
 export class ProductService {
@@ -20,14 +21,17 @@ export class ProductService {
     @Inject(forwardRef(() => MaterialService))
     private readonly materialService: MaterialService,
     @Inject(forwardRef(() => UnitMeasureService))
-    private readonly unitmeasureService: UnitMeasureService
+    private readonly unitmeasureService: UnitMeasureService,
+    @Inject(forwardRef(() => SupplierService))
+    private readonly supplierService: SupplierService
   ){}
   
   async create(createProductDto: CreateProductDto) {
-    const [category, material, unit] = await Promise.all([
+    const [category, material, unit, supplier] = await Promise.all([
       this.categoryService.findOne(createProductDto.CategoryId),
       this.materialService.findOne(createProductDto.MaterialId),
       this.unitmeasureService.findOne(createProductDto.UnitMeasureId),
+      this.supplierService.findOne(createProductDto.SupplierId),
     ]);
 
     const newProduct = this.productRepo.create({
@@ -37,12 +41,13 @@ export class ProductService {
       Category: category,
       Material: material,
       UnitMeasure: unit,
+      Supplier: supplier,
     });
     return await this.productRepo.save(newProduct);
   }
 
   async findAll() {
-    return this.productRepo.find({ relations: ['Category', 'Material', 'UnitMeasure'], where: { IsActive: true } });
+    return this.productRepo.find({ relations: ['Category', 'Material', 'UnitMeasure', 'Supplier'], where: { IsActive: true } });
   }
 
   // products.service.ts
@@ -53,6 +58,7 @@ export class ProductService {
     categoryId,
     materialId,
     unitId,
+    supplierId,
     state
   }: ProductPaginationDto) {
     const pageNum = Math.max(1, Number(page) || 1);
@@ -64,6 +70,7 @@ export class ProductService {
       .leftJoinAndSelect('product.Category', 'category')
       .leftJoinAndSelect('product.Material', 'material')
       .leftJoinAndSelect('product.UnitMeasure', 'unit')
+      .leftJoinAndSelect('product.Supplier', 'supplier')
       .skip(skip)
       .take(take);
 
@@ -94,6 +101,10 @@ export class ProductService {
       qb.andWhere('unit.Id = :unitId', { unitId });
       // Alternativa: qb.andWhere('product.UnitMeasureId = :unitId', { unitId });
     }
+    if (typeof supplierId === 'number') {
+      qb.andWhere('supplier.Id = :supplierId', { supplierId });
+      // Alternativa: qb.andWhere('product.UnitMeasureId = :unitId', { unitId });
+    }
     if(state){
       qb.andWhere('product.IsActive = :state',{state})
   }
@@ -118,7 +129,7 @@ export class ProductService {
   async findOne(Id: number) {
     const foundProduct = await this.productRepo.findOne({
       where: { Id, IsActive: true },
-      relations: ['Category', 'Material', 'UnitMeasure'],
+      relations: ['Category', 'Material', 'UnitMeasure', 'Supplier'],
     });
 
     if(!foundProduct) throw new ConflictException(`Product with Id ${Id} not found`);
@@ -141,6 +152,8 @@ export class ProductService {
       updateProduct.Material = await this.materialService.findOne(updateProductDto.MaterialId);
     if (updateProductDto.UnitMeasureId !== undefined)
       updateProduct.UnitMeasure = await this.unitmeasureService.findOne(updateProductDto.UnitMeasureId);
+    if (updateProductDto.SupplierId !== undefined)
+      updateProduct.Supplier = await this.supplierService.findOne(updateProductDto.SupplierId);
     
     
     return await this.productRepo.save(updateProduct);

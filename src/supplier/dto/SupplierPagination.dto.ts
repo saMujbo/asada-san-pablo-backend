@@ -28,13 +28,6 @@
 
     @ApiPropertyOptional({ description: 'Filtro por estado (true/false)' })
     @IsOptional()
-    @Transform(({ value }) => {
-        if (value == null || value === '') return undefined;
-        const v = String(value).toLowerCase();
-        if (v === 'true') return true;
-        if (v === 'false') return false;
-        return undefined; // ignora valores inválidos
-    })
-    @IsBoolean()
+    @IsString()
     state?: string;
-    }
+}

@@ -33,6 +33,10 @@ export class UpdateProductDto {
     UnitMeasureId?: number;
 
     @ApiProperty()
+    @IsOptional() @IsInt() @Min(1)
+    SupplierId?: number;
+
+    @ApiProperty()
     @IsBoolean()
     @IsOptional()
     IsActive?: boolean;

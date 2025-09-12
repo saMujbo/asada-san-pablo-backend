@@ -6,6 +6,7 @@ import { Product } from './entities/product.entity';
 import { CategoriesModule } from 'src/categories/categories.module';
 import { MaterialModule } from 'src/material/material.module';
 import { UnitMeasureModule } from 'src/unit_measure/unit_measure.module';
+import { SupplierModule } from 'src/supplier/supplier.module';
 
 @Module({
   imports:[
@@ -13,6 +14,7 @@ import { UnitMeasureModule } from 'src/unit_measure/unit_measure.module';
       forwardRef(() => CategoriesModule),
       forwardRef(() => MaterialModule),
       forwardRef(() => UnitMeasureModule),
+      forwardRef(() => SupplierModule),
     ],
   controllers: [ProductController],
   providers: [ProductService],

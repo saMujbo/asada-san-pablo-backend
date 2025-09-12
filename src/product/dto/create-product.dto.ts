@@ -25,4 +25,8 @@ export class CreateProductDto {
     @ApiProperty()
     @IsInt() @Min(1)
     UnitMeasureId: number;
+
+    @ApiProperty()
+    @IsInt() @Min(1)
+    SupplierId: number;
 }

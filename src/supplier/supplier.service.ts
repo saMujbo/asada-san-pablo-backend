@@ -8,12 +8,14 @@ import { ProductService } from 'src/product/product.service';
 import { SupplierPaginationDto } from './dto/SupplierPagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 
+
 @Injectable()
 export class SupplierService {
   constructor(
     @InjectRepository(Supplier)
     private readonly supplierRepo:Repository<Supplier>,
-            private readonly productSv: ProductService,
+    @Inject(forwardRef(() => ProductService))
+    private readonly productSv: ProductService
   ) {}
 
   async create(createSupplierDto: CreateSupplierDto) {
@@ -24,6 +26,7 @@ export class SupplierService {
   async findAll() {
     return await this.supplierRepo.find({where:{IsActive:true}});
   }
+
   async search({ page = 1, limit = 10, name, state }: SupplierPaginationDto) {
     const pageNum = Math.max(1, Number(page) || 1);
     const take = Math.min(100, Math.max(1, Number(limit) || 10));
@@ -34,17 +37,17 @@ export class SupplierService {
       .take(take);
 
     if (name?.trim()) {
-      qb.andWhere('LOWER(category.Name) LIKE :name', {
+      qb.andWhere('LOWER(supplier.Name) LIKE :name', {
         name: `%${name.trim().toLowerCase()}%`,
       });
     }
 
     // se aplica solo si viene definido (true o false)
     if (state) {
-      qb.andWhere('category.IsActive = :state', { state });
+      qb.andWhere('supplier.IsActive = :state', { state });
     }
 
-    qb.orderBy('category.Name', 'ASC');
+    qb.orderBy('supplier.Name', 'ASC');
 
     const [data, total] = await qb.getManyAndCount();
 
@@ -60,6 +63,7 @@ export class SupplierService {
       },
     };
   }
+
   async findOne(Id: number) {
     const supplierFound = await this.supplierRepo.findOne({
       where: {Id, IsActive:true}
@@ -78,7 +82,7 @@ export class SupplierService {
     const hasProducts = await this.productSv.isOnSupplier(Id);
         if (hasProducts && updateSupplierDto.IsActive === false) {
       throw new BadRequestException(
-        `No se puede desactivar la categoría ${Id} porque está asociado a al menos un producto.`
+        `No se puede desactivar el proveedor ${Id} porque está asociado a al menos un producto.`
       );
     }
 
@@ -93,16 +97,17 @@ export class SupplierService {
     const hasProducts = await this.productSv.isOnSupplier(Id);
     if (hasProducts) {
       throw new BadRequestException(
-        `No se puede desactivar la categoría ${Id} porque está asociado a al menos un producto.`
+        `No se puede desactivar el proveedor ${Id} porque está asociado a al menos un producto.`
       );
     }
     supplierFound.IsActive = false;
     return await this.supplierRepo.save(supplierFound);
   }
-    async reactivate(Id: number) {
-      const updateActive = await this.findOne(Id);
-      changeState(updateActive.IsActive);
-    
-      return await this.supplierRepo.save(updateActive);
-    }
+
+  async reactivate(Id: number) {
+    const updateActive = await this.findOne(Id);
+    changeState(updateActive.IsActive);
+  
+    return await this.supplierRepo.save(updateActive);
+  }
 }
