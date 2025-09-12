@@ -87,6 +87,9 @@ export class SupplierService {
     }
 
     if (updateSupplierDto.Name !== undefined && updateSupplierDto.Name != null &&updateSupplierDto.Name!=='') foundSupplier.Name = updateSupplierDto.Name;
+    if (updateSupplierDto.Email !== undefined && updateSupplierDto.Email != null &&updateSupplierDto.Email!=='') foundSupplier.Email = updateSupplierDto.Email;
+    if (updateSupplierDto.PhoneNumber !== undefined && updateSupplierDto.PhoneNumber != null &&updateSupplierDto.PhoneNumber!=='') foundSupplier.PhoneNumber = updateSupplierDto.PhoneNumber;
+    if (updateSupplierDto.Location !== undefined && updateSupplierDto.Location != null &&updateSupplierDto.Location!=='') foundSupplier.Location = updateSupplierDto.Location;  
     if (updateSupplierDto.IsActive !== undefined && updateSupplierDto.IsActive != null) foundSupplier.IsActive = updateSupplierDto.IsActive;
     return await this.supplierRepo.save(foundSupplier);
   }

@@ -10,6 +10,15 @@ export class Supplier {
     @Column()
     Name: string;
 
+    @Column()
+    Email: string;
+
+    @Column()
+    PhoneNumber: string;
+
+    @Column()
+    Location: string;
+    
     @Column({ default: true })
     IsActive: boolean;
 
