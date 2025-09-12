@@ -8,9 +8,9 @@ export class Supplier {
     Id: number;
 
     @Column()
-    name: string;
+    Name: string;
 
-    @Column()
+    @Column({ default: true })
     IsActive: boolean;
 
     @OneToMany(() => Product, (product) => product.Supplier)

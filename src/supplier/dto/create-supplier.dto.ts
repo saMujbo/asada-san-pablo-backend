@@ -5,7 +5,7 @@ export class CreateSupplierDto {
         @ApiProperty()
         @IsString()
         @IsOptional()
-        name: string;
+        Name: string;
     
         @ApiProperty()
         @IsBoolean()

@@ -86,7 +86,7 @@ export class SupplierService {
       );
     }
 
-    if (updateSupplierDto.name !== undefined && updateSupplierDto.name != null &&updateSupplierDto.name!=='') foundSupplier.name = updateSupplierDto.name;
+    if (updateSupplierDto.Name !== undefined && updateSupplierDto.Name != null &&updateSupplierDto.Name!=='') foundSupplier.Name = updateSupplierDto.Name;
     if (updateSupplierDto.IsActive !== undefined && updateSupplierDto.IsActive != null) foundSupplier.IsActive = updateSupplierDto.IsActive;
     return await this.supplierRepo.save(foundSupplier);
   }
