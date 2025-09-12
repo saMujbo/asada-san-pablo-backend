@@ -1,5 +1,6 @@
 import { Category } from "src/categories/entities/category.entity";
 import { Material } from "src/material/entities/material.entity";
+import { Supplier } from "src/supplier/entities/supplier.entity";
 import { UnitMeasure } from "src/unit_measure/entities/unit_measure.entity";
 import {
     Column,
@@ -49,4 +50,12 @@ export class Product {
     })
     @JoinColumn({ name: "UnitMeasureId" })
     UnitMeasure: UnitMeasure;
+
+        @Index()
+    @ManyToOne(() => Supplier, (supplier) => supplier.Products, {
+        nullable: false,
+        onDelete: "RESTRICT",
+    })
+    @JoinColumn({ name: "SupplierId" })
+    Supplier: Category;
 }

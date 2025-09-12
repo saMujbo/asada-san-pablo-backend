@@ -166,7 +166,13 @@ export class ProductService {
     });
     return hasActiveProducts;
   }
-
+  async isOnSupplier(Id: number) {
+    const hasActiveProducts = await this.productRepo.exist({
+      where: { Category: { Id }, IsActive: true },
+    });
+    return hasActiveProducts;
+  }
+  
   async isOnMaterial(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
       where: { Material: { Id }, IsActive: true },

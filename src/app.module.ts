@@ -12,6 +12,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { UnitMeasureModule } from './unit_measure/unit_measure.module';
 import { MaterialModule } from './material/material.module';
 import { ProductModule } from './product/product.module';
+import { SupplierModule } from './supplier/supplier.module';
 
 @Module({
   imports: [
@@ -42,7 +43,8 @@ import { ProductModule } from './product/product.module';
     MaterialModule,
     CategoriesModule,
     UnitMeasureModule,
-    ProductModule
+    ProductModule,
+    SupplierModule
   ],
 })
 export class AppModule {}
