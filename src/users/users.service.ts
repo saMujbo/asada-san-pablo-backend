@@ -43,7 +43,7 @@ export class UsersService {
     });
   }
 
-  async search({ page, limit, name, roleId,state }: PaginationDto) {
+  async search({ page, limit, name, roleId, state }: PaginationDto) {
     const skip = (page - 1) * limit;
 
     const qb = this.userRepo
@@ -69,7 +69,7 @@ export class UsersService {
     }
 
     if (state) {
-      qb.andWhere('category.IsActive = :state', { state });
+      qb.andWhere('user.IsActive = :state', { state });
     }
     
     // Orden sugerido (ajusta a tu preferencia)
