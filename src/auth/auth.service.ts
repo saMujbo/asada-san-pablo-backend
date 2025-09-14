@@ -50,19 +50,19 @@ export class AuthService {
     const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
     const url = `${await this.configService.get('FrontEndBaseURL')}/login`;
     try {
-    await this.mailClient.sendWelcomeTempPasswordEmail({
+    await this.mailClient.sendWelcomeEmail({
       to: createAuthDto.Email,
       subject: '¡Bienvenido a RedSanPablo!',
       message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
       LoginURL: url,
-      Name: createAuthDto.Name,
-      temPasswordL: ''
+      Name: createAuthDto.Name
     });
   } catch (error) {
     console.error('Error al enviar correo de bienvenida:', error);
   }
     return newUser;
   }
+
   async adminCreateUser(adminCreateUserDto: AdminCreateUserDto){
     const {...rest } = adminCreateUserDto;
     const defaultRole = await this.roleService.findOne(2);
