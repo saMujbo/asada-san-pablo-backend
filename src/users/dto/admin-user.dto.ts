@@ -59,6 +59,6 @@
     @IsString()
     Address: string;
     
-    @ApiProperty({ type: [Role], required: false })
-    Roles?: Role[]; // Opcional, si se desea asignar roles al crear el usuario
+    // @ApiProperty({ type: [Role], required: false })
+    // Roles?: Role[]; // Opcional, si se desea asignar roles al crear el usuario
 }

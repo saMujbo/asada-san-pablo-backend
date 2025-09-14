@@ -29,8 +29,9 @@ export class AuthController {
     return this.authService.forgotPassword(forgotObjectUser);
   }
 
+  @UseGuards(AuthGuard, TokenGuard)
   @Put('change-password')
-    async Register(@Req() req, @Body() changePasswordDto: ChangepasswordDto) {
+  async Register(@Req() req, @Body() changePasswordDto: ChangepasswordDto) {
     return await this.authService.changePassword(
       req.user.id,
       changePasswordDto.OldPassword,
