@@ -3,11 +3,11 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { UpdateEmailDto } from './dto/updateEmail-user';
+import { PaginationDto } from './dto/pagination.dto';
 
 @ApiBearerAuth()
 @Controller('users')

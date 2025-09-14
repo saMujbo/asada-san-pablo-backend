@@ -19,12 +19,22 @@
     @ApiPropertyOptional({ description: 'Filtro por nombre de proveedor' })
     @IsOptional()
     @IsString()
-    @Transform(({ value }) => {
-        if (typeof value !== 'string') return undefined;
-        const v = value.trim();
-        return v.length ? v : undefined;
-    })
-    name?: string;
+    Name?: string;
+
+    @ApiPropertyOptional({ description: 'Filtro por correo electrónico de proveedor' })
+    @IsOptional()
+    Email?: string;
+
+    
+    @ApiPropertyOptional({ description: 'Filtro por número telefónico de proveedor' })
+    @IsOptional()
+    @IsString()
+    PhoneNumber?: string;
+
+    
+    @ApiPropertyOptional({ description: 'Filtro por ubicación de proveedor' })
+    @IsOptional()
+    Location?: string;
 
     @ApiPropertyOptional({ description: 'Filtro por estado (true/false)' })
     @IsOptional()

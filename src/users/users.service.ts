@@ -3,7 +3,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ForgotPassword } from 'src/auth/dto/forgotPassword-auth.dto';
 import { RolesService } from 'src/roles/roles.service';
 import * as bcrypt from 'bcrypt';
@@ -14,6 +13,7 @@ import { UpdateEmailDto } from './dto/updateEmail-user';
 import { use } from 'passport';
 import { changeState } from 'src/utils/changeState';
 import { UpdateMeDto } from './dto/updateMeDto';
+import { PaginationDto } from './dto/pagination.dto';
 
 @Injectable()
 export class UsersService {

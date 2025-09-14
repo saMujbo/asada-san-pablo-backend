@@ -27,7 +27,7 @@ export class SupplierService {
     return await this.supplierRepo.find({where:{IsActive:true}});
   }
 
-  async search({ page = 1, limit = 10, name, state }: SupplierPaginationDto) {
+  async search({ page = 1, limit = 10, Name, state }: SupplierPaginationDto) {
     const pageNum = Math.max(1, Number(page) || 1);
     const take = Math.min(100, Math.max(1, Number(limit) || 10));
     const skip = (pageNum - 1) * take;
@@ -36,9 +36,9 @@ export class SupplierService {
       .skip(skip)
       .take(take);
 
-    if (name?.trim()) {
+    if (Name?.trim()) {
       qb.andWhere('LOWER(supplier.Name) LIKE :name', {
-        name: `%${name.trim().toLowerCase()}%`,
+        name: `%${Name.trim().toLowerCase()}%`,
       });
     }
 

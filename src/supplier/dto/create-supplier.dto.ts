@@ -16,12 +16,12 @@ export class CreateSupplierDto {
         @IsString()
         @IsOptional()
         PhoneNumber: string;
-        
+
         @ApiProperty()
         @IsString()
         @IsOptional()
         Location: string;
-        
+
         @ApiProperty()
         @IsBoolean()
         @IsOptional()
