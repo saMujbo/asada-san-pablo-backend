@@ -1,0 +1,57 @@
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
+import { IsOptional, IsString, IsDateString, Matches, IsBoolean } from "class-validator";
+import { toDateOnly } from "src/utils/ToDateOnly";
+
+export class UpdateProjectDto {
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    Name?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    Location?: string;
+
+    @ApiPropertyOptional()
+    @Transform(({ value }) => toDateOnly(value))
+    @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+        message: 'Birthdate debe ser YYYY-MM-DD',
+    })
+    @IsOptional()
+    InnitialDate?: string;
+
+    @ApiPropertyOptional()
+    @Transform(({ value }) => toDateOnly(value))
+    @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+        message: 'Birthdate debe ser YYYY-MM-DD',
+    })
+    @IsOptional()
+    EndDate?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    Objective?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    Description?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    Observation?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    SpaceOfDocument?: string;
+
+    @ApiPropertyOptional()
+    @IsBoolean()
+    @IsOptional()
+    IsActive?: boolean;
+}

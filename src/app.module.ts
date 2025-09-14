@@ -13,6 +13,11 @@ import { UnitMeasureModule } from './unit_measure/unit_measure.module';
 import { MaterialModule } from './material/material.module';
 import { ProductModule } from './product/product.module';
 import { SupplierModule } from './supplier/supplier.module';
+import { ProjectModule } from './project/project.module';
+import { TraceProjectModule } from './trace-project/trace-project.module';
+import { TraceProjectProductModule } from './trace-project/trace-project_product/trace-project_product.module';
+import { ProjectStateModule } from './project/project-state/project-state.module';
+import { ProjectProductModule } from './project/project_product/project_product.module';
 
 @Module({
   imports: [
@@ -44,7 +49,12 @@ import { SupplierModule } from './supplier/supplier.module';
     CategoriesModule,
     UnitMeasureModule,
     ProductModule,
-    SupplierModule
+    SupplierModule,
+    ProjectModule,
+    TraceProjectModule,
+    TraceProjectProductModule,
+    ProjectStateModule,
+    ProjectProductModule
   ],
 })
 export class AppModule {}
