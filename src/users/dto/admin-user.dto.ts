@@ -1,5 +1,5 @@
-    import { ApiProperty } from '@nestjs/swagger';
-    import { Transform } from 'class-transformer';
+    import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+    import { Transform, Type } from 'class-transformer';
     import {
     IsString,
     IsEmail,
@@ -7,6 +7,10 @@
     IsOptional,
     IsNotEmpty,
     Matches,
+    IsArray,
+    ArrayUnique,
+    ArrayMinSize,
+    IsInt,
     } from 'class-validator';
     import { Role } from 'src/roles/entities/role.entity';
     import { toDateOnly } from 'src/utils/ToDateOnly';
@@ -59,6 +63,19 @@
     @IsString()
     Address: string;
     
-    // @ApiProperty({ type: [Role], required: false })
-    // Roles?: Role[]; // Opcional, si se desea asignar roles al crear el usuario
+    @ApiPropertyOptional({ type: [Number], description: 'IDs de roles' })
+    @IsOptional()
+    @IsArray()
+    @ArrayUnique()
+    @ArrayMinSize(1)
+    @Transform(({ value }) => {
+        // Permite recibir "1,2,3" o [1,2,3]
+        if (typeof value === 'string') {
+        return value.split(',').map(v => Number(v.trim())).filter(v => !Number.isNaN(v));
+        }
+        return value;
+    })
+    @Type(() => Number)
+    @IsInt({ each: true })
+    roleIds?: number[];
 }

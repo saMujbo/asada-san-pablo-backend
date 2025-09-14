@@ -18,6 +18,7 @@ import { Roles } from './auth-roles/roles.decorator';
 
 @Injectable()
 export class AuthService {
+  dataSource: any;
   constructor (
     private readonly userService: UsersService,
     private readonly roleService: RolesService,
@@ -64,31 +65,41 @@ export class AuthService {
   }
 
   async adminCreateUser(adminCreateUserDto: AdminCreateUserDto){
-    const {...rest } = adminCreateUserDto;
-    const defaultRole = await this.roleService.findOne(2);
+    const { roleIds, ...rest } = adminCreateUserDto;
 
-    if (!defaultRole) {
-      throw new Error('❌ Rol por defecto "GUEST" no existe en la base de datos');
-    }
+    // 2) Roles a asignar
+    const roles = roleIds?.length
+      ? await this.roleService.findAllByIDs(roleIds)
+      : [await this.roleService.findDefaultRole()];
 
+    // 3) Password temporal
     const plainTempPassword = generateRandomPassword(8);
     const hashed = await bcrypt.hash(plainTempPassword, 10);
 
-  const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
-    const url = `${await this.configService.get('FrontEndBaseURL')}/login`;
-    try {
-    await this.mailClient.sendWelcomeTempPasswordEmail({
-      to: adminCreateUserDto.Email,
-      subject: '¡Bienvenido a RedSanPablo!',
-      message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
-      LoginURL: url,
-      Name: adminCreateUserDto.Name,
-      temPasswordL: plainTempPassword
+    // 4) Transacción para crear y asociar roles
+    const newUser = await this.userService.createRegister({
+      ...rest,
+      Password: hashed,
+      Roles: roles, // <- lo correcto
     });
-  } catch (error) {
-    console.error('Error al enviar correo de bienvenida:', error);
-  }
-  return newUser;
+
+    // 5) Enviar correo (si falla, no rompas la creación)
+    const url = `${this.configService.get<string>('FrontEndBaseURL')}/login`;
+    try {
+      await this.mailClient.sendWelcomeTempPasswordEmail({
+        to: newUser.Email,
+        subject: '¡Bienvenido a RedSanPablo!',
+        message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
+        LoginURL: url,
+        Name: newUser.Name,
+        temPasswordL: plainTempPassword, // <- nombre correcto
+      });
+    } catch (error) {
+      // Loguea y sigue; el usuario quedó creado
+      console.error('Error al enviar correo de bienvenida:', error);
+    }
+
+    return newUser;
   }
 
   async login(userObjectLogin: LoginAuthDto) {
