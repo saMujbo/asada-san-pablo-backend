@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from './entities/project.entity';
 import { Repository } from 'typeorm';
 import { hasNonEmptyString, isValidDate } from 'src/utils/validation.utils';
+import { ProjectPaginationDto } from './dto/pagination-project.dto';
 
 @Injectable()
 export class ProjectService {
@@ -24,7 +25,40 @@ export class ProjectService {
   async findAll() {
     return await this.projectRepo.find({where:{IsActive:true}});
   }
+  async search({ page =1, limit = 10,name,state}:ProjectPaginationDto){
+    const pageNum = Math.max(1, Number(page)||1);
+    const take = Math.min(100, Math.max(1,Number(limit)||10));
+    const skip = (pageNum -1)* take;
 
+    const qb = this.projectRepo.createQueryBuilder('project')
+    .skip(skip)
+    .take(take);
+
+        if (name?.trim()) {
+        qb.andWhere('LOWER(project.Name) LIKE :name', {
+          name: `%${name.trim().toLowerCase()}%`,
+        });
+      }
+
+      if (state) {
+        qb.andWhere('project.IsActive = :state', { state });
+      }
+
+        qb.orderBy('project.Name', 'ASC');
+            const [data, total] = await qb.getManyAndCount();
+
+      return {
+        data,
+        meta: {
+          total,
+          page: pageNum,
+          limit: take,
+          pageCount: Math.max(1, Math.ceil(total / take)),
+          hasNextPage: pageNum * take < total,
+          hasPrevPage: pageNum > 1,
+        },
+      };
+  }
   async findOne(Id: number) {
     const foundProject = await this.projectRepo.findOne({
       where: { Id, IsActive: true },
