@@ -50,14 +50,26 @@ export class ProjectService {
     if (hasNonEmptyString(updateProjectDto.Name) && updateProjectDto.Name !== undefined) 
       updateProject.Name = updateProjectDto.Name;
     
-    if (hasNonEmptyString(updateProjectDto.Description) && updateProjectDto.Description !== undefined) 
-      updateProject.Description = updateProjectDto.Description;
+    if (hasNonEmptyString(updateProjectDto.Location) && updateProjectDto.Location !== undefined) 
+      updateProject.Location = updateProjectDto.Location;
+    
+    if (isValidDate(updateProjectDto.InnitialDate) && updateProjectDto.InnitialDate !== undefined) 
+      updateProject.InnitialDate = updateProjectDto.InnitialDate as any;
     
     if (isValidDate(updateProjectDto.EndDate) && updateProjectDto.EndDate !== undefined) 
       updateProject.EndDate = updateProjectDto.EndDate as any;
     
+    if (hasNonEmptyString(updateProjectDto.Objective) && updateProjectDto.Objective !== undefined) 
+      updateProject.Objective = updateProjectDto.Objective;
+    
     if (hasNonEmptyString(updateProjectDto.Description) && updateProjectDto.Description !== undefined) 
       updateProject.Description = updateProjectDto.Description;
+    
+    if (hasNonEmptyString(updateProjectDto.Observation) && updateProjectDto.Observation !== undefined) 
+      updateProject.Observation = updateProjectDto.Observation;
+    
+    if (hasNonEmptyString(updateProjectDto.SpaceOfDocument) && updateProjectDto.SpaceOfDocument !== undefined) 
+      updateProject.SpaceOfDocument = updateProjectDto.SpaceOfDocument;
 
     if (updateProjectDto.IsActive !== undefined && updateProjectDto.IsActive != null) 
       updateProject.IsActive = updateProjectDto.IsActive;
