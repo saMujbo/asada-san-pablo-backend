@@ -1,3 +1,4 @@
+import { text } from "body-parser";
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
@@ -26,7 +27,7 @@ export class Project {
     @Column()
     Description: string;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text' })
     Observation: string | null;
 
     @Column({ default: true })

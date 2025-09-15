@@ -54,7 +54,7 @@ export class ProjectService {
       updateProject.Description = updateProjectDto.Description;
     
     if (isValidDate(updateProjectDto.EndDate) && updateProjectDto.EndDate !== undefined) 
-      updateProject.EndDate = updateProjectDto.EndDate;
+      updateProject.EndDate = updateProjectDto.EndDate as any;
     
     if (hasNonEmptyString(updateProjectDto.Description) && updateProjectDto.Description !== undefined) 
       updateProject.Description = updateProjectDto.Description;

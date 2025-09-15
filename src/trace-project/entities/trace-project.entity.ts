@@ -1,22 +1,27 @@
+  import { Transform } from "class-transformer";
+import { Matches } from "class-validator";
+  import { toDateOnly } from "src/utils/ToDateOnly";
 
-@Entity()
-export class TraceProject {
+  import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
-    @PrimaryGeneratedColumn()
-    Id:number;
+  @Entity()
+  export class TraceProject {
 
-    @Column()
-    Name:string;
+      @PrimaryGeneratedColumn()
+      Id:number;
 
-  @Transform(({ value }) => toDateOnly(value))
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    message: 'date debe ser YYYY-MM-DD',
-  })
-   date: string;
+      @Column()
+      Name:string;
 
-    @Column()
-    Observation:string;
+    @Transform(({ value }) => toDateOnly(value))
+    @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+      message: 'date debe ser YYYY-MM-DD',
+    })
+    date: string;
 
-    @Column({default : true})
-    IsActive:boolean; 
-}
+      @Column()
+      Observation:string;
+
+      @Column({default : true})
+      IsActive:boolean; 
+  }
