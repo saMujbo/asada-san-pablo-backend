@@ -1,3 +1,8 @@
+import { ApiProperty } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
+import { IsString, IsNotEmpty, Matches, IsOptional } from "class-validator";
+import { toDateOnly } from "src/utils/ToDateOnly";
+
 
 export class CreateTraceProjectDto {
 

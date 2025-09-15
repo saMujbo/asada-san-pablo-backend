@@ -1,5 +1,9 @@
-import { PartialType } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CreateTraceProjectDto } from './create-trace-project.dto';
+import { IsString, IsNotEmpty, Matches, IsOptional, IsBoolean } from 'class-validator';
+import { toDateOnly } from 'src/utils/ToDateOnly';
+import { Transform } from 'class-transformer';
+
 
 export class UpdateTraceProjectDto{
     @ApiProperty()
@@ -9,7 +13,7 @@ export class UpdateTraceProjectDto{
 
     @Transform(({ value }) => toDateOnly(value))
     @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-     message: 'date debe ser YYYY-MM-DD',
+    message: 'date debe ser YYYY-MM-DD',
     })
     @IsOptional()
     date?: string;

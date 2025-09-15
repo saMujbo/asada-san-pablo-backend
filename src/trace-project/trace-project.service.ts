@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTraceProjectDto } from './dto/create-trace-project.dto';
 import { UpdateTraceProjectDto } from './dto/update-trace-project.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { changeState } from 'src/utils/changeState';
+import { Repository } from 'typeorm';
+import { TraceProject } from './entities/trace-project.entity';
 
 @Injectable()
 export class TraceProjectService {
@@ -14,15 +18,15 @@ export class TraceProjectService {
     return await this.traceProjectRepo.save(newTraceProject)
   }
 
- async findAll() {
+  async findAll() {
     return await this.traceProjectRepo.find({where:{IsActive:true}});
   }
 
-  async findOne(id: number) {
+  async findOne(Id: number) {
     const foundTraceProject = await this.traceProjectRepo.findOne({
-    Where:{Id,IsActive:true},
+    where:{Id,IsActive:true},
     })
-        if(!foundTraceProject) throw new NoFoundExeception(`TraceProject with Id ${Id} not found`)
+        if(!foundTraceProject) throw new NotFoundException(`TraceProject with Id ${Id} not found`)
     return foundTraceProject;
   }
 
@@ -33,8 +37,7 @@ export class TraceProjectService {
       if(updateTraceProjectDto.Name !== undefined && updateTraceProjectDto.Name != null && updateTraceProjectDto.Name!='')
         updateTraceProject.Name = updateTraceProjectDto.Name;
     if (updateTraceProject.date !== undefined) updateTraceProject.date = updateTraceProject.date as any;
-        updateTraceProject.date = updateTraceProjectDto.date;
-      if(updateTraceProjectDto.Observation !== undefined && updateTraceProjectDto.Observation != null updateTraceProjectDto.Observation !='')
+      if(updateTraceProjectDto.Observation !== undefined && updateTraceProjectDto.Observation != null && updateTraceProjectDto.Observation!='')
           updateTraceProject.Observation = updateTraceProjectDto.Observation;
 
     return await this.traceProjectRepo.save(updateTraceProject);
