@@ -115,7 +115,7 @@ export class ProjectService {
 
   async findOne(Id: number) {
     const foundProject = await this.projectRepo.findOne({
-      where: { Id, IsActive: true },
+      where: { Id },
       relations:[
       'ProjectProducts', 'ProjectProducts.Product', 'ProjectState']
     });
