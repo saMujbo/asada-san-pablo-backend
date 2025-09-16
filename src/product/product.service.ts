@@ -1,7 +1,7 @@
-import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ConflictException, forwardRef, Inject, Injectable, NotFoundException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { MaterialService } from 'src/material/material.service';
 import { UnitMeasureService } from 'src/unit_measure/unit_measure.service';
@@ -136,7 +136,18 @@ export class ProductService {
     return foundProduct;
   }
   
-
+  async findAllByIds(IDsArray:number[]){
+    const products = await this.productRepo.find({
+      where:{Id: In(IDsArray)},
+    });
+    if(products.length !== IDsArray.length){
+      const encontrados = new Set(products.map(p=>p.Id));
+      const faltantes = IDsArray.filter(id=> !encontrados.has(id));
+      throw new NotFoundException(`Productos inexistentes:[${faltantes.join(',')}]`);
+    }
+    return products;
+  }
+  
   async update(Id: number, updateProductDto: UpdateProductDto) {
     const updateProduct = await this.findOne(Id);
 

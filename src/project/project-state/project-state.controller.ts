@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 import { ProjectStateService } from './project-state.service';
 import { CreateProjectStateDto } from './dto/create-project-state.dto';
 import { UpdateProjectStateDto } from './dto/update-project-state.dto';
@@ -18,17 +18,17 @@ export class ProjectStateController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projectStateService.findOne(+id);
+  findOne(@Param('id') id: number) {
+    return this.projectStateService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProjectStateDto: UpdateProjectStateDto) {
-    return this.projectStateService.update(+id, updateProjectStateDto);
+  @Put(':id')
+  update(@Param('id') id: number, @Body() updateProjectStateDto: UpdateProjectStateDto) {
+    return this.projectStateService.update(id, updateProjectStateDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.projectStateService.remove(+id);
+  remove(@Param('id') id: number) {
+    return this.projectStateService.remove(id);
   }
 }

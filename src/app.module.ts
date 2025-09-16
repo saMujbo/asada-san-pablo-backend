@@ -17,7 +17,6 @@ import { ProjectModule } from './project/project.module';
 import { TraceProjectModule } from './trace-project/trace-project.module';
 import { TraceProjectProductModule } from './trace-project/trace-project_product/trace-project_product.module';
 import { ProjectStateModule } from './project/project-state/project-state.module';
-import { ProjectProductModule } from './project/project_product/project_product.module';
 
 @Module({
   imports: [
@@ -54,7 +53,6 @@ import { ProjectProductModule } from './project/project_product/project_product.
     TraceProjectModule,
     TraceProjectProductModule,
     ProjectStateModule,
-    ProjectProductModule
   ],
 })
 export class AppModule {}

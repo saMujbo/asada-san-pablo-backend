@@ -1,5 +1,6 @@
 import { Category } from "src/categories/entities/category.entity";
 import { Material } from "src/material/entities/material.entity";
+import { ProjectProduct } from "src/project/project_product/entities/project_product.entity";
 import { Supplier } from "src/supplier/entities/supplier.entity";
 import { UnitMeasure } from "src/unit_measure/entities/unit_measure.entity";
 import {
@@ -9,6 +10,7 @@ import {
     ManyToOne,
     JoinColumn,
     Index,
+    OneToMany,
 } from "typeorm";
 @Entity()
 export class Product {
@@ -58,4 +60,7 @@ export class Product {
     })
     @JoinColumn({ name: "SupplierId" })
     Supplier: Supplier;
+
+    @OneToMany(() => ProjectProduct, (ProjectProduct) => ProjectProduct.Product)
+    ProjectProducts?: ProjectProduct[];
 }

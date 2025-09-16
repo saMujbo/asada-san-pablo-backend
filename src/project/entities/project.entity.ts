@@ -1,12 +1,15 @@
-import { text } from "body-parser";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { ProjectState } from "../project-state/entities/project-state.entity";
+import { Product } from "src/product/entities/product.entity";
+import { Role } from "src/roles/entities/role.entity";
+import { ProjectProduct } from "../project_product/entities/project_product.entity";
 
 @Entity()
 export class Project {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column()
+    @Column({ unique: true })
     Name: string;
 
     @Column()
@@ -32,4 +35,16 @@ export class Project {
 
     @Column({ default: true })
     IsActive: boolean;
+
+    //RELATIONS
+    @Index()
+    @ManyToOne(() => ProjectState, (projectState) => projectState.Projects, {
+        nullable: false,
+        onDelete: "RESTRICT",
+    })
+    @JoinColumn({ name: "ProjectStateId" })
+    ProjectState: ProjectState;
+
+    @OneToMany(() => ProjectProduct, (ProjectProduct) => ProjectProduct.Project)
+    ProjectProducts?: ProjectProduct[];
 }

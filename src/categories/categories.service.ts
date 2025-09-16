@@ -63,8 +63,6 @@ export class CategoriesService {
     };
   }
 
-
-
   async findOne(Id: number) {
     const categoryFound = await this.categoryRepo.findOne({ 
       where: { Id, IsActive: true },
