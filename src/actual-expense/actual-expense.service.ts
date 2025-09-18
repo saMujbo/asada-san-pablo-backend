@@ -1,0 +1,61 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateActualExpenseDto } from './dto/create-actual-expense.dto';
+import { UpdateActualExpenseDto } from './dto/update-actual-expense.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ActualExpense } from './entities/actual-expense.entity';
+import { Repository } from 'typeorm';
+
+@Injectable()
+export class ActualExpenseService {
+  constructor(
+      @InjectRepository(ActualExpense)
+      private readonly actualExpenseRepo: Repository<ActualExpense>,
+  ) {}
+  async create(createActualExpenseDto: CreateActualExpenseDto) {
+    const newActualExpense = this.actualExpenseRepo.create(createActualExpenseDto);
+
+    return await this.actualExpenseRepo.save(newActualExpense);
+  }
+  
+  async findAll() {
+    return await this.actualExpenseRepo.find({ where: { IsActive: true }});
+  }
+
+  async findOne(Id: number) {
+    const actualExpense = await this.actualExpenseRepo.findOne({ where: { Id, IsActive: true }});
+    if (!actualExpense) {
+      throw new NotFoundException(`ActualExpense with ID ${Id} not found`);
+    }
+    return actualExpense;
+  }
+
+  async update(Id: number, updateActualExpenseDto: UpdateActualExpenseDto) {
+    const newActualExpense = await this.actualExpenseRepo.findOne({ where: { Id, IsActive: true } });
+    
+    if(!newActualExpense){
+      throw new NotFoundException(`ActualExpense with ID ${Id} not found`);
+    }
+    if(updateActualExpenseDto.Date !== undefined) newActualExpense.Date= updateActualExpenseDto.Date as any;
+    if(updateActualExpenseDto.Observation !== undefined,updateActualExpenseDto.Observation != null && updateActualExpenseDto.Observation !='') newActualExpense.Observation= updateActualExpenseDto.Observation;
+    if(updateActualExpenseDto.IsActive !== undefined) newActualExpense.IsActive= updateActualExpenseDto.IsActive;
+    return await this.actualExpenseRepo.save(newActualExpense);
+  }
+
+  async remove(Id: number) {
+    const actualExpense = await this.actualExpenseRepo.findOneBy({Id});
+    if(!actualExpense){
+      throw new NotFoundException(`ActualExpense with ID ${Id} not found`);
+    }
+    actualExpense.IsActive = false;
+    return await this.actualExpenseRepo.save(actualExpense);
+  }
+
+  async reactive(Id: number){
+    const actualExpense = await this.actualExpenseRepo.findOneBy({Id});
+    if(!actualExpense){
+      throw new NotFoundException(`ActualExpense with ID ${Id} not found`);
+    }
+    actualExpense.IsActive = true;
+    return await this.actualExpenseRepo.save(actualExpense);
+  }
+}

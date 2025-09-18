@@ -29,4 +29,9 @@ export class CreateProductDto {
     @ApiProperty()
     @IsInt() @Min(1)
     SupplierId: number;
+
+    @ApiProperty()
+    @IsOptional() 
+    @IsInt() @Min(1)
+    ProjectDetailId?: number;
 }

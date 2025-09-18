@@ -1,8 +1,9 @@
   import { Transform } from "class-transformer";
 import { Matches } from "class-validator";
+import { ActualExpense } from "src/actual-expense/entities/actual-expense.entity";
   import { toDateOnly } from "src/utils/ToDateOnly";
 
-  import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+  import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from "typeorm";
 
   @Entity()
   export class TraceProject {
@@ -24,4 +25,8 @@ import { Matches } from "class-validator";
 
       @Column({default : true})
       IsActive:boolean; 
+
+      @ManyToMany(() => ActualExpense, (traceProject) => traceProject.TraceProjects)
+      @JoinTable({name: "TraceProjectActualExpenses"})
+      ActualExpenses: ActualExpense[];
   }

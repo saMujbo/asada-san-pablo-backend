@@ -1,8 +1,9 @@
-import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { ProjectState } from "../project-state/entities/project-state.entity";
 import { Product } from "src/product/entities/product.entity";
 import { Role } from "src/roles/entities/role.entity";
 import { ProjectProduct } from "../project_product/entities/project_product.entity";
+import { ProjectProjection } from "src/project-projection/entities/project-projection.entity";
 
 @Entity()
 export class Project {
@@ -47,4 +48,10 @@ export class Project {
 
     @OneToMany(() => ProjectProduct, (ProjectProduct) => ProjectProduct.Project)
     ProjectProducts?: ProjectProduct[];
+
+    @OneToOne(()=>ProjectProjection,(projectprojection)=>projectprojection.Project,{
+        cascade: ["insert", "update"],
+    })
+    @JoinColumn({name:"ProjectProjectionId"})
+    ProjectProjection:ProjectProjection;
 }

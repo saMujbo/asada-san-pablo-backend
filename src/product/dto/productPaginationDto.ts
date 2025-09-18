@@ -59,6 +59,7 @@ export class ProductPaginationDto {
     @Transform(({ value }) => (value === '' || value === null ? undefined : value))
     supplierId?: number;
 
+
     @ApiPropertyOptional({description: 'Filtro por estado (true o false)'})
     @IsOptional()
     @IsString()
