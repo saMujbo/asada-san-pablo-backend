@@ -6,16 +6,26 @@ import { Repository } from 'typeorm';
 import { changeState } from 'src/utils/changeState';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AgentSupplier } from './entities/agent_supplier.entity';
+import { SupplierService } from 'src/supplier/supplier.service';
 
 @Injectable()
 export class AgentSupplierService {
   constructor(
     @InjectRepository(AgentSupplier)
       private readonly agentSupplierRepo: Repository<AgentSupplier>,
+    private readonly supplierSv: SupplierService,
   ) {}
 
   async create(createAgentSupplierDto: CreateAgentSupplierDto) {
-    const newAgentSupplier = this.agentSupplierRepo.create(createAgentSupplierDto);
+    const supplierExists = await this.supplierSv.findOne(createAgentSupplierDto.SupplierId);
+    const newAgentSupplier = this.agentSupplierRepo.create({
+      Name: createAgentSupplierDto.Name,
+      Surname1: createAgentSupplierDto.Surname1,
+      Surname2: createAgentSupplierDto.Surname2,
+      Email: createAgentSupplierDto.Email,
+      PhoneNumber: createAgentSupplierDto.PhoneNumber,
+      Supplier: supplierExists,
+    });
     return await this.agentSupplierRepo.save(newAgentSupplier);
   }
 
@@ -39,7 +49,7 @@ export class AgentSupplierService {
     if(updateAgentSupplierDto.PhoneNumber !== undefined && updateAgentSupplierDto.PhoneNumber !== null && updateAgentSupplierDto.PhoneNumber !== '') agentSupplier.PhoneNumber = updateAgentSupplierDto.PhoneNumber;
     if(updateAgentSupplierDto.Email !== undefined && updateAgentSupplierDto.Email !== null && updateAgentSupplierDto.Email !== '') agentSupplier.Email = updateAgentSupplierDto.Email;
     if(updateAgentSupplierDto.IsActive !== undefined && updateAgentSupplierDto.IsActive !== null) agentSupplier.IsActive = updateAgentSupplierDto.IsActive;
-    }
+  }
 
   async remove(Id: number) {
     const agentSupplier = await this.agentSupplierRepo.findOneBy({Id});
@@ -47,8 +57,9 @@ export class AgentSupplierService {
     agentSupplier.IsActive = false;
     return await this.agentSupplierRepo.save(agentSupplier);
   }
+
   async reactive(Id: number){
     const updateActive = await this.findOne(Id);
     changeState(updateActive.IsActive); 
-}
+  }
 }

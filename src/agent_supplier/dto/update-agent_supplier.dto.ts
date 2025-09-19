@@ -1,7 +1,7 @@
-    import { ApiProperty} from '@nestjs/swagger';
+import { ApiProperty} from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean } from 'class-validator';
 
-    export class UpdateAgentSupplierDto {
+export class UpdateAgentSupplierDto {
     @ApiProperty({ example: 'Juan' })
     @IsString()
     @IsNotEmpty()
@@ -28,4 +28,4 @@ import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean } from 'class-vali
     @ApiProperty({ example: true })
     @IsBoolean()
     IsActive: boolean;
-    }
+}

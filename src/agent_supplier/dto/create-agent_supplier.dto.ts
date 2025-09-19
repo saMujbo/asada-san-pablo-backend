@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean } from "class-validator";
+import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean, IsInt, Min } from "class-validator";
 
     export class CreateAgentSupplierDto {
     @ApiProperty({ example: 'Juan' })
@@ -19,9 +19,15 @@ import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean } from "class-vali
 
     @ApiProperty({ example: 'juanperez@email.com' })
     @IsEmail()
+    @IsNotEmpty()
     Email: string;
 
     @ApiProperty({ example: '+50688887777' })
     @IsString()
+    @IsNotEmpty()
     PhoneNumber: string;
-    }
+
+    @ApiProperty()
+    @IsInt() @Min(1)
+    SupplierId: number;
+}
