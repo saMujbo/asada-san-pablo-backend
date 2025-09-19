@@ -1,32 +1,36 @@
-  import { Transform } from "class-transformer";
-import { Matches } from "class-validator";
-import { ActualExpense } from "src/actual-expense/entities/actual-expense.entity";
-  import { toDateOnly } from "src/utils/ToDateOnly";
+import {
+  Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
+} from 'typeorm';
+import { ActualExpense } from 'src/actual-expense/entities/actual-expense.entity';
+import { Transform } from 'class-transformer';
+import { toDateOnly } from 'src/utils/ToDateOnly';
+import { Matches } from 'class-validator';
 
-  import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from "typeorm";
+@Entity({ name: 'trace_project' })
+export class TraceProject {
+  @PrimaryGeneratedColumn()
+  Id: number;
 
-  @Entity()
-  export class TraceProject {
+  @Column()
+  Name: string;
 
-      @PrimaryGeneratedColumn()
-      Id:number;
-
-      @Column()
-      Name:string;
-
+  // Sugerencia: valida en el DTO; en la entidad basta con el tipo/columna
     @Transform(({ value }) => toDateOnly(value))
     @Matches(/^\d{4}-\d{2}-\d{2}$/, {
       message: 'date debe ser YYYY-MM-DD',
     })
     date: string;
+  @Column()
+  Observation: string;
 
-      @Column()
-      Observation:string;
+  @Column({ default: true })
+  IsActive: boolean;
 
-      @Column({default : true})
-      IsActive:boolean; 
-
-      @ManyToMany(() => ActualExpense, (traceProject) => traceProject.TraceProjects)
-      @JoinTable({name: "TraceProjectActualExpenses"})
-      ActualExpenses: ActualExpense[];
-  }
+  @ManyToMany(() => ActualExpense, (ae) => ae.TraceProjects)
+  @JoinTable({
+    name: 'trace_project_actual_expense',                 // nombre de la tabla puente
+    joinColumn: { name: 'TraceProjectId', referencedColumnName: 'Id' },
+    inverseJoinColumn: { name: 'ActualExpenseId', referencedColumnName: 'Id' },
+  })
+  ActualExpenses: ActualExpense[];
+}

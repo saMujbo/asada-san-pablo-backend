@@ -1,5 +1,5 @@
 import { Supplier } from "src/supplier/entities/supplier.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from "typeorm";
 
 @Entity('AgentSupplier')
 export class AgentSupplier {
@@ -17,8 +17,14 @@ export class AgentSupplier {
     PhoneNumber: string;
     @Column()
     IsActive: boolean;
-    @ManyToOne(() => Supplier, (supplier) => supplier.SupplerAgents)
+    @ManyToOne(() => Supplier, (supplier) => supplier.SupplierAgents, {
+        nullable: false,
+        onDelete: 'RESTRICT',
+    })
+    @JoinColumn({ name: 'SupplierId', referencedColumnName: 'Id' })
     Supplier: Supplier;
-    // @Column()
-    // SupplierId: number;
+
+    // Si quieres leer el id sin cargar la relación:
+    @RelationId((a: AgentSupplier) => a.Supplier)
+    SupplierId: number; // <-- NO pongas @Column aquí
 }

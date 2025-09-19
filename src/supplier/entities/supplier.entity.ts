@@ -26,6 +26,6 @@ export class Supplier {
 
     @OneToMany(() => Product, (product) => product.Supplier)
         Products: Product[];
-    @OneToMany(()=> AgentSupplier, (agent) => agent.Supplier)
-        SupplerAgents: Agent[];
+    @OneToMany(() => AgentSupplier, (agent) => agent.Supplier)
+    SupplierAgents: AgentSupplier[];
 }
