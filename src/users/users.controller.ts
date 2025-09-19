@@ -8,6 +8,7 @@ import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { UpdateEmailDto } from './dto/updateEmail-user';
 import { PaginationDto } from './dto/pagination.dto';
+import { AdminCreateUserDto } from './dto/admin-user.dto';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -68,7 +69,7 @@ export class UsersController {
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: UpdateUserDto,
+    @Body() updateUserDto:AdminCreateUserDto,
   ) {
     return await  this.usersService.update(id, updateUserDto);
   }

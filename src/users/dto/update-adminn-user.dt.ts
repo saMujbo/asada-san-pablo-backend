@@ -53,21 +53,17 @@
     PhoneNumber: string;
 
     @ApiProperty()
+    @IsOptional()
     @Transform(({ value }) => toDateOnly(value))
     @Matches(/^\d{4}-\d{2}-\d{2}$/, {
         message: 'Birthdate debe ser YYYY-MM-DD',
     })
-    Birthdate: string;
+    Birthdate?: string;
 
     @ApiProperty()
     @IsString()
     Address: string;
     
-    @ApiProperty()
-    @IsBoolean()
-    @IsOptional()
-    IsActive?: boolean;
-
     @ApiPropertyOptional({ type: [Number], description: 'IDs de roles' })
     @IsOptional()
     @IsArray()
@@ -84,5 +80,8 @@
     @IsInt({ each: true })
     roleIds?: number[];
 
-    
+    @ApiProperty()
+    @IsBoolean()
+    @IsOptional()
+    IsActive?:boolean;
 }
