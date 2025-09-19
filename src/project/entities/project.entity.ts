@@ -1,8 +1,5 @@
-import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { ProjectState } from "../project-state/entities/project-state.entity";
-import { Product } from "src/product/entities/product.entity";
-import { Role } from "src/roles/entities/role.entity";
-import { ProjectProduct } from "../project_product/entities/project_product.entity";
 import { ProjectProjection } from "src/project-projection/entities/project-projection.entity";
 
 @Entity()
@@ -13,7 +10,7 @@ export class Project {
     @Column({ unique: true })
     Name: string;
 
-    @Column()
+    @Column({ type: 'text' })
     Location: string;
 
     @Column({ type: "date" })
@@ -22,17 +19,17 @@ export class Project {
     @Column({ type: "date", nullable: true })
     EndDate: Date | null; // puede ser null si el proyecto sigue activo
 
-    @Column({ type: "varchar", length: 255, nullable: true })
+    @Column({ type: 'text', nullable: true })
     SpaceOfDocument: string | null; // p.ej. folderId/URL de Drive
 
-    @Column()
+    @Column({ type: 'text' })
     Objective: string;
 
-    @Column()
+    @Column({ type: 'text' })
     Description: string;
 
     @Column({ type: 'text' })
-    Observation: string | null;
+    Observation?: string | null;
 
     @Column({ default: true })
     IsActive: boolean;
@@ -45,9 +42,6 @@ export class Project {
     })
     @JoinColumn({ name: "ProjectStateId" })
     ProjectState: ProjectState;
-
-    @OneToMany(() => ProjectProduct, (ProjectProduct) => ProjectProduct.Project)
-    ProjectProducts?: ProjectProduct[];
 
     @OneToOne(()=>ProjectProjection,(projectprojection)=>projectprojection.Project,{
         cascade: ["insert", "update"],

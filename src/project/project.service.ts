@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { hasNonEmptyString, isValidDate } from 'src/utils/validation.utils';
 import { ProjectPaginationDto } from './dto/pagination-project.dto';
 import { ProjectStateService } from './project-state/project-state.service';
-import { ProjectProduct } from './project_product/entities/project_product.entity';
 import { ProductService } from 'src/product/product.service';
 
 @Injectable()
@@ -15,15 +14,13 @@ export class ProjectService {
   constructor(
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
-    @InjectRepository(ProjectProduct)
-    private readonly projectProductRepo: Repository<ProjectProduct>,
     @Inject(forwardRef(() => ProjectStateService))
     private readonly projectStateSv: ProjectStateService,
     private readonly productSv: ProductService,
   ){}
 
   async create(createProjectDto: CreateProjectDto) {
-    const { productQuantitys = [], ProjectStateId ,...rest } = createProjectDto;
+    const { ProjectStateId ,...rest } = createProjectDto;
 
     if (rest.InnitialDate && rest.EndDate) {
       const ini = new Date(rest.InnitialDate);
@@ -36,46 +33,46 @@ export class ProjectService {
     const project = this.projectRepo.create({ ProjectState: projectState, ...rest });
     await this.projectRepo.save(project);
 
-    if (!productQuantitys.length) {
-      project.ProjectProducts = [];
-      return project;
-    }
+    // if (!productQuantitys.length) {
+    //   project.ProjectProducts = [];
+    //   return project;
+    // }
 
-    const qtyMap = new Map<number, number>();
-    for (const item of productQuantitys) {
-      qtyMap.set(item.productId, (qtyMap.get(item.productId) ?? 0) + Number(item.quantity));
-    }
+    // const qtyMap = new Map<number, number>();
+    // for (const item of productQuantitys) {
+    //   qtyMap.set(item.productId, (qtyMap.get(item.productId) ?? 0) + Number(item.quantity));
+    // }
 
-    const ids = Array.from(qtyMap.keys());
-    const products = await this.productSv.findAllByIds(ids);
-    const productMap = new Map(products.map(p => [p.Id, p]));
-    const faltantes = ids.filter(id => !productMap.has(id));
-    if (faltantes.length) {
-      throw new NotFoundException(`No existen productos con ids: ${faltantes.join(', ')}`);
-    }
+    // const ids = Array.from(qtyMap.keys());
+    // const products = await this.productSv.findAllByIds(ids);
+    // const productMap = new Map(products.map(p => [p.Id, p]));
+    // const faltantes = ids.filter(id => !productMap.has(id));
+    // if (faltantes.length) {
+    //   throw new NotFoundException(`No existen productos con ids: ${faltantes.join(', ')}`);
+    // }
 
-    const items = Array.from(qtyMap.entries()).map(([productId, quantity]) =>
-      this.projectProductRepo.create({
-        Project: project,
-        Product: productMap.get(productId)!,
-        quantity,
-      })
-    );
+    // const items = Array.from(qtyMap.entries()).map(([productId, quantity]) =>
+    //   this.projectProductRepo.create({
+    //     Project: project,
+    //     Product: productMap.get(productId)!,
+    //     quantity,
+    //   })
+    // );
 
-    await this.projectProductRepo.save(items);
+    // await this.projectProductRepo.save(items);
 
-    project.ProjectProducts = await this.projectProductRepo.find({
-      where: { Project: { Id: project.Id } },
-      relations: ['Product'],
-      order: { idProjectProduct: 'ASC' },
-    });
+    // project.ProjectProducts = await this.projectProductRepo.find({
+    //   where: { Project: { Id: project.Id } },
+    //   relations: ['Product'],
+    //   order: { idProjectProduct: 'ASC' },
+    // });
 
     return project;
   }
 
   async findAll() {
     return await this.projectRepo.find({where:{IsActive:true}, relations:[
-      'ProjectProducts', 'ProjectProducts.Product', 'ProjectState']});
+      'ProjectState']});
   }
   
   async search({ page =1, limit = 10,name,state}:ProjectPaginationDto){
@@ -117,7 +114,7 @@ export class ProjectService {
     const foundProject = await this.projectRepo.findOne({
       where: { Id },
       relations:[
-      'ProjectProducts', 'ProjectProducts.Product', 'ProjectState']
+      'ProjectState']
     });
     
     if(!foundProject) throw new NotFoundException(`Project with Id ${Id} not found`);

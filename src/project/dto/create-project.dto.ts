@@ -1,20 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Transform, Type } from "class-transformer";
-import { IsString, IsNotEmpty, IsDateString, IsOptional, Matches, IsArray, ArrayUnique, ArrayMinSize, IsInt, Min, ValidateNested } from "class-validator";
+import { Transform } from "class-transformer";
+import { IsString, IsNotEmpty, IsOptional, Matches, IsInt} from "class-validator";
 import { toDateOnly } from "src/utils/ToDateOnly";
-
-export class ProductWithQtyDto {
-    @ApiProperty()
-    @IsInt()
-    @Min(1)
-    productId: number;
-
-    @ApiProperty()
-    @IsInt()
-    @Min(1)
-    quantity: number;
-}
-
 
 export class CreateProjectDto {
     @ApiProperty()
@@ -32,6 +19,7 @@ export class CreateProjectDto {
     @Matches(/^\d{4}-\d{2}-\d{2}$/, {
         message: 'Birthdate debe ser YYYY-MM-DD',
     })
+    @IsNotEmpty()
     InnitialDate: string;
 
     @ApiProperty()
@@ -66,12 +54,4 @@ export class CreateProjectDto {
     @IsNotEmpty()
     @IsInt()
     ProjectStateId: number;
-
-    @ApiPropertyOptional({ type: [ProductWithQtyDto] })
-    @IsOptional()
-    @IsArray()
-    @ArrayMinSize(1)
-    @ValidateNested({ each: true })
-    @Type(() => ProductWithQtyDto)
-    productQuantitys?: ProductWithQtyDto[];
 }

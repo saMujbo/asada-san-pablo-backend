@@ -2,7 +2,6 @@ import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform, Type } from "class-transformer";
 import { IsOptional, IsString, Matches, IsBoolean, IsArray, ArrayUnique, IsInt, ArrayMinSize, ValidateNested } from "class-validator";
 import { toDateOnly } from "src/utils/ToDateOnly";
-import { ProductWithQtyDto } from "./create-project.dto";
 
 export class UpdateProjectDto {
     @ApiPropertyOptional()
@@ -60,12 +59,4 @@ export class UpdateProjectDto {
     @IsBoolean()
     @IsOptional()
     IsActive?: boolean;
-
-    @ApiPropertyOptional({ type: [ProductWithQtyDto] })
-    @IsOptional()
-    @IsArray()
-    @ArrayMinSize(1)
-    @ValidateNested({ each: true })
-    @Type(() => ProductWithQtyDto)
-    productQuantitys?: ProductWithQtyDto[];
 }

@@ -1,6 +1,5 @@
 import { Category } from "src/categories/entities/category.entity";
 import { Material } from "src/material/entities/material.entity";
-import { ProjectProduct } from "src/project/project_product/entities/project_product.entity";
 import { Supplier } from "src/supplier/entities/supplier.entity";
 import { UnitMeasure } from "src/unit_measure/entities/unit_measure.entity";
 import {
@@ -62,12 +61,9 @@ export class Product {
     @JoinColumn({ name: "SupplierId" })
     Supplier: Supplier;
 
-    @OneToMany(() => ProjectProduct, (ProjectProduct) => ProjectProduct.Product)
-    ProjectProducts?: ProjectProduct[];
-
     @OneToMany(() => ProductDetail, (d) => d.Product, {
     cascade: ["insert", "update"], 
     nullable: false,                   // true si quieres que siempre cargue los detalles
-})
-ProductDetails?: ProductDetail[];
+    })
+    ProductDetails?: ProductDetail[];
 }

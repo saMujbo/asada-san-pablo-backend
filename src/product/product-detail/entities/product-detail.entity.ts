@@ -25,4 +25,4 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } 
 
     @JoinColumn({ name: "ActualExpenseId" } )
     ActualExpense: ActualExpense;
-    }
+}
