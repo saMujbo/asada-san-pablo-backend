@@ -17,13 +17,13 @@ export class ProjectProjectionController {
     return this.projectProjectionService.findAll();
   }
 
-  @Get(':id/ProjectProjection')
-  findOne(@Param('id',ParseIntPipe) id: number) {
+  @Get(':id')
+  findOne(@Param('id') id: number) {
     return this.projectProjectionService.findOne(id);
   }
 
-  @Put(':idProjectPro')
-  update(@Param('Id',ParseIntPipe) Id: number, 
+  @Put(':id')
+  update(@Param('Id') Id: number, 
   @Body() updateProjectProjectionDto: UpdateProjectProjectionDto) {
     return this.projectProjectionService.update(Id, updateProjectProjectionDto);
   }

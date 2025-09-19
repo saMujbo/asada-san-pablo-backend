@@ -113,20 +113,25 @@ export class UsersService {
   }
 
 
-  async update(Id: number, updateUserDto: AdminCreateUserDto) {
-    const user = await this.userRepo.findOne({ where:{ Id} });
+  async update(Id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.userRepo.findOne({ where:{ Id } });
 
     if (!user) {throw new ConflictException(`User with Id ${Id} not found`);}
 
-    if(updateUserDto.Name !== undefined && updateUserDto.Name != null && updateUserDto.Name !== '') user.Name = updateUserDto.Name;
-    if(updateUserDto.Surname1 !== undefined && updateUserDto.Surname1 != null && updateUserDto.Surname1 !== '') user.Surname1 = updateUserDto.Surname1;
-    if(updateUserDto.Surname2 !== undefined && updateUserDto.Surname2 != null && updateUserDto.Surname2 !== '') user.Surname2 = updateUserDto.Surname2;
+    const { roleIds, ...rest } = updateUserDto;
+
+    // 2) Roles a asignar
+    const roles = roleIds?.length
+      ? await this.rolesService.findAllByIDs(roleIds)
+      : [await this.rolesService.findDefaultRole()];
+
     if(updateUserDto.Nis !== undefined && updateUserDto.Nis != null && updateUserDto.Nis !== '') user.Nis = updateUserDto.Nis;
     if(updateUserDto.Email !== undefined && updateUserDto.Email != null && updateUserDto.Email !== '') user.Email = updateUserDto.Email;
     if(updateUserDto.PhoneNumber !== undefined && updateUserDto.PhoneNumber != null && updateUserDto.PhoneNumber !== '') user.PhoneNumber = updateUserDto.PhoneNumber;
     if(updateUserDto.Address !== undefined && updateUserDto.Address != null && updateUserDto.Address !== '') user.Address = updateUserDto.Address;
     if(updateUserDto.Birthdate !== undefined) user.Birthdate = updateUserDto.Birthdate as any;
     if(updateUserDto.IsActive !== undefined && updateUserDto.IsActive != null) user.IsActive = updateUserDto.IsActive;
+    user.Roles = roles;
     
     return await this.userRepo.save(user);
 }

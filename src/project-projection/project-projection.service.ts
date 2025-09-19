@@ -4,24 +4,33 @@ import { UpdateProjectProjectionDto } from './dto/update-project-projection.dto'
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProjectProjection } from './entities/project-projection.entity';
 import { Repository } from 'typeorm';
+import { ProjectService } from 'src/project/project.service';
 
 @Injectable()
 export class ProjectProjectionService {
   constructor(
     @InjectRepository(ProjectProjection)
     private readonly projectProjectionRepo: Repository<ProjectProjection>,
+    private readonly projectService: ProjectService,
   ) {}
   async create(createProjectProjectionDto: CreateProjectProjectionDto) {
-    const newProjectProjection = this.projectProjectionRepo.create(createProjectProjectionDto);
+    const project = await this.projectService.findOne(createProjectProjectionDto.ProjectId);
+    const newProjectProjection = this.projectProjectionRepo.create({
+      Observation: createProjectProjectionDto.Observation,
+      Project: project,
+    });
     return await this.projectProjectionRepo.save(newProjectProjection);
   }
 
   async findAll() {
-  return await this.projectProjectionRepo.find();
+  return await this.projectProjectionRepo.find({ relations: ['Project' ,'ProductDetails', 'ProductDetails.Product'] });
   }
 
   async findOne(Id: number) {
-    const foundProjection = await this.projectProjectionRepo.findOne({ where: { Id} });
+    const foundProjection = await this.projectProjectionRepo.findOne({ 
+      where: { Id }, 
+      relations: ['ProductDetails', 'ProductDetails.Product'] 
+    });
     if(!foundProjection) throw new NotFoundException(`ProjectProjection with Id ${Id} not found`);
     return foundProjection;
   }

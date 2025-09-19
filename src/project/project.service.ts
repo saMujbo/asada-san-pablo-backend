@@ -15,8 +15,7 @@ export class ProjectService {
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
     @Inject(forwardRef(() => ProjectStateService))
-    private readonly projectStateSv: ProjectStateService,
-    private readonly productSv: ProductService,
+    private readonly projectStateSv: ProjectStateService
   ){}
 
   async create(createProjectDto: CreateProjectDto) {
@@ -72,7 +71,10 @@ export class ProjectService {
 
   async findAll() {
     return await this.projectRepo.find({where:{IsActive:true}, relations:[
-      'ProjectState']});
+      'ProjectState', 
+      'ProjectProjection', 
+      'ProjectProjection.ProductDetails', 
+      'ProjectProjection.ProductDetails.Product'] });
   }
   
   async search({ page =1, limit = 10,name,state}:ProjectPaginationDto){
@@ -114,7 +116,10 @@ export class ProjectService {
     const foundProject = await this.projectRepo.findOne({
       where: { Id },
       relations:[
-      'ProjectState']
+      'ProjectState', 
+      'ProjectProjection', 
+      'ProjectProjection.ProductDetails', 
+      'ProjectProjection.ProductDetails.Product']
     });
     
     if(!foundProject) throw new NotFoundException(`Project with Id ${Id} not found`);

@@ -69,7 +69,7 @@ export class UsersController {
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto:AdminCreateUserDto,
+    @Body() updateUserDto: UpdateUserDto,
   ) {
     return await  this.usersService.update(id, updateUserDto);
   }

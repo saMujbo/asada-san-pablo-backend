@@ -11,6 +11,7 @@ import { CreateProductDetailDto } from "src/product/product-detail/dto/create-pr
     Observation?: string;
 
     // Relación con Project (1:1)
+    @ApiProperty()
     @IsOptional()
     @Type(() => Number)
     @IsInt()
