@@ -1,12 +1,16 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ProductDetailService } from './product-detail.service';
 import { TypeOrmModule } from '@nestjs/typeorm/dist';
 import { ProductDetail } from './entities/product-detail.entity';
 import { ProductDetailController } from './product-detail.controller';
+import { ProductModule } from '../product.module';
+import { ProjectProjectionModule } from 'src/project-projection/project-projection.module';
 
 @Module({
   imports: [
-        TypeOrmModule.forFeature([ProductDetail]),
+    TypeOrmModule.forFeature([ProductDetail]),
+    ProductModule,
+    ProjectProjectionModule
   ],
   controllers: [ProductDetailController],
   providers: [ProductDetailService],

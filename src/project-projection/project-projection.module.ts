@@ -3,8 +3,6 @@ import { ProjectProjectionService } from './project-projection.service';
 import { ProjectProjectionController } from './project-projection.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProjectProjection } from './entities/project-projection.entity';
-import { Product } from 'src/product/entities/product.entity';
-import { Project } from 'src/project/entities/project.entity';
 
 @Module({
   imports: [
@@ -12,5 +10,6 @@ import { Project } from 'src/project/entities/project.entity';
   ],
   controllers: [ProjectProjectionController],
   providers: [ProjectProjectionService],
+  exports: [ProjectProjectionService],
 })
 export class ProjectProjectionModule {}

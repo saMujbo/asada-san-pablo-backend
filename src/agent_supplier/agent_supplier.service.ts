@@ -30,11 +30,11 @@ export class AgentSupplierService {
   }
 
   async findAll() {
-    return await this.agentSupplierRepo.find();
+    return await this.agentSupplierRepo.find({relations: ['Supplier']});
   }
 
   async findOne(Id: number) {
-    const found = await this.agentSupplierRepo.findOne({where:{Id}});
+    const found = await this.agentSupplierRepo.findOne({where:{Id,}, relations: ['Supplier']});
     if(!found) throw new ConflictException(`AgentSupplier with ${Id} not found`);
     return found;
   }

@@ -13,7 +13,7 @@ export class ProjectProjection {
     @OneToMany(() => ProductDetail, (projectDetail) => projectDetail.ProjectProjection,{
         cascade: ["insert", "update"],
     })   
-    ProductDetails: ProductDetail[]; 
+    ProductDetails: ProductDetail[];
 
     @OneToOne(()=>Project,(project)=>project.ProjectProjection)
     Project:Project;

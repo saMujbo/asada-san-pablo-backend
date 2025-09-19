@@ -5,25 +5,38 @@ import { Repository } from 'typeorm';
 import { ProductDetail } from './entities/product-detail.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from '../entities/product.entity';
+import { ProductService } from '../product.service';
+import { ProjectService } from 'src/project/project.service';
+import { ProjectProjectionService } from 'src/project-projection/project-projection.service';
 
 @Injectable()
 export class ProductDetailService {
   constructor(
-      @InjectRepository(ProductDetail)
-    private readonly productRepo: Repository<ProductDetail>,
-
+    @InjectRepository(ProductDetail)
+    private readonly productDetailRepo: Repository<ProductDetail>,
+    private readonly productSv: ProductService,
+    private readonly projectProjectionSv: ProjectProjectionService,
   ) {}
+
   async  create(createProductDetailDto: CreateProductDetailDto) {
-    const newProductDetail = this.productRepo.create(createProductDetailDto)
-    return await this.productRepo.save(newProductDetail) 
+    const [productExists, projectProjection ] = await Promise.all([
+      this.productSv.findOne(createProductDetailDto.ProductId),
+      this.projectProjectionSv.findOne(createProductDetailDto.ProjectProjectionId),
+    ]);
+    const newProductDetail = this.productDetailRepo.create({
+      Quantity: createProductDetailDto.Quantity,
+      Product: productExists,
+      ProjectProjection: projectProjection
+    })
+    return await this.productDetailRepo.save(newProductDetail) 
   }
 
   async findAll() {
-    return await this.productRepo.find();
+    return await this.productDetailRepo.find({ relations: ['Product', 'ProjectProjection'] });
   }
 
   async findOne(id: number) {
-    const productDetail = await this.productRepo.findOneBy({Id: id})
+    const productDetail = await this.productDetailRepo.findOneBy({Id: id})
     if(!productDetail){
       throw new Error(`ProductDetail with ID ${id} not found`);
     }
@@ -31,14 +44,14 @@ export class ProductDetailService {
   }
 
   async update(id: number, updateProductDetailDto: UpdateProductDetailDto) {
-    const updatedProductDetail = await this.productRepo.findOne({where: {Id: id}});
+    const updatedProductDetail = await this.productDetailRepo.findOne({where: {Id: id}});
     if(!updatedProductDetail){
       throw new Error(`ProductDetail with ID ${id} not found`);
     }
     if(updateProductDetailDto.Quantity !== undefined && updateProductDetailDto.Quantity !== null){
       updatedProductDetail.Quantity = updateProductDetailDto.Quantity;
     } 
-    return await this.productRepo.save(updatedProductDetail);
+    return await this.productDetailRepo.save(updatedProductDetail);
   }
 
   async remove(Id: number) {
@@ -46,6 +59,6 @@ export class ProductDetailService {
     if(!Productdelete){
       throw new Error(`ProductDetail with ID ${Id} not found`);
     }
-    return await this.productRepo.remove(Productdelete);
+    return await this.productDetailRepo.remove(Productdelete);
   }
 }

@@ -83,6 +83,4 @@
     @Type(() => Number)
     @IsInt({ each: true })
     roleIds?: number[];
-
-    
 }

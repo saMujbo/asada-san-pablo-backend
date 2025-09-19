@@ -21,7 +21,7 @@ export class ProjectProjectionService {
   }
 
   async findOne(Id: number) {
-    const foundProjection = await this.projectProjectionRepo.findOne({ where: { Id: Id } });
+    const foundProjection = await this.projectProjectionRepo.findOne({ where: { Id} });
     if(!foundProjection) throw new NotFoundException(`ProjectProjection with Id ${Id} not found`);
     return foundProjection;
   }
