@@ -10,5 +10,6 @@ import { ActualExpense } from './entities/actual-expense.entity';
   ],
   controllers: [ActualExpenseController],
   providers: [ActualExpenseService],
+  exports: [ActualExpenseService]
 })
 export class ActualExpenseModule {}

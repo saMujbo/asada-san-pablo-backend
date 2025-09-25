@@ -26,11 +26,5 @@ export class TraceProject {
   @Column({ default: true })
   IsActive: boolean;
 
-  @ManyToMany(() => ActualExpense, (ae) => ae.TraceProjects)
-  @JoinTable({
-    name: 'trace_project_actual_expense',                 // nombre de la tabla puente
-    joinColumn: { name: 'TraceProjectId', referencedColumnName: 'Id' },
-    inverseJoinColumn: { name: 'ActualExpenseId', referencedColumnName: 'Id' },
-  })
-  ActualExpenses: ActualExpense[];
+
 }
