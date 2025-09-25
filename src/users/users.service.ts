@@ -281,4 +281,28 @@ export class UsersService {
     return { message: 'Email updated', email: user.Email };
   }
 
+//  async findUsersByRole() {
+//   const users = await this.userRepo.find({
+//     relations: ['Roles'],
+//     where: {
+//       Roles: {
+//         Rolname: 'ADMIN',
+//       },
+//     },
+//   });
+
+//   return users;
+// }
+
+async findUsersByRoleAdmin() {
+  return await this.userRepo.find({
+    relations: ['Roles'],
+    where: {
+      Roles: { Rolname: 'ADMIN' },
+    },
+  });
 }
+
+}
+
+

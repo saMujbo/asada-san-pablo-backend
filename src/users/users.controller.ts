@@ -38,6 +38,11 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get('/role-admin')
+  async getUsersByRole() {
+    return this.usersService.findUsersByRoleAdmin();
+  }
+
   //@UseGuards(AuthGuard('jwt'), RolesGuard)
   @Get('search')
   //@Roles(Role.ADMIN) // Only allow ADMIN role to access this endpoint
@@ -79,5 +84,7 @@ export class UsersController {
   async updateMyEmail( @GetUser('id') id: number, @Body() dto: UpdateEmailDto ){
     return await this.usersService.updateMyEmail(id, dto);
   }
+
+  
 
 }
