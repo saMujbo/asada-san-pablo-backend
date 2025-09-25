@@ -14,4 +14,8 @@ export class CreateProductDetailDto {
     @ApiProperty()
     @IsInt() @Min(1)
     ProjectProjectionId: number;
+
+    @ApiProperty()
+    @IsInt() @Min(1)
+    ActualExpenseId: number;
 }

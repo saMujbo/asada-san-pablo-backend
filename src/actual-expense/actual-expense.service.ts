@@ -10,6 +10,7 @@ export class ActualExpenseService {
   constructor(
       @InjectRepository(ActualExpense)
       private readonly actualExpenseRepo: Repository<ActualExpense>,
+      //private readonly productDetailSv: ActualExpenseService,
   ) {}
   async create(createActualExpenseDto: CreateActualExpenseDto) {
     const newActualExpense = this.actualExpenseRepo.create(createActualExpenseDto);
@@ -33,8 +34,7 @@ export class ActualExpenseService {
     const newActualExpense = await this.actualExpenseRepo.findOne({ where: { Id, IsActive: true } });
     
     if(!newActualExpense){
-      throw new NotFoundException(`ActualExpense with ID ${Id} not found`);
-    }
+      throw new NotFoundException(`ActualExpense with ID ${Id} not found`);}
     if(updateActualExpenseDto.Date !== undefined) newActualExpense.Date= updateActualExpenseDto.Date as any;
     if(updateActualExpenseDto.Observation !== undefined,updateActualExpenseDto.Observation != null && updateActualExpenseDto.Observation !='') newActualExpense.Observation= updateActualExpenseDto.Observation;
     if(updateActualExpenseDto.IsActive !== undefined) newActualExpense.IsActive= updateActualExpenseDto.IsActive;

@@ -25,6 +25,8 @@ import { Transform } from 'class-transformer';
     @Column({ default: true })
     IsActive: boolean;
 
+    @OneToMany(() => ProductDetail, (producDetail) => producDetail.ActualExpense)
+    ProductDetails: ProductDetail[];
     // 1:N con ProductDetail (la FK vive en ProductDetail)
     // @OneToMany(() => ProductDetail, (d) => d.ActualExpense, {
     //     cascade: ['insert', 'update'],
@@ -32,6 +34,6 @@ import { Transform } from 'class-transformer';
     // ProductDetails: ProductDetail[];
 
     // M:N con TraceProject (el @JoinTable va SOLO en TraceProject)
-    @ManyToMany(() => TraceProject, (tp) => tp.ActualExpenses)
-    TraceProjects: TraceProject[];
+    // @ManyToMany(() => TraceProject, (tp) => tp.ActualExpenses)
+    // TraceProjects: TraceProject[];
 }

@@ -14,7 +14,7 @@ export class UnitMeasureService {
     @InjectRepository(UnitMeasure)
     private readonly unitRepo: Repository<UnitMeasure>,
     @Inject(forwardRef(() => ProductService))
-    private readonly productSv: ProductService,
+     private readonly productSv: ProductService,
   ){}
 
   async create(createUnitMeasureDto: CreateUnitMeasureDto) {

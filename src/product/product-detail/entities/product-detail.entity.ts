@@ -28,6 +28,11 @@ export class ProductDetail {
     @JoinColumn({ name: "ProjectProjectionId" })
     ProjectProjection: ProjectProjection;
 
-    // @JoinColumn({ name: "ActualExpenseId" } )
-    // ActualExpense: ActualExpense;
+    @Index()
+    @ManyToOne(() => ActualExpense, (actualExpense) => actualExpense.ProductDetails, {
+        nullable: false,
+        onDelete: "RESTRICT",
+    })
+    @JoinColumn({ name: "ActualExpenseId" })
+    ActualExpense: ActualExpense;
 }
