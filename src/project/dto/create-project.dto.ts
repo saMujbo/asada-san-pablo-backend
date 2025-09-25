@@ -54,4 +54,9 @@ export class CreateProjectDto {
     @IsNotEmpty()
     @IsInt()
     ProjectStateId: number;
+
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsInt()
+    UserId: number;
 }

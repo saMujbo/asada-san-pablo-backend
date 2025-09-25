@@ -8,6 +8,8 @@ import { hasNonEmptyString, isValidDate } from 'src/utils/validation.utils';
 import { ProjectPaginationDto } from './dto/pagination-project.dto';
 import { ProjectStateService } from './project-state/project-state.service';
 import { ProductService } from 'src/product/product.service';
+import { UsersService } from 'src/users/users.service';
+import { use } from 'passport';
 
 @Injectable()
 export class ProjectService {
@@ -15,11 +17,12 @@ export class ProjectService {
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
     @Inject(forwardRef(() => ProjectStateService))
-    private readonly projectStateSv: ProjectStateService
+    private readonly projectStateSv: ProjectStateService,
+    private readonly userSv: UsersService
   ){}
 
   async create(createProjectDto: CreateProjectDto) {
-    const { ProjectStateId ,...rest } = createProjectDto;
+    const { ProjectStateId, UserId,...rest } = createProjectDto;
 
     if (rest.InnitialDate && rest.EndDate) {
       const ini = new Date(rest.InnitialDate);
@@ -29,49 +32,17 @@ export class ProjectService {
       }
     }
     const projectState = await this.projectStateSv.findOne(ProjectStateId);
-    const project = this.projectRepo.create({ ProjectState: projectState, ...rest });
+    const user = await this.userSv.findOne(UserId);
+    const project = this.projectRepo.create({ ProjectState: projectState, User: user, ...rest });
     await this.projectRepo.save(project);
-
-    // if (!productQuantitys.length) {
-    //   project.ProjectProducts = [];
-    //   return project;
-    // }
-
-    // const qtyMap = new Map<number, number>();
-    // for (const item of productQuantitys) {
-    //   qtyMap.set(item.productId, (qtyMap.get(item.productId) ?? 0) + Number(item.quantity));
-    // }
-
-    // const ids = Array.from(qtyMap.keys());
-    // const products = await this.productSv.findAllByIds(ids);
-    // const productMap = new Map(products.map(p => [p.Id, p]));
-    // const faltantes = ids.filter(id => !productMap.has(id));
-    // if (faltantes.length) {
-    //   throw new NotFoundException(`No existen productos con ids: ${faltantes.join(', ')}`);
-    // }
-
-    // const items = Array.from(qtyMap.entries()).map(([productId, quantity]) =>
-    //   this.projectProductRepo.create({
-    //     Project: project,
-    //     Product: productMap.get(productId)!,
-    //     quantity,
-    //   })
-    // );
-
-    // await this.projectProductRepo.save(items);
-
-    // project.ProjectProducts = await this.projectProductRepo.find({
-    //   where: { Project: { Id: project.Id } },
-    //   relations: ['Product'],
-    //   order: { idProjectProduct: 'ASC' },
-    // });
 
     return project;
   }
 
   async findAll() {
     return await this.projectRepo.find({where:{IsActive:true}, relations:[
-      'ProjectState', 
+      'ProjectState',
+      'User', 
       'ProjectProjection', 
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product'] });
@@ -114,9 +85,10 @@ export class ProjectService {
 
   async findOne(Id: number) {
     const foundProject = await this.projectRepo.findOne({
-      where: { Id },
+      where: { Id, IsActive: true },
       relations:[
       'ProjectState', 
+      'User',
       'ProjectProjection', 
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product']

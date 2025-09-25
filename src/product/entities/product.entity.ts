@@ -62,8 +62,8 @@ export class Product {
     Supplier: Supplier;
 
     @OneToMany(() => ProductDetail, (d) => d.Product, {
-    cascade: ["insert", "update"], 
-    nullable: false,                   // true si quieres que siempre cargue los detalles
+        cascade: ["insert", "update"], 
+        nullable: false,                   // true si quieres que siempre cargue los detalles
     })
     ProductDetails?: ProductDetail[];
 }

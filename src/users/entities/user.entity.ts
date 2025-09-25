@@ -1,5 +1,6 @@
+import { Project } from "src/project/entities/project.entity";
 import { Role } from "src/roles/entities/role.entity";
-import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class User {
@@ -42,8 +43,10 @@ export class User {
     @Column()
     Password:string;
 
-
     @ManyToMany(()=>Role)
     @JoinTable({ name: 'user_roles_role' })
     Roles:Role[];
+
+    @OneToMany(() => Project, (project) => project.User)
+    Projects?: Project[];
 }

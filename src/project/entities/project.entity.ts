@@ -1,6 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { ProjectState } from "../project-state/entities/project-state.entity";
 import { ProjectProjection } from "src/project-projection/entities/project-projection.entity";
+import { User } from "src/users/entities/user.entity";
 
 @Entity()
 export class Project {
@@ -48,4 +49,9 @@ export class Project {
     })
     @JoinColumn({name:"ProjectProjectionId"})
     ProjectProjection:ProjectProjection;
+
+    @Index()
+    @ManyToOne(() => User, (user) => user.Projects, { nullable: false }) // FK obligatoria
+    @JoinColumn({ name: "UserId" })
+    User: User;
 }
