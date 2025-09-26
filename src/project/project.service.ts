@@ -54,6 +54,7 @@ export class ProjectService {
     const skip = (pageNum -1)* take;
 
     const qb = this.projectRepo.createQueryBuilder('project')
+    .leftJoinAndSelect('project.ProjectState', 'projectState')
     .skip(skip)
     .take(take);
 
