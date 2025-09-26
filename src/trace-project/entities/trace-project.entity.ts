@@ -1,5 +1,5 @@
 import {
-  Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn,
+  Column, Entity, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ActualExpense } from 'src/actual-expense/entities/actual-expense.entity';
 import { Transform } from 'class-transformer';
@@ -26,5 +26,7 @@ export class TraceProject {
   @Column({ default: true })
   IsActive: boolean;
 
+  @OneToOne(() => ActualExpense, (actualExpense) => actualExpense.TraceProject)
+  ActualExpense?: ActualExpense;
 
 }

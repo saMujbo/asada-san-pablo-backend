@@ -4,26 +4,32 @@ import { UpdateActualExpenseDto } from './dto/update-actual-expense.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ActualExpense } from './entities/actual-expense.entity';
 import { Repository } from 'typeorm';
+import { TraceProjectService } from 'src/trace-project/trace-project.service';
 
 @Injectable()
 export class ActualExpenseService {
   constructor(
       @InjectRepository(ActualExpense)
       private readonly actualExpenseRepo: Repository<ActualExpense>,
-      //private readonly productDetailSv: ActualExpenseService,
+      private readonly traceProjectService: TraceProjectService,
   ) {}
   async create(createActualExpenseDto: CreateActualExpenseDto) {
-    const newActualExpense = this.actualExpenseRepo.create(createActualExpenseDto);
-
+        const traceProject = await this.traceProjectService.findOne(createActualExpenseDto.TraceProjectId);
+    const newActualExpense = await this.actualExpenseRepo.create({
+      Date: createActualExpenseDto.Date,
+      Observation: createActualExpenseDto.Observation,
+      TraceProject: traceProject,
+    })
     return await this.actualExpenseRepo.save(newActualExpense);
   }
-  
   async findAll() {
     return await this.actualExpenseRepo.find({ where: { IsActive: true }});
   }
 
   async findOne(Id: number) {
-    const actualExpense = await this.actualExpenseRepo.findOne({ where: { Id, IsActive: true }});
+    const actualExpense = await this.actualExpenseRepo.findOne({ where: { Id, IsActive: true },
+      relations: ['TraceProject']
+    });
     if (!actualExpense) {
       throw new NotFoundException(`ActualExpense with ID ${Id} not found`);
     }
@@ -43,6 +49,11 @@ export class ActualExpenseService {
 
   async remove(Id: number) {
     const actualExpense = await this.actualExpenseRepo.findOneBy({Id});
+
+    const hasTraceProject = await this.traceProjectService.isOnActualExpesne(Id);
+    if (hasTraceProject) {
+      throw new NotFoundException(`Cannot delete ActualExpense with ID ${Id} because it is associated with an active TraceProject`);
+    }
     if(!actualExpense){
       throw new NotFoundException(`ActualExpense with ID ${Id} not found`);
     }

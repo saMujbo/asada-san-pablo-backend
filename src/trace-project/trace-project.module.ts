@@ -10,5 +10,6 @@ import { TraceProject } from './entities/trace-project.entity';
   ],
   controllers: [TraceProjectController],
   providers: [TraceProjectService],
+  exports: [TraceProjectService]
 })
 export class TraceProjectModule {}

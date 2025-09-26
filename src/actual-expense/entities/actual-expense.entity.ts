@@ -1,5 +1,5 @@
 import {
-Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn,
+Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ProductDetail } from 'src/product/product-detail/entities/product-detail.entity';
 import { TraceProject } from 'src/trace-project/entities/trace-project.entity';
@@ -28,7 +28,10 @@ import { Transform } from 'class-transformer';
     @OneToMany(() => ProductDetail, (producDetail) => producDetail.ActualExpense)
     ProductDetails: ProductDetail[];
 
-    // M:N con TraceProject (el @JoinTable va SOLO en TraceProject)
-    // @ManyToMany(() => TraceProject, (tp) => tp.ActualExpenses)
-    // TraceProjects: TraceProject[];
+    @OneToOne(()=>TraceProject,(traceProject)=>traceProject.ActualExpense,{
+        cascade: ["insert", "update"],
+    })
+    @JoinColumn({ name: "TraceProjectId"})
+    TraceProject:TraceProject;
+
 }

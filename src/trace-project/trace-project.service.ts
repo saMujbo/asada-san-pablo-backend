@@ -56,4 +56,10 @@ export class TraceProjectService {
 
     return await this.traceProjectRepo.save(updateActive);
   }
+  async isOnActualExpesne(Id: number){
+    const hasActiveActualExpense = await this.traceProjectRepo.exists({
+      where: {ActualExpense:{Id}, IsActive:true},
+    });
+    return hasActiveActualExpense;
+  }
 }
