@@ -1,7 +1,8 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { ProjectState } from "../project-state/entities/project-state.entity";
 import { ProjectProjection } from "src/project-projection/entities/project-projection.entity";
 import { User } from "src/users/entities/user.entity";
+import { TraceProject } from "src/trace-project/entities/trace-project.entity";
 
 @Entity()
 export class Project {
@@ -54,4 +55,7 @@ export class Project {
     @ManyToOne(() => User, (user) => user.Projects, { nullable: false }) // FK obligatoria
     @JoinColumn({ name: "UserId" })
     User: User;
+    
+    @OneToMany(()=>TraceProject,(traceProject)=>traceProject.Project)
+    TraceProject:TraceProject[];
 }

@@ -16,7 +16,6 @@ export class ActualExpenseService {
   async create(createActualExpenseDto: CreateActualExpenseDto) {
         const traceProject = await this.traceProjectService.findOne(createActualExpenseDto.TraceProjectId);
     const newActualExpense = await this.actualExpenseRepo.create({
-      Date: createActualExpenseDto.Date,
       Observation: createActualExpenseDto.Observation,
       TraceProject: traceProject,
     })
@@ -41,7 +40,6 @@ export class ActualExpenseService {
     
     if(!newActualExpense){
       throw new NotFoundException(`ActualExpense with ID ${Id} not found`);}
-    if(updateActualExpenseDto.Date !== undefined) newActualExpense.Date= updateActualExpenseDto.Date as any;
     if(updateActualExpenseDto.Observation !== undefined,updateActualExpenseDto.Observation != null && updateActualExpenseDto.Observation !='') newActualExpense.Observation= updateActualExpenseDto.Observation;
     if(updateActualExpenseDto.IsActive !== undefined) newActualExpense.IsActive= updateActualExpenseDto.IsActive;
     return await this.actualExpenseRepo.save(newActualExpense);

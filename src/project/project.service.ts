@@ -171,4 +171,10 @@ export class ProjectService {
     });
     return hasActiveProjectState;
   }
+  async isTraceProjectOnProject(Id: number) {
+    const hasActiveTraceProject = await this.projectRepo.exists({
+      where: {TraceProject:{Id}, IsActive:true},
+    });
+    return hasActiveTraceProject;
+  }
 }
