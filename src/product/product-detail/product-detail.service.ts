@@ -9,6 +9,7 @@ import { ProductService } from '../product.service';
 import { ProjectService } from 'src/project/project.service';
 import { ProjectProjectionService } from 'src/project-projection/project-projection.service';
 import { ActualExpenseService } from 'src/actual-expense/actual-expense.service';
+import { hasNonEmptyString } from 'src/utils/validation.utils';
 
 @Injectable()
 export class ProductDetailService {
@@ -20,19 +21,33 @@ export class ProductDetailService {
     private readonly projectProjectionSv: ProjectProjectionService,
   ) {}
 
-  async  create(createProductDetailDto: CreateProductDetailDto) {
-    const [productExists, projectProjection ] = await Promise.all([
-      this.productSv.findOne(createProductDetailDto.ProductId),
-      this.actualExpenseSv.findOne(createProductDetailDto.ActualExpenseId),
-      this.projectProjectionSv.findOne(createProductDetailDto.ProjectProjectionId),
-    ]);
-    const newProductDetail = this.productDetailRepo.create({
-      Quantity: createProductDetailDto.Quantity,
-      Product: productExists,
-      ActualExpense: projectProjection,
-      ProjectProjection: projectProjection
-    })
-    return await this.productDetailRepo.save(newProductDetail) 
+  async create(createProductDetailDto: CreateProductDetailDto) {
+    if(createProductDetailDto.ProjectProjectionId == null
+        && createProductDetailDto.ActualExpenseId == null){
+      throw new Error(`Faltan argumentos para agregar un detalle de producto!`);
+    }
+    const productExists = await this.productSv.findOne(createProductDetailDto.ProductId);
+
+    if(hasNonEmptyString(String(createProductDetailDto.ProjectProjectionId))){
+      const actualExpense = await this.actualExpenseSv.findOne(createProductDetailDto.ActualExpenseId);
+
+      const newProductDetail = this.productDetailRepo.create({
+        Quantity: createProductDetailDto.Quantity,
+        Product: productExists,
+        ActualExpense: actualExpense
+      })
+      return await this.productDetailRepo.save(newProductDetail)
+    }
+    else{
+      const projectProjection = await this.projectProjectionSv.findOne(createProductDetailDto.ProjectProjectionId);
+
+      const newProductDetail = this.productDetailRepo.create({
+        Quantity: createProductDetailDto.Quantity,
+        Product: productExists,
+        ProjectProjection: projectProjection
+      })
+      return await this.productDetailRepo.save(newProductDetail)
+    }
   }
 
   async findAll() {

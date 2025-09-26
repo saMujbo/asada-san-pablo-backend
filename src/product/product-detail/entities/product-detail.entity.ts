@@ -21,18 +21,12 @@ export class ProductDetail {
     Product: Product;
 
     @Index()
-    @ManyToOne(() => ProjectProjection, (projectProjection) => projectProjection.ProductDetails, {
-        nullable: false,
-        onDelete: "RESTRICT",
-    })
+    @ManyToOne(() => ProjectProjection, (projectProjection) => projectProjection.ProductDetails)
     @JoinColumn({ name: "ProjectProjectionId" })
-    ProjectProjection: ProjectProjection;
+    ProjectProjection?: ProjectProjection;
 
     @Index()
-    @ManyToOne(() => ActualExpense, (actualExpense) => actualExpense.ProductDetails, {
-        nullable: false,
-        onDelete: "RESTRICT",
-    })
+    @ManyToOne(() => ActualExpense, (actualExpense) => actualExpense.ProductDetails)
     @JoinColumn({ name: "ActualExpenseId" })
-    ActualExpense: ActualExpense;
+    ActualExpense?: ActualExpense;
 }
