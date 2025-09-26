@@ -104,7 +104,9 @@ export class ProjectService {
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product',
       'ProjectProjection.ProductDetails.Product.Category',
-      'ProjectProjection.ProductDetails.Product.UnitMeasure']
+      'ProjectProjection.ProductDetails.Product.UnitMeasure',
+      'ProjectProjection.ProductDetails.Product.Material'
+    ]
     });
     
     if(!foundProject) throw new NotFoundException(`Project with Id ${Id} not found`);
