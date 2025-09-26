@@ -48,40 +48,48 @@ export class ProjectService {
       'ProjectProjection.ProductDetails.Product'] });
   }
   
-  async search({ page =1, limit = 10,name,state}:ProjectPaginationDto){
+  async search({ page = 1, limit = 10, name, state, projectState}:ProjectPaginationDto){
     const pageNum = Math.max(1, Number(page)||1);
     const take = Math.min(100, Math.max(1,Number(limit)||10));
     const skip = (pageNum -1)* take;
 
     const qb = this.projectRepo.createQueryBuilder('project')
-    .leftJoinAndSelect('project.ProjectState', 'projectState')
-    .skip(skip)
-    .take(take);
+      .leftJoinAndSelect('project.ProjectState', 'ProjectState')
+      .leftJoinAndSelect('project.User', 'User')
+      .leftJoinAndSelect('project.ProjectProjection', 'ProjectProjection')
+      .leftJoinAndSelect('ProjectProjection.ProductDetails', 'ProductDetails')
+      .leftJoinAndSelect('ProductDetails.Product', 'Product')
+      .skip(skip)
+      .take(take);
 
-        if (name?.trim()) {
-        qb.andWhere('LOWER(project.Name) LIKE :name', {
-          name: `%${name.trim().toLowerCase()}%`,
-        });
-      }
+    if (name?.trim()) {
+      qb.andWhere('LOWER(project.Name) LIKE :name', {
+        name: `%${name.trim().toLowerCase()}%`,
+      });
+    }
 
-      if (state) {
-        qb.andWhere('project.IsActive = :state', { state });
-      }
+    if (state) {
+      qb.andWhere('project.IsActive = :state', { state });
+    }
 
-        qb.orderBy('project.Name', 'ASC');
-            const [data, total] = await qb.getManyAndCount();
+    if (projectState) {
+      qb.andWhere('project.ProjectState = :projectState', { projectState });
+    }
 
-      return {
-        data,
-        meta: {
-          total,
-          page: pageNum,
-          limit: take,
-          pageCount: Math.max(1, Math.ceil(total / take)),
-          hasNextPage: pageNum * take < total,
-          hasPrevPage: pageNum > 1,
-        },
-      };
+    qb.orderBy('project.Name', 'ASC');
+        const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page: pageNum,
+        limit: take,
+        pageCount: Math.max(1, Math.ceil(total / take)),
+        hasNextPage: pageNum * take < total,
+        hasPrevPage: pageNum > 1,
+      },
+    };
   }
 
   async findOne(Id: number) {

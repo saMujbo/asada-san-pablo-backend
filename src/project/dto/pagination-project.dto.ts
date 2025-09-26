@@ -30,4 +30,9 @@ export class ProjectPaginationDto {
     @IsOptional()
     @IsString()
     state?: string;
+
+    @ApiPropertyOptional({ description: 'Filtro por estado proyecto' })
+    @IsOptional()
+    @IsString()
+    projectState?: string;
 }
