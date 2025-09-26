@@ -41,11 +41,13 @@ export class ProjectService {
 
   async findAll() {
     return await this.projectRepo.find({where:{IsActive:true}, relations:[
-      'ProjectState',
-      'User', 
+      'ProjectState', 
+      'User',
       'ProjectProjection', 
       'ProjectProjection.ProductDetails', 
-      'ProjectProjection.ProductDetails.Product'] });
+      'ProjectProjection.ProductDetails.Product',
+      'ProjectProjection.ProductDetails.Product.Category',
+      'ProjectProjection.ProductDetails.Product.UnitMeasure'] });
   }
   
   async search({ page = 1, limit = 10, name, state, projectState}:ProjectPaginationDto){
@@ -100,7 +102,9 @@ export class ProjectService {
       'User',
       'ProjectProjection', 
       'ProjectProjection.ProductDetails', 
-      'ProjectProjection.ProductDetails.Product']
+      'ProjectProjection.ProductDetails.Product',
+      'ProjectProjection.ProductDetails.Product.Category',
+      'ProjectProjection.ProductDetails.Product.UnitMeasure']
     });
     
     if(!foundProject) throw new NotFoundException(`Project with Id ${Id} not found`);
