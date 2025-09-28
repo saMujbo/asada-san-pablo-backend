@@ -21,6 +21,8 @@ import { ProjectProjectionModule } from './project-projection/project-projection
 import { ProductDetailModule } from './product/product-detail/product-detail.module';
 import { ActualExpenseModule } from './actual-expense/actual-expense.module';
 import { AgentSupplierModule } from './agent_supplier/agent_supplier.module';
+import { LegalSupplierModule } from './legal-supplier/legal-supplier.module';
+import { PhysicalSupplierModule } from './physical-supplier/physical-supplier.module';
 
 @Module({
   imports: [
@@ -61,6 +63,8 @@ import { AgentSupplierModule } from './agent_supplier/agent_supplier.module';
     ProjectProjectionModule,
     ActualExpenseModule,
     AgentSupplierModule,
+    LegalSupplierModule,
+    PhysicalSupplierModule,
   ],
 })
 export class AppModule {}

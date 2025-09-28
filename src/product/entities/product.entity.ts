@@ -12,6 +12,8 @@ import {
     OneToMany,
 } from "typeorm";
 import { ProductDetail } from "../product-detail/entities/product-detail.entity";
+import { LegalSupplier } from "src/legal-supplier/entities/legal-supplier.entity";
+import { PhysicalSupplier } from "src/physical-supplier/entities/physical-supplier.entity";
 @Entity()
 export class Product {
     @PrimaryGeneratedColumn()
@@ -66,4 +68,12 @@ export class Product {
         nullable: false,                   // true si quieres que siempre cargue los detalles
     })
     ProductDetails?: ProductDetail[];
+
+    @ManyToOne(() => PhysicalSupplier, (s) => s.Products, { nullable: true })
+    @JoinColumn({ name: 'PhysicalSupplierId' })
+    PhysicalSupplier?: PhysicalSupplier;
+
+    @ManyToOne(() => LegalSupplier, (s) => s.Products, { nullable: true })
+    @JoinColumn({ name: 'LegalSupplierId' })
+    LegalSupplier?: LegalSupplier;
 }

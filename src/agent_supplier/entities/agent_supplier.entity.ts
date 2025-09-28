@@ -1,3 +1,4 @@
+import { LegalSupplier } from "src/legal-supplier/entities/legal-supplier.entity";
 import { Supplier } from "src/supplier/entities/supplier.entity";
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from "typeorm";
 
@@ -18,11 +19,7 @@ export class AgentSupplier {
     @Column({ default: true })
     IsActive: boolean;
 
-    @Index()
-    @ManyToOne(() => Supplier, (supplier) => supplier.SupplierAgents, {
-        nullable: false,
-        onDelete: "RESTRICT",
-    })
-    @JoinColumn({ name: "SupplierId" })
-    Supplier: Supplier;
+    @ManyToOne(() => LegalSupplier, (s) => s.AgentSupppliers, { nullable: false })
+    @JoinColumn({ name: 'LegalSupplierId' })
+    LegalSupplier?: LegalSupplier;
 }
