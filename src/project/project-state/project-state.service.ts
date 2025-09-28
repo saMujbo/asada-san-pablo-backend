@@ -46,7 +46,7 @@ export class ProjectStateService {
 
     if (hasProjects && updateProjectStateDto.IsActive === false) {
       throw new BadRequestException(
-        `No se puede desactivar la categoría ${Id} porque está asociado a al menos un producto.`
+        `No se puede desactivar este state ${Id} porque está asociado a al menos a una request.`
       );
     }
 
@@ -64,8 +64,8 @@ export class ProjectStateService {
 
   async remove(Id: number) {
     const projectState = await this.findOne(Id);
-    
-    // ¿Hay algún producto que referencie este material?
+
+
     const hasProjects = await this.projectSv.isOnProjectState(Id);
   
     if (hasProjects) {

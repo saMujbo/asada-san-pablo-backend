@@ -1,4 +1,5 @@
 import { Project } from "src/project/entities/project.entity";
+import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
 import { Role } from "src/roles/entities/role.entity";
 import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
@@ -43,10 +44,14 @@ export class User {
     @Column()
     Password:string;
 
+    //RELATIONS
     @ManyToMany(()=>Role)
     @JoinTable({ name: 'user_roles_role' })
     Roles:Role[];
 
     @OneToMany(() => Project, (project) => project.User)
     Projects?: Project[];
+
+    @OneToMany(()=>RequesAvailabilityWater,(requesAvailabilityWater)=>requesAvailabilityWater.User)
+    RequesAvailabilityWater?:RequesAvailabilityWater[];
 }

@@ -3,9 +3,6 @@ import {
   Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ActualExpense } from 'src/actual-expense/entities/actual-expense.entity';
-import { Transform } from 'class-transformer';
-import { toDateOnly } from 'src/utils/ToDateOnly';
-import { Matches } from 'class-validator';
 import { Project } from 'src/project/entities/project.entity';
 
 @Entity({ name: 'trace_project' })
