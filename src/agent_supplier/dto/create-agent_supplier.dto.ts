@@ -29,5 +29,5 @@ import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean, IsInt, Min } from
 
     @ApiProperty()
     @IsInt() @Min(1)
-    SupplierId: number;
+    LegalSupplierId: number;
 }

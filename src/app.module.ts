@@ -12,7 +12,6 @@ import { CategoriesModule } from './categories/categories.module';
 import { UnitMeasureModule } from './unit_measure/unit_measure.module';
 import { MaterialModule } from './material/material.module';
 import { ProductModule } from './product/product.module';
-import { SupplierModule } from './supplier/supplier.module';
 import { ProjectModule } from './project/project.module';
 import { TraceProjectModule } from './trace-project/trace-project.module';
 import { TraceProjectProductModule } from './trace-project/trace-project_product/trace-project_product.module';
@@ -54,7 +53,6 @@ import { PhysicalSupplierModule } from './physical-supplier/physical-supplier.mo
     CategoriesModule,
     UnitMeasureModule,
     ProductModule,
-    SupplierModule,
     ProjectModule,
     TraceProjectModule,
     TraceProjectProductModule,

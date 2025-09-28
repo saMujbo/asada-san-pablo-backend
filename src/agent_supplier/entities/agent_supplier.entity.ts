@@ -1,5 +1,4 @@
 import { LegalSupplier } from "src/legal-supplier/entities/legal-supplier.entity";
-import { Supplier } from "src/supplier/entities/supplier.entity";
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from "typeorm";
 
 @Entity('agent_supplier')

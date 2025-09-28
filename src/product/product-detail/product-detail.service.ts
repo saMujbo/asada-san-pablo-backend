@@ -7,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ProductService } from '../product.service';
 import { ProjectProjectionService } from 'src/project-projection/project-projection.service';
 import { ActualExpenseService } from 'src/actual-expense/actual-expense.service';
-import { hasNonEmptyString } from 'src/utils/validation.utils';
 
 @Injectable()
 export class ProductDetailService {

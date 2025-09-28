@@ -1,4 +1,4 @@
-import { ConflictException, forwardRef, Inject, Injectable, NotFoundException} from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable, NotFoundException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { In, Repository } from 'typeorm';
@@ -9,7 +9,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductPaginationDto } from './dto/productPaginationDto';
 import { changeState } from 'src/utils/changeState';
-import { SupplierService } from 'src/supplier/supplier.service';
+import { LegalSupplierService } from 'src/legal-supplier/legal-supplier.service';
+import { PhysicalSupplierService } from 'src/physical-supplier/physical-supplier.service';
 
 @Injectable()
 export class ProductService {
@@ -22,28 +23,58 @@ export class ProductService {
     private readonly materialService: MaterialService,
     @Inject(forwardRef(() => UnitMeasureService))
     private readonly unitmeasureService: UnitMeasureService,
-    @Inject(forwardRef(() => SupplierService))
-    private readonly supplierService: SupplierService
+    @Inject(forwardRef(() => LegalSupplierService))
+    private readonly legalSupplierSv: LegalSupplierService,
+    @Inject(forwardRef(() => PhysicalSupplierService))
+    private readonly physicalSupplierSv: PhysicalSupplierService,
   ){}
   
   async create(createProductDto: CreateProductDto) {
-    const [category, material, unit, supplier] = await Promise.all([
-      this.categoryService.findOne(createProductDto.CategoryId),
-      this.materialService.findOne(createProductDto.MaterialId),
-      this.unitmeasureService.findOne(createProductDto.UnitMeasureId),
-      this.supplierService.findOne(createProductDto.SupplierId),
+    const {
+      CategoryId, 
+      MaterialId, 
+      UnitMeasureId, 
+      LegalSupplierId, 
+      PhysicalSupplierId,
+      ...rest
+    } = createProductDto;
+
+    if ((LegalSupplierId == null) && (PhysicalSupplierId == null)) {
+      // En Nest es mejor BadRequestException
+      throw new BadRequestException('Faltan argumentos para agregar un producto!');
+    }
+
+    const [category, material, unit] = await Promise.all([
+      this.categoryService.findOne(CategoryId),
+      this.materialService.findOne(MaterialId),
+      this.unitmeasureService.findOne(UnitMeasureId),
     ]);
 
-    const newProduct = this.productRepo.create({
-      Name: createProductDto.Name,
-      Type: createProductDto.Type,
-      Observation: createProductDto.Observation,
-      Category: category,
-      Material: material,
-      UnitMeasure: unit,
-      Supplier: supplier,
-    });
-    return await this.productRepo.save(newProduct);
+    if(LegalSupplierId != null){
+      const legalSupplier = await this.legalSupplierSv.findOne(LegalSupplierId);
+
+      const newProduct = await this.productRepo.create({
+        Category: category,
+        Material: material,
+        UnitMeasure: unit,
+        LegalSupplier: legalSupplier,
+        ...rest
+      });
+      return await this.productRepo.save(newProduct);
+    }
+    else{
+      const physicalSupplier = await this.physicalSupplierSv.findOne(PhysicalSupplierId);
+
+      const newProduct = await this.productRepo.create({
+        Category: category,
+        Material: material,
+        UnitMeasure: unit,
+        PhysicalSupplier: physicalSupplier,
+        ...rest
+      });
+      return await this.productRepo.save(newProduct);
+    }
+    
   }
 
   async findAll() {
@@ -155,7 +186,7 @@ export class ProductService {
     if (updateProductDto.Type !== undefined) updateProduct.Type = updateProductDto.Type;
     if (updateProductDto.Observation !== undefined) updateProduct.Observation = updateProductDto.Observation;
     if (updateProductDto.IsActive !== undefined && updateProductDto.IsActive != null) 
-          updateProduct.IsActive = updateProductDto.IsActive;
+        updateProduct.IsActive = updateProductDto.IsActive;
     // relaciones (si vienen)
     if (updateProductDto.CategoryId !== undefined)
       updateProduct.Category = await this.categoryService.findOne(updateProductDto.CategoryId);
@@ -163,9 +194,10 @@ export class ProductService {
       updateProduct.Material = await this.materialService.findOne(updateProductDto.MaterialId);
     if (updateProductDto.UnitMeasureId !== undefined)
       updateProduct.UnitMeasure = await this.unitmeasureService.findOne(updateProductDto.UnitMeasureId);
-    if (updateProductDto.SupplierId !== undefined)
-      updateProduct.Supplier = await this.supplierService.findOne(updateProductDto.SupplierId);
-    
+    if (updateProductDto.LegalSupplierId !== undefined)
+      updateProduct.LegalSupplier = await this.legalSupplierSv.findOne(updateProductDto.LegalSupplierId);
+    if (updateProductDto.PhysicalSupplierId !== undefined)
+      updateProduct.PhysicalSupplier = await this.physicalSupplierSv.findOne(updateProductDto.PhysicalSupplierId);
     
     return await this.productRepo.save(updateProduct);
   }
@@ -186,27 +218,35 @@ export class ProductService {
 
   async isOnCategory(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
-      where: { Category: { Id }, IsActive: true },
+      where: { Category: { Id } },
     });
     return hasActiveProducts;
   }
-  async isOnSupplier(Id: number) {
+
+  async isOnLegalSupplier(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
-      where: { Category: { Id }, IsActive: true },
+      where: { LegalSupplier: { Id } },
+    });
+    return hasActiveProducts;
+  }
+
+  async isOnPhysicalSupplier(Id: number) {
+    const hasActiveProducts = await this.productRepo.exist({
+      where: { PhysicalSupplier: { Id } },
     });
     return hasActiveProducts;
   }
   
   async isOnMaterial(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
-      where: { Material: { Id }, IsActive: true },
+      where: { Material: { Id } },
     });
     return hasActiveProducts;
   }
 
   async isOnUnit(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
-      where: { UnitMeasure: { Id }, IsActive: true },
+      where: { UnitMeasure: { Id } },
     });
     return hasActiveProducts;
   }

@@ -6,35 +6,35 @@ import { Repository } from 'typeorm';
 import { changeState } from 'src/utils/changeState';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AgentSupplier } from './entities/agent_supplier.entity';
-import { SupplierService } from 'src/supplier/supplier.service';
+import { LegalSupplierService } from 'src/legal-supplier/legal-supplier.service';
 
 @Injectable()
 export class AgentSupplierService {
   constructor(
     @InjectRepository(AgentSupplier)
-      private readonly agentSupplierRepo: Repository<AgentSupplier>,
-    private readonly supplierSv: SupplierService,
+    private readonly agentSupplierRepo: Repository<AgentSupplier>,
+    private readonly legalSupplierSv: LegalSupplierService,
   ) {}
 
   async create(createAgentSupplierDto: CreateAgentSupplierDto) {
-    const supplierExists = await this.supplierSv.findOne(createAgentSupplierDto.SupplierId);
+    const supplierExists = await this.legalSupplierSv.findOne(createAgentSupplierDto.LegalSupplierId);
     const newAgentSupplier = this.agentSupplierRepo.create({
       Name: createAgentSupplierDto.Name,
       Surname1: createAgentSupplierDto.Surname1,
       Surname2: createAgentSupplierDto.Surname2,
       Email: createAgentSupplierDto.Email,
       PhoneNumber: createAgentSupplierDto.PhoneNumber,
-      Supplier: supplierExists,
+      LegalSupplier: supplierExists,
     });
     return await this.agentSupplierRepo.save(newAgentSupplier);
   }
 
   async findAll() {
-    return await this.agentSupplierRepo.find({relations: ['Supplier']});
+    return await this.agentSupplierRepo.find({relations: ['LegalSupplier']});
   }
 
   async findOne(Id: number) {
-    const found = await this.agentSupplierRepo.findOne({where:{Id,}, relations: ['Supplier']});
+    const found = await this.agentSupplierRepo.findOne({where:{Id, IsActive: true}, relations: ['LegalSupplier']});
     if(!found) throw new ConflictException(`AgentSupplier with ${Id} not found`);
     return found;
   }

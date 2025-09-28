@@ -34,11 +34,11 @@ export class UpdateProductDto {
 
     @ApiProperty()
     @IsOptional() @IsInt() @Min(1)
-    SupplierId?: number;
-    
+    LegalSupplierId?: number;
+
     @ApiProperty()
-    @IsInt() @Min(1)
-    ProjectDetailId: number;
+    @IsOptional() @IsInt() @Min(1)
+    PhysicalSupplierId?: number;
 
     @ApiProperty()
     @IsBoolean()

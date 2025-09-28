@@ -28,10 +28,11 @@ export class CreateProductDto {
 
     @ApiProperty()
     @IsInt() @Min(1)
-    SupplierId: number;
+    @IsOptional()
+    LegalSupplierId: number;
 
     @ApiProperty()
-    @IsOptional() 
     @IsInt() @Min(1)
-    ProjectDetailId?: number;
+    @IsOptional()
+    PhysicalSupplierId: number;
 }

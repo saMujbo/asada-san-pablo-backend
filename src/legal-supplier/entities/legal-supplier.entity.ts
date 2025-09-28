@@ -2,7 +2,7 @@ import { AgentSupplier } from 'src/agent_supplier/entities/agent_supplier.entity
 import { Product } from 'src/product/entities/product.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Index } from 'typeorm';
 
-@Entity('LegalSupplier')
+@Entity('legal_supplier')
 export class LegalSupplier {
     @PrimaryGeneratedColumn()
     Id: number;
