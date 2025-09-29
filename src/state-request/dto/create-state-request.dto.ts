@@ -3,7 +3,7 @@ import { IsInt, IsNotEmpty, IsString } from "class-validator";
 
 export class CreateStateRequestDto {
 
-        @ApiProperty()
+        @ApiProperty(({ example: 'PENDIENTE' }))
         @IsString()
         @IsNotEmpty()
         Name:string;

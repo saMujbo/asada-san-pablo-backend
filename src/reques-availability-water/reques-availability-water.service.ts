@@ -20,7 +20,7 @@ export class RequesAvailabilityWaterService {
   ) {}
   async create(createRequesAvailabilityWaterDto: CreateRequestAvailabilityWaterDto) {
     const Usersv = await this.userSerive.findOne(createRequesAvailabilityWaterDto.UserId);
-    const StateRequestSv = await this.stateRequestSv.findOne(createRequesAvailabilityWaterDto.StateRequestId);
+    const StateRequestSv = await this.stateRequestSv.findDefaultState();
     const newRequestAvailabilityWater = this.requesAvailabilityWaterRepository.create({
       Justification: createRequesAvailabilityWaterDto.Justification,
       IdCardFiles: createRequesAvailabilityWaterDto.IdCardFiles,
