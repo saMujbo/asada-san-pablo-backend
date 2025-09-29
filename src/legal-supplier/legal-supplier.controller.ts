@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query } from '@nestjs/common';
 import { LegalSupplierService } from './legal-supplier.service';
 import { CreateLegalSupplierDto } from './dto/create-legal-supplier.dto';
 import { UpdateLegalSupplierDto } from './dto/update-legal-supplier.dto';
+import { LegalSupplierPaginationDto } from './dto/pagination-legal-supplier.dto';
 
 @Controller('legal-supplier')
 export class LegalSupplierController {
@@ -17,18 +18,23 @@ export class LegalSupplierController {
     return this.legalSupplierService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.legalSupplierService.findOne(+id);
+  @Get('search')
+  search(@Query() pagination: LegalSupplierPaginationDto) {
+    return this.legalSupplierService.search(pagination);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateLegalSupplierDto: UpdateLegalSupplierDto) {
-    return this.legalSupplierService.update(+id, updateLegalSupplierDto);
+  @Get(':id')
+  findOne(@Param('id') id: number) {
+    return this.legalSupplierService.findOne(id);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: number, @Body() updateLegalSupplierDto: UpdateLegalSupplierDto) {
+    return this.legalSupplierService.update(id, updateLegalSupplierDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.legalSupplierService.remove(+id);
+  remove(@Param('id') id: number) {
+    return this.legalSupplierService.remove(id);
   }
 }

@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { PhysicalSupplier } from './entities/physical-supplier.entity';
 import { Repository } from 'typeorm';
 import { ProductService } from 'src/product/product.service';
+import { PhysicalSupplierPaginationDto } from './dto/pagination-physical-supplier.dto';
 
 @Injectable()
 export class PhysicalSupplierService {
@@ -23,8 +24,45 @@ export class PhysicalSupplierService {
   async findAll() {
     return await this.physicalSupplierRepo.find( {
       where: {IsActive: true},
-      relations: ['Products', 'AgentSupppliers']
+      relations: ['Products']
     });
+  }
+
+  async search({ page = 1, limit = 10, name, state}: PhysicalSupplierPaginationDto){
+    const pageNum = Math.max(1, Number(page)||1);
+    const take = Math.min(100, Math.max(1,Number(limit)||10));
+    const skip = (pageNum -1)* take; 
+
+    const qb = this.physicalSupplierRepo.createQueryBuilder('physical_supplier')
+    .skip(skip)
+    .take(take);
+
+        if (name?.trim()) {
+        qb.andWhere('LOWER(physical_supplier.Name) LIKE :name', {
+          name: `%${name.trim().toLowerCase()}%`,
+        });
+      }
+
+      // se aplica solo si viene definido (true o false)
+      if (state) {
+        qb.andWhere('physical_supplier.IsActive = :state', { state });
+      }
+
+          qb.orderBy('physical_supplier.Name', 'ASC');
+
+      const [data, total] = await qb.getManyAndCount();
+
+      return {
+        data,
+        meta: {
+          total,
+          page: pageNum,
+          limit: take,
+          pageCount: Math.max(1, Math.ceil(total / take)),
+          hasNextPage: pageNum * take < total,
+          hasPrevPage: pageNum > 1,
+        },
+      };
   }
 
   async findOne(Id: number) {

@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { LegalSupplier } from './entities/legal-supplier.entity';
 import { Repository } from 'typeorm';
 import { ProductService } from 'src/product/product.service';
+import { LegalSupplierPaginationDto } from './dto/pagination-legal-supplier.dto';
 
 @Injectable()
 export class LegalSupplierService {
@@ -25,6 +26,43 @@ export class LegalSupplierService {
       where: {IsActive: true},
       relations: ['Products', 'AgentSupppliers']
     });
+  }
+
+  async search({page =1, limit = 10,name,state}:LegalSupplierPaginationDto){
+    const pageNum = Math.max(1, Number(page)||1);
+    const take = Math.min(100, Math.max(1,Number(limit)||10));
+    const skip = (pageNum -1)* take; 
+
+    const qb = this.legalSupplierRepo.createQueryBuilder('legal_supplier')
+    .skip(skip)
+    .take(take);
+
+        if (name?.trim()) {
+        qb.andWhere('LOWER(legal_supplier.CompanyName) LIKE :name', {
+          name: `%${name.trim().toLowerCase()}%`,
+        });
+      }
+
+      // se aplica solo si viene definido (true o false)
+      if (state) {
+        qb.andWhere('legal_supplier.IsActive = :state', { state });
+      }
+
+          qb.orderBy('legal_supplier.CompanyName', 'ASC');
+
+      const [data, total] = await qb.getManyAndCount();
+
+      return {
+        data,
+        meta: {
+          total,
+          page: pageNum,
+          limit: take,
+          pageCount: Math.max(1, Math.ceil(total / take)),
+          hasNextPage: pageNum * take < total,
+          hasPrevPage: pageNum > 1,
+        },
+      };
   }
 
   async findOne(Id: number) {

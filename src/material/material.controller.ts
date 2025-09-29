@@ -25,6 +25,7 @@ export class MaterialController {
   findAll() {
     return this.materialService.findAll();
   }
+  
   @Get('search')
   search(@Query() pagination:MaterialPaginationDto){
     return this.materialService.search(pagination);
