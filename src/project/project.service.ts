@@ -142,6 +142,10 @@ export class ProjectService {
     if (hasNonEmptyString(updateProjectDto.SpaceOfDocument) && updateProjectDto.SpaceOfDocument !== undefined) 
       updateProject.SpaceOfDocument = updateProjectDto.SpaceOfDocument;
 
+    if(updateProjectDto.UserId !== undefined && updateProjectDto.UserId != null) {
+      updateProject.User = await this.userSv.findOne(updateProjectDto.UserId);
+    }
+
     if (updateProjectDto.IsActive !== undefined && updateProjectDto.IsActive != null) 
       updateProject.IsActive = updateProjectDto.IsActive;
 
