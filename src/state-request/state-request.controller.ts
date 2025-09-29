@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 import { StateRequestService } from './state-request.service';
 import { CreateStateRequestDto } from './dto/create-state-request.dto';
 import { UpdateStateRequestDto } from './dto/update-state-request.dto';
@@ -22,7 +22,7 @@ export class StateRequestController {
     return this.stateRequestService.findOne(+id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateStateRequestDto: UpdateStateRequestDto) {
     return this.stateRequestService.update(+id, updateStateRequestDto);
   }
