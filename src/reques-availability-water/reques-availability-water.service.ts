@@ -6,6 +6,7 @@ import { UpdateRequestAvailabilityWaterDto } from './dto/update-reques-availabil
 import { RequesAvailabilityWater } from './entities/reques-availability-water.entity';
 import { UsersService } from 'src/users/users.service';
 import { StateRequestService } from 'src/state-request/state-request.service';
+import { RequestAvailabilityWaterPagination } from './dto/pagination-request-availabaility.dto';
 
 
 @Injectable()
@@ -39,7 +40,30 @@ export class RequesAvailabilityWaterService {
         'StateRequest',
         'User',]});
   }
+  async search({page =1, limit =10, state}:RequestAvailabilityWaterPagination){
+        const pageNum = Math.max(1, Number(page) || 1);
+    const take = Math.min(100, Math.max(1, Number(limit) || 10));
+    const skip = (pageNum - 1) * take;
 
+    const qb = this.requesAvailabilityWaterRepository.createQueryBuilder('resquestAvailabilityWater')
+      .skip(skip)
+      .take(take);
+
+      if (state) {
+      qb.andWhere('resquestAvailabilityWater.IsActive = :state', { state });
+    }
+    const [data, total]= await qb.getManyAndCount();
+    return{
+      data,
+      meta:{
+        page:pageNum,
+        limit:take,
+        pageCount:Math.max(1,Math.ceil(total/take)),
+        hasNextPage:pageNum * take < total,
+        hasPrevPage: pageNum >1,
+      },
+    };
+  }
   async findOne(Id: number) {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({
       where:{Id,IsActive:true},relations:[

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query } from '@nestjs/common';
 import { RequesAvailabilityWaterService } from './reques-availability-water.service';
 import { CreateRequestAvailabilityWaterDto } from './dto/create-reques-availability-water.dto';
 import { UpdateRequestAvailabilityWaterDto } from './dto/update-reques-availability-water.dto';
+import { RequestAvailabilityWaterPagination } from './dto/pagination-request-availabaility.dto';
 
 @Controller('reques-availability-water')
 export class RequesAvailabilityWaterController {
@@ -17,6 +18,10 @@ export class RequesAvailabilityWaterController {
     return this.requesAvailabilityWaterService.findAll();
   }
 
+  @Get('search')
+  search(@Query() pagination: RequestAvailabilityWaterPagination){
+    return this.requesAvailabilityWaterService.search(pagination);
+  }
   @Get(':id')
   findOne(@Param('id') Id: number) {
     return this.requesAvailabilityWaterService.findOne(Id);

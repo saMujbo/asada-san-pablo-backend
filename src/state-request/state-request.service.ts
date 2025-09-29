@@ -25,6 +25,12 @@ export class StateRequestService {
     return await this.stateRequesRepo.find({where:{IsActive:true}});
 }
 
+  async findDefaultState(){
+    const state = await this.stateRequesRepo.findOne({where:{Name:'Pendiente'}});
+    if(!state) throw new NotFoundException('Sate por defecto no existe');
+    return state;
+  }
+  
   async findOne(Id: number) {
     const foundProjectState = await this.stateRequesRepo.findOne({
       where:{Id,IsActive:true}
