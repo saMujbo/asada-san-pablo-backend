@@ -14,15 +14,16 @@ import { AdminCreateUserDto } from 'src/users/dto/admin-user.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
   @Post('register')
   register(@Body() registerAuthDto: RegisterAuth) {
     return this.authService.register(registerAuthDto);
   }
+
   @Post('admin/create-user')
   adminCreateuser(@Body()adminUserDto: AdminCreateUserDto){
     return this.authService.adminCreateUser(adminUserDto)
   }
+
   @Post('forgot-password')
   @HttpCode(200)
   fogotPassword(@Body() forgotObjectUser: ForgotPassword) {
@@ -51,5 +52,11 @@ export class AuthController {
   @Post('login')
   login(@Body() loginAuth: LoginAuthDto) {
     return this.authService.login(loginAuth);
+  }
+
+  @Get('validate')
+  @UseGuards(AuthGuard, TokenGuard)
+  validateToken(@Req() req) {
+    return { valid: true, user: req.user };
   }
 }
