@@ -43,6 +43,6 @@ import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, Primar
     User: User;
     
     @ManyToOne(()=> StateRequest,(stateRequest) => stateRequest.RequesAvailabilityWater)
-    @JoinColumn({name: 'SatetRequestId'})
+    @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 }

@@ -40,7 +40,7 @@ export class RequesAvailabilityWaterService {
         'StateRequest',
         'User',]});
   }
-  async search({page =1, limit =10, state}:RequestAvailabilityWaterPagination){
+  async search({page =1, limit =10,UserId,StateRequestId,State}:RequestAvailabilityWaterPagination){
         const pageNum = Math.max(1, Number(page) || 1);
     const take = Math.min(100, Math.max(1, Number(limit) || 10));
     const skip = (pageNum - 1) * take;
@@ -49,8 +49,14 @@ export class RequesAvailabilityWaterService {
       .skip(skip)
       .take(take);
 
-      if (state) {
-      qb.andWhere('resquestAvailabilityWater.IsActive = :state', { state });
+      if (State) {
+      qb.andWhere('resquestAvailabilityWater.IsActive = :state', { State });
+      if(UserId){
+      qb.andWhere('resquestAvailabilityWater.UserId= :userId', { UserId });
+      }
+        if(StateRequestId){
+      qb.andWhere('resquestAvailabilityWater.StateRequestId= :satetRequestId', { StateRequestId});
+      }
     }
     const [data, total]= await qb.getManyAndCount();
     return{
