@@ -14,8 +14,8 @@ import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean, IsInt, Min } from
 
     @ApiProperty({ example: 'Gómez' })
     @IsString()
-    @IsOptional()
-    Surname2?: string;
+    @IsNotEmpty()
+    Surname2: string;
 
     @ApiProperty({ example: 'juanperez@email.com' })
     @IsEmail()
@@ -29,5 +29,6 @@ import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean, IsInt, Min } from
 
     @ApiProperty()
     @IsInt() @Min(1)
+    @IsNotEmpty()
     LegalSupplierId: number;
 }

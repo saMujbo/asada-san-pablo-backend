@@ -15,20 +15,30 @@ export class CreatePhysicalSupplierDto {
     Name: string;
 
     @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    Surname1: string;
+
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
+    Surname2: string;
+
+    @ApiProperty()
     @IsNotEmpty()
     @IsEmail()
     @MaxLength(160)
-    Email?: string;
+    Email: string;
 
     @ApiProperty()
     @IsNotEmpty()
     @IsString() // o @IsPhoneNumber('CR') si aplicarás región
     @MaxLength(30)
-    PhoneNumber?: string;
+    PhoneNumber: string;
 
     @ApiProperty()
     @IsNotEmpty()
     @IsString()
     @MaxLength(160)
-    Location?: string;
+    Location: string;
 }

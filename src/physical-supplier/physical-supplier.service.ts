@@ -37,10 +37,14 @@ export class PhysicalSupplierService {
     .skip(skip)
     .take(take);
 
-        if (name?.trim()) {
-        qb.andWhere('LOWER(physical_supplier.Name) LIKE :name', {
-          name: `%${name.trim().toLowerCase()}%`,
-        });
+      if (name?.trim()) {
+        qb.andWhere(
+        `(LOWER(physical_supplier.Name) LIKE :name 
+          OR LOWER(physical_supplier.Surname1) LIKE :name 
+          OR LOWER(physical_supplier.Surname2) LIKE :name 
+          OR LOWER(physical_supplier.Email) LIKE :name)`,
+        { name: `%${name.toLowerCase()}%` }
+      );
       }
 
       // se aplica solo si viene definido (true o false)
@@ -48,7 +52,7 @@ export class PhysicalSupplierService {
         qb.andWhere('physical_supplier.IsActive = :state', { state });
       }
 
-          qb.orderBy('physical_supplier.Name', 'ASC');
+      qb.orderBy('physical_supplier.Name', 'ASC');
 
       const [data, total] = await qb.getManyAndCount();
 
@@ -92,6 +96,12 @@ export class PhysicalSupplierService {
     if (updatePhysicalSupplierDto.Name !== undefined && updatePhysicalSupplierDto.Name != null 
       && updatePhysicalSupplierDto.Name!=='') 
         foundSupplier.Name = updatePhysicalSupplierDto.Name;
+    if (updatePhysicalSupplierDto.Surname1 !== undefined && updatePhysicalSupplierDto.Surname1 != null 
+      && updatePhysicalSupplierDto.Name!=='') 
+        foundSupplier.Surname1 = updatePhysicalSupplierDto.Surname1;
+    if (updatePhysicalSupplierDto.Surname2 !== undefined && updatePhysicalSupplierDto.Surname2 != null 
+      && updatePhysicalSupplierDto.Name!=='') 
+        foundSupplier.Surname2 = updatePhysicalSupplierDto.Surname2;
     if (updatePhysicalSupplierDto.Email !== undefined && updatePhysicalSupplierDto.Email != null 
       && updatePhysicalSupplierDto.Email!=='') 
         foundSupplier.Email = updatePhysicalSupplierDto.Email;

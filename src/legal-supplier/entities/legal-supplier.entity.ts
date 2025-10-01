@@ -11,6 +11,7 @@ export class LegalSupplier {
     @Column({ type: 'varchar', length: 40 })
     LegalID: string;
 
+    @Index({ unique: true })
     @Column({ type: 'varchar', length: 160 })
     CompanyName: string;
 

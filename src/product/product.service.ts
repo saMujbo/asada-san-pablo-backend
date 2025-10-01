@@ -101,7 +101,8 @@ export class ProductService {
       .leftJoinAndSelect('product.Category', 'category')
       .leftJoinAndSelect('product.Material', 'material')
       .leftJoinAndSelect('product.UnitMeasure', 'unit')
-      .leftJoinAndSelect('product.Supplier', 'supplier')
+      .leftJoinAndSelect('product.PhysicalSupplier', 'physical_supplier')
+      .leftJoinAndSelect('product.LegalSupplier', 'legal_supplier')
       .skip(skip)
       .take(take);
 

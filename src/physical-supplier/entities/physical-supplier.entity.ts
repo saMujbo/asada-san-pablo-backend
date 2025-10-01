@@ -13,14 +13,20 @@ export class PhysicalSupplier {
   @Column({ type: 'varchar', length: 120 })
   Name: string;
 
+  @Column()
+  Surname1: string;
+
+  @Column()
+  Surname2: string;
+
   @Column({ type: 'varchar', length: 160, nullable: true })
-  Email?: string;
+  Email: string;
 
   @Column({ type: 'varchar', length: 30, nullable: true })
-  PhoneNumber?: string;
+  PhoneNumber: string;
 
   @Column({ type: 'varchar', length: 160, nullable: true })
-  Location?: string;
+  Location: string;
 
   @Column({ type: 'boolean', default: true })
   IsActive: boolean;
