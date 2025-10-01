@@ -5,16 +5,25 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, R
 export class AgentSupplier {
     @PrimaryGeneratedColumn()
     Id: number;
+
+    @Column({unique: true})
+    IDcard: string;
+
     @Column()
     Name: string;
+
     @Column()
     Surname1: string;
+
     @Column()
     Surname2: string;
+
     @Column()
     Email: string;
+
     @Column()
     PhoneNumber: string;
+
     @Column({ default: true })
     IsActive: boolean;
 

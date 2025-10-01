@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAgentSupplierDto } from './dto/create-agent_supplier.dto';
 import { UpdateAgentSupplierDto } from './dto/update-agent_supplier.dto';
 import { Repository } from 'typeorm';
@@ -19,6 +19,7 @@ export class AgentSupplierService {
   async create(createAgentSupplierDto: CreateAgentSupplierDto) {
     const supplierExists = await this.legalSupplierSv.findOne(createAgentSupplierDto.LegalSupplierId);
     const newAgentSupplier = this.agentSupplierRepo.create({
+      IDcard: createAgentSupplierDto.IDcard,
       Name: createAgentSupplierDto.Name,
       Surname1: createAgentSupplierDto.Surname1,
       Surname2: createAgentSupplierDto.Surname2,
@@ -42,9 +43,12 @@ export class AgentSupplierService {
   async update(Id: number, updateAgentSupplierDto: UpdateAgentSupplierDto) {
   const agentSupplier = await this.agentSupplierRepo.findOne({ where: { Id } });
   if (!agentSupplier) {
-    throw new ConflictException(`AgentSupplier with Id ${Id} not found`);
+    throw new NotFoundException(`AgentSupplier with Id ${Id} not found`);
   }
 
+  if (updateAgentSupplierDto.IDcard?.trim()) {
+    agentSupplier.IDcard = updateAgentSupplierDto.IDcard;
+  }
   if (updateAgentSupplierDto.Name?.trim()) {
     agentSupplier.Name = updateAgentSupplierDto.Name;
   }

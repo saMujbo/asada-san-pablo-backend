@@ -78,7 +78,7 @@ export class ProductService {
   }
 
   async findAll() {
-    return this.productRepo.find({ relations: ['Category', 'Material', 'UnitMeasure', 'Supplier'], where: { IsActive: true } });
+    return this.productRepo.find({ relations: ['Category', 'Material', 'UnitMeasure', 'PhysicalSupplier', 'LegalSupplier'], where: { IsActive: true } });
   }
 
   // products.service.ts
@@ -161,7 +161,7 @@ export class ProductService {
   async findOne(Id: number) {
     const foundProduct = await this.productRepo.findOne({
       where: { Id, IsActive: true },
-      relations: ['Category', 'Material', 'UnitMeasure', 'Supplier'],
+      relations: ['Category', 'Material', 'UnitMeasure', 'PhysicalSupplier', 'LegalSupplier'],
     });
 
     if(!foundProduct) throw new ConflictException(`Product with Id ${Id} not found`);
@@ -181,7 +181,8 @@ export class ProductService {
   }
   
   async update(Id: number, updateProductDto: UpdateProductDto) {
-    const updateProduct = await this.findOne(Id);
+    const updateProduct = await this.productRepo.findOne({ where: {Id} });
+    if(!updateProduct) throw new NotFoundException(`Product with Id ${Id} not found`);
 
     if (updateProductDto.Name !== undefined) updateProduct.Name = updateProductDto.Name;
     if (updateProductDto.Type !== undefined) updateProduct.Type = updateProductDto.Type;

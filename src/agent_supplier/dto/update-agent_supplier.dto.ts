@@ -1,31 +1,10 @@
-import { ApiProperty} from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean } from 'class-validator';
+import { ApiProperty, PartialType} from '@nestjs/swagger';
+import { IsOptional, IsBoolean } from 'class-validator';
+import { CreateAgentSupplierDto } from './create-agent_supplier.dto';
 
-export class UpdateAgentSupplierDto {
-    @ApiProperty({ example: 'Juan' })
-    @IsString()
-    @IsNotEmpty()
-    Name: string;
-
-    @ApiProperty({ example: 'Pérez' })
-    @IsString()
-    @IsNotEmpty()
-    Surname1: string;
-
-    @ApiProperty({ example: 'Gómez' })
-    @IsString()
-    @IsOptional()
-    Surname2?: string;
-
-    @ApiProperty({ example: 'juanperez@email.com' })
-    @IsEmail()
-    Email: string;
-
-    @ApiProperty({ example: '+50688887777' })
-    @IsString()
-    PhoneNumber: string;
-
+export class UpdateAgentSupplierDto extends PartialType(CreateAgentSupplierDto){
     @ApiProperty({ example: true })
     @IsBoolean()
-    IsActive: boolean;
+    @IsOptional()
+    IsActive?: boolean;
 }

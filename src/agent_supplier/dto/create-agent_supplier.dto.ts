@@ -2,6 +2,11 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsString, IsNotEmpty, IsOptional, IsEmail, IsBoolean, IsInt, Min } from "class-validator";
 
     export class CreateAgentSupplierDto {
+    @ApiProperty({ example: '504560520' })
+    @IsString()
+    @IsNotEmpty()
+    IDcard: string;
+
     @ApiProperty({ example: 'Juan' })
     @IsString()
     @IsNotEmpty()
