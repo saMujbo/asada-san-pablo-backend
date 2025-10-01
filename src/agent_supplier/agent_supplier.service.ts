@@ -40,16 +40,33 @@ export class AgentSupplierService {
   }
 
   async update(Id: number, updateAgentSupplierDto: UpdateAgentSupplierDto) {
-    const agentSupplier = await this.agentSupplierRepo.findOne({where:{Id}});
-    if(!agentSupplier) throw new ConflictException(`AgentSupplier with ${Id} not found`);
-
-    if(updateAgentSupplierDto.Name !== undefined && updateAgentSupplierDto.Name !== null && updateAgentSupplierDto.Name !== '') agentSupplier.Name = updateAgentSupplierDto.Name;
-    if(updateAgentSupplierDto.Surname1 !== undefined && updateAgentSupplierDto.Surname1 !== null && updateAgentSupplierDto.Surname1 !== '') agentSupplier.Surname1 = updateAgentSupplierDto.Surname1;
-    if(updateAgentSupplierDto.Surname2 !== undefined && updateAgentSupplierDto.Surname2 !== null && updateAgentSupplierDto.Surname2 !== '') agentSupplier.Surname2 = updateAgentSupplierDto.Surname2;
-    if(updateAgentSupplierDto.PhoneNumber !== undefined && updateAgentSupplierDto.PhoneNumber !== null && updateAgentSupplierDto.PhoneNumber !== '') agentSupplier.PhoneNumber = updateAgentSupplierDto.PhoneNumber;
-    if(updateAgentSupplierDto.Email !== undefined && updateAgentSupplierDto.Email !== null && updateAgentSupplierDto.Email !== '') agentSupplier.Email = updateAgentSupplierDto.Email;
-    if(updateAgentSupplierDto.IsActive !== undefined && updateAgentSupplierDto.IsActive !== null) agentSupplier.IsActive = updateAgentSupplierDto.IsActive;
+  const agentSupplier = await this.agentSupplierRepo.findOne({ where: { Id } });
+  if (!agentSupplier) {
+    throw new ConflictException(`AgentSupplier with Id ${Id} not found`);
   }
+
+  if (updateAgentSupplierDto.Name?.trim()) {
+    agentSupplier.Name = updateAgentSupplierDto.Name;
+  }
+  if (updateAgentSupplierDto.Surname1?.trim()) {
+    agentSupplier.Surname1 = updateAgentSupplierDto.Surname1;
+  }
+  if (updateAgentSupplierDto.Surname2?.trim()) {
+    agentSupplier.Surname2 = updateAgentSupplierDto.Surname2;
+  }
+  if (updateAgentSupplierDto.PhoneNumber?.trim()) {
+    agentSupplier.PhoneNumber = updateAgentSupplierDto.PhoneNumber;
+  }
+  if (updateAgentSupplierDto.Email?.trim()) {
+    agentSupplier.Email = updateAgentSupplierDto.Email;
+  }
+  if (updateAgentSupplierDto.IsActive !== undefined && updateAgentSupplierDto.IsActive !== null) {
+    agentSupplier.IsActive = updateAgentSupplierDto.IsActive;
+  }
+
+  const saved = await this.agentSupplierRepo.save(agentSupplier);
+  return saved; // ✅ devuelve JSON actualizado
+}
 
   async remove(Id: number) {
     const agentSupplier = await this.agentSupplierRepo.findOneBy({Id});
