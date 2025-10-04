@@ -18,16 +18,17 @@ export class RequestAvailabilityWaterPagination{
         @Max(100)
         limit: number = 10;
         
-        @ApiPropertyOptional({description: 'Filtro por nombre de encargado'})
-        @IsOptional()
-        @IsInt()
-        UserId?: number;
 
-        @ApiPropertyOptional({description: 'Filtro por estado de proyecto'})
+        @ApiPropertyOptional({ description: 'Filtro por nombre del encargado' })
         @IsOptional()
-        @IsInt()
-        StateRequestId?: number;
+        @IsString()
+        UserName?: string;
 
+        @ApiPropertyOptional({ description: 'Filtro por nombre del estado (Pendiente, Terminado, etc.)' })
+        @IsOptional()
+        @IsString()
+        StateName?: string;
+        
         @ApiPropertyOptional({description: 'Filtro por estado (true o false)'})
         @IsOptional()
         @IsString()

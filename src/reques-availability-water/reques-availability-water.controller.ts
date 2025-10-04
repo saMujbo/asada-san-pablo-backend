@@ -4,7 +4,7 @@ import { CreateRequestAvailabilityWaterDto } from './dto/create-reques-availabil
 import { UpdateRequestAvailabilityWaterDto } from './dto/update-reques-availability-water.dto';
 import { RequestAvailabilityWaterPagination } from './dto/pagination-request-availabaility.dto';
 
-@Controller('reques-availability-water')
+@Controller('request-availability-water')
 export class RequesAvailabilityWaterController {
   constructor(private readonly requesAvailabilityWaterService: RequesAvailabilityWaterService) {}
 

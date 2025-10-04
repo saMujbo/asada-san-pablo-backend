@@ -1,5 +1,5 @@
     import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
     export class UpdateRequestAvailabilityWaterDto {
     @ApiProperty()
@@ -31,4 +31,14 @@ import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
     @IsOptional()
     @IsString()
     ConstructionPermitFile?: string;
+    
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsInt()
+    UserId: number;
+    
+    @ApiProperty()
+    @IsNotEmpty()
+    @IsInt()
+    StateRequestId: number;
     }
