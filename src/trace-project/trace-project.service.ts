@@ -14,6 +14,7 @@ export class TraceProjectService {
     private readonly traceProjectRepo: Repository<TraceProject>,
     private readonly projecService:ProjectService
   ){}
+  
   async create(createTraceProjectDto: CreateTraceProjectDto) {
     const projectExists = await this.projecService.findOne(createTraceProjectDto.ProjectId);
     const newTraceProject = this.traceProjectRepo.create({

@@ -1,4 +1,4 @@
-import { HttpException, Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpException, Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RegisterAuth } from './dto/register-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
@@ -106,11 +106,11 @@ export class AuthService {
     const { Email, Password } = userObjectLogin;
     const findUser = await this.userService.findByEmail(Email);
 
-    if (!findUser) throw new HttpException('Usuario no encontrado', 404);
+    if (!findUser) throw new NotFoundException('Usuario no encontrado');
 
     const isPasswordValid = await bcrypt.compare(Password, findUser.Password);
 
-    if (!isPasswordValid) throw new HttpException('Contraseña invalida', 403);
+    if (!isPasswordValid) throw new ConflictException('Contraseña invalida');
 
     const rolesNames = findUser.Roles?.map((role) => role.Rolname);
 

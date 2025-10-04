@@ -100,7 +100,7 @@ export class UsersService {
   }
 
   async findByEmail(Email: string) {
-    return await this.userRepo.findOne({ where: { Email }, relations: ['Roles'] });
+    return await this.userRepo.findOne({ where: { Email, IsActive: true }, relations: ['Roles'] });
   }
 
   async findByIDcardEmail(userObjectForgot: ForgotPassword) {
