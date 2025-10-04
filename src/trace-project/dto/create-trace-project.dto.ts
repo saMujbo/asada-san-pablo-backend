@@ -5,7 +5,6 @@ import { toDateOnly } from "src/utils/ToDateOnly";
 
 
 export class CreateTraceProjectDto {
-
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
@@ -28,6 +27,4 @@ export class CreateTraceProjectDto {
     @IsNotEmpty()
     @IsInt()
     ProjectId:number;
-
-
 }

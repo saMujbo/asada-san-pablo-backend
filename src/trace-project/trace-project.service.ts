@@ -25,15 +25,31 @@ export class TraceProjectService {
   }
 
   async findAll() {
-    return await this.traceProjectRepo.find({where:{IsActive:true}});
+    return await this.traceProjectRepo.find({
+      where:{IsActive:true},
+      relations:[
+        "ActualExpense",
+        'ActualExpense.ProductDetails', 
+        'ActualExpense.ProductDetails.Product',
+        'ActualExpense.ProductDetails.Product.Category',
+        'ActualExpense.ProductDetails.Product.UnitMeasure'
+      ]
+    });
   }
 
   async findOne(Id: number) {
     const foundTraceProject = await this.traceProjectRepo.findOne({
     where:{Id,IsActive:true},
-    relations:["ActualExpense","Project"]
+    relations:[
+      "ActualExpense",
+      'ActualExpense.ProductDetails', 
+      'ActualExpense.ProductDetails.Product',
+      'ActualExpense.ProductDetails.Product.Category',
+      'ActualExpense.ProductDetails.Product.UnitMeasure'
+    ]
     })
-        if(!foundTraceProject) throw new NotFoundException(`TraceProject with Id ${Id} not found`)
+
+    if(!foundTraceProject) throw new NotFoundException(`TraceProject with Id ${Id} not found`)
     return foundTraceProject;
   }
 
