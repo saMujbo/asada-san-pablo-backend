@@ -160,7 +160,7 @@ export class ProductService {
 
   async findOne(Id: number) {
     const foundProduct = await this.productRepo.findOne({
-      where: { Id, IsActive: true },
+      where: { Id },
       relations: ['Category', 'Material', 'UnitMeasure', 'PhysicalSupplier', 'LegalSupplier'],
     });
 
@@ -196,6 +196,7 @@ export class ProductService {
       updateProduct.Material = await this.materialService.findOne(updateProductDto.MaterialId);
     if (updateProductDto.UnitMeasureId !== undefined)
       updateProduct.UnitMeasure = await this.unitmeasureService.findOne(updateProductDto.UnitMeasureId);
+
     if (updateProductDto.LegalSupplierId !== undefined)
       updateProduct.LegalSupplier = await this.legalSupplierSv.findOne(updateProductDto.LegalSupplierId);
     if (updateProductDto.PhysicalSupplierId !== undefined)

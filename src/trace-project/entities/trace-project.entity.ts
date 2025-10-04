@@ -37,7 +37,7 @@ export class TraceProject {
   @OneToOne(() => ActualExpense, (actualExpense) => actualExpense.TraceProject)
   ActualExpense?: ActualExpense;
 
-@ManyToOne(() => Project, p => p.TraceProject, { nullable: false, onDelete: 'CASCADE' })
-@JoinColumn({ name: 'ProjectId' })
-Project: Project;
+  @ManyToOne(() => Project, p => p.TraceProject, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'ProjectId' })
+  Project: Project;
 }

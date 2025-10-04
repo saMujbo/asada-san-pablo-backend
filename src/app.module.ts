@@ -14,7 +14,6 @@ import { MaterialModule } from './material/material.module';
 import { ProductModule } from './product/product.module';
 import { ProjectModule } from './project/project.module';
 import { TraceProjectModule } from './trace-project/trace-project.module';
-import { TraceProjectProductModule } from './trace-project/trace-project_product/trace-project_product.module';
 import { ProjectStateModule } from './project/project-state/project-state.module';
 import { ProjectProjectionModule } from './project-projection/project-projection.module';
 import { ProductDetailModule } from './product/product-detail/product-detail.module';
@@ -56,7 +55,6 @@ import { RequesAvailabilityWaterModule } from './reques-availability-water/reque
     ProductModule,
     ProjectModule,
     TraceProjectModule,
-    TraceProjectProductModule,
     ProjectStateModule,
     ProductDetailModule,
     ProjectProjectionModule,
