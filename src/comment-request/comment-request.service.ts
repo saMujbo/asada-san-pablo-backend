@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RequesAvailabilityWaterService } from 'src/reques-availability-water/reques-availability-water.service';
 import { hasNonEmptyString } from 'src/utils/validation.utils';
+import { RequestsupervisionMeterService } from 'src/requestsupervision-meter/requestsupervision-meter.service';
 
 
 @Injectable()
@@ -14,10 +15,13 @@ export class CommentRequestService {
     @InjectRepository(CommentRequest)
     private readonly commentRequestrepo: Repository<CommentRequest>,
     @Inject(forwardRef(()=>RequesAvailabilityWaterService))
-    private readonly requestAvailabilitySv: RequesAvailabilityWaterService
+    private readonly requestAvailabilitySv: RequesAvailabilityWaterService,
+    @Inject(forwardRef(()=>RequestsupervisionMeterService))
+    private readonly requestRevisionMeter: RequestsupervisionMeterService
   ){}
   async create(createCommentRequestDto: CreateCommentRequestDto) {
     const foundrequesAvailabilityWS = await this.requestAvailabilitySv.findOne(createCommentRequestDto.RequestAvailabilityWaterId);
+    const foundRequestSupervision = await this.requestRevisionMeter.findOne(createCommentRequestDto.RequestSupervisionMeterId)
     const foundCommentRequest = this.commentRequestrepo.create({
       Subject: createCommentRequestDto.Subject,
       Comment: createCommentRequestDto.Comment,

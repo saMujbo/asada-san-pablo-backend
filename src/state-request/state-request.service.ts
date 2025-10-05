@@ -6,6 +6,8 @@ import { StateRequest } from './entities/state-request.entity';
 import { Repository } from 'typeorm';
 import { RequesAvailabilityWaterService } from 'src/reques-availability-water/reques-availability-water.service';
 import { hasNonEmptyString } from 'src/utils/validation.utils';
+import { RequestSupervisionMeter } from 'src/requestsupervision-meter/entities/requestsupervision-meter.entity';
+import { RequestsupervisionMeterService } from 'src/requestsupervision-meter/requestsupervision-meter.service';
 
 @Injectable()
 export class StateRequestService {
@@ -14,6 +16,9 @@ export class StateRequestService {
     private readonly stateRequesRepo : Repository<StateRequest>,
     @Inject(forwardRef(()=>RequesAvailabilityWaterService))
     private readonly RequesAvailabilityWaterSv :  RequesAvailabilityWaterService,
+    @Inject(forwardRef(()=>RequestsupervisionMeterService))
+    private readonly requesSupervisionMeterSv: RequestsupervisionMeterService,
+    
   ){}
   async create(createStateRequestDto: CreateStateRequestDto) {
     const newRequestState = await this.stateRequesRepo.create(createStateRequestDto)
@@ -45,8 +50,9 @@ export class StateRequestService {
     if(!foundProjectState) throw new NotFoundException(`RequestState with ${Id} not found`);
 
     const hasState = await this.RequesAvailabilityWaterSv.isOnRequestState(Id);
+    const hasSateSupervision = await this.requesSupervisionMeterSv.isOnRequestState(Id)
 
-    if(hasState && updateStateRequestDto.IsActive===false){
+    if( hasSateSupervision || hasState || updateStateRequestDto.IsActive===false){
     throw new NotFoundException(
         `No se puede desactivar este state ${Id} porque está asociado a al menos a una request.`
     )}

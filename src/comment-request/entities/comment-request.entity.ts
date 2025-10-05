@@ -1,4 +1,5 @@
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
+import { RequestSupervisionMeter } from "src/requestsupervision-meter/entities/requestsupervision-meter.entity";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
@@ -15,4 +16,8 @@ export class CommentRequest {
     @ManyToOne(()=>RequesAvailabilityWater,(requestAvaillabilityWater)=> requestAvaillabilityWater.commentRquest)
     @JoinColumn({name:'RequestAvailabilityWaterId'})
     requestAvailability:RequesAvailabilityWater;
+
+    @ManyToOne(()=>RequestSupervisionMeter,(requestSupervisionMeter)=> requestSupervisionMeter.commentRquest)
+    @JoinColumn({name:'RequestSupervisionMeterId'})
+    RequestSupervisionMeter:RequestSupervisionMeter;
 }

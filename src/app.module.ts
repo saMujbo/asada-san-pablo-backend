@@ -23,6 +23,7 @@ import { LegalSupplierModule } from './legal-supplier/legal-supplier.module';
 import { PhysicalSupplierModule } from './physical-supplier/physical-supplier.module';
 import { RequesAvailabilityWaterModule } from './reques-availability-water/reques-availability-water.module';
 import { CommentRequestModule } from './comment-request/comment-request.module';
+import { RequestsupervisionMeterModule } from './requestsupervision-meter/requestsupervision-meter.module';
 
 @Module({
   imports: [
@@ -64,7 +65,8 @@ import { CommentRequestModule } from './comment-request/comment-request.module';
     LegalSupplierModule,
     PhysicalSupplierModule,
     RequesAvailabilityWaterModule,
-    CommentRequestModule
+    CommentRequestModule,
+    RequestsupervisionMeterModule
   ],
 })
 export class AppModule {}

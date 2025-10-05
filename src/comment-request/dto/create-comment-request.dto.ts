@@ -16,4 +16,9 @@ import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
     @IsInt()
     @IsNotEmpty()
     RequestAvailabilityWaterId: number; // Relación con RequestAvailabilityWater
+
+    @ApiProperty()
+    @IsInt()
+    @IsNotEmpty()
+    RequestSupervisionMeterId: number; 
     }

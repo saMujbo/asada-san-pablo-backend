@@ -4,11 +4,14 @@ import { StateRequestController } from './state-request.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RequesAvailabilityWaterModule } from 'src/reques-availability-water/reques-availability-water.module';
 import { StateRequest } from './entities/state-request.entity';
+import { RequestsupervisionMeterModule } from 'src/requestsupervision-meter/requestsupervision-meter.module';
+
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([StateRequest]),
     forwardRef(() => RequesAvailabilityWaterModule),
+    forwardRef(() => RequestsupervisionMeterModule),
 
 ],
   controllers: [StateRequestController],

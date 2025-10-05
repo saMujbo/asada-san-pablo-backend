@@ -54,4 +54,7 @@ export class User {
 
     @OneToMany(()=>RequesAvailabilityWater,(requesAvailabilityWater)=>requesAvailabilityWater.User)
     RequesAvailabilityWater?:RequesAvailabilityWater[];
+
+    @OneToMany(()=>RequesAvailabilityWater,(requesAvailabilityWater)=>requesAvailabilityWater.User)
+    RequestSupervisionMeter?:RequesAvailabilityWater[];
 }
