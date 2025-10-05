@@ -22,6 +22,7 @@ export class RequesAvailabilityWaterController {
   search(@Query() pagination: RequestAvailabilityWaterPagination){
     return this.requesAvailabilityWaterService.search(pagination);
   }
+
   @Get(':id')
   findOne(@Param('id') Id: number) {
     return this.requesAvailabilityWaterService.findOne(Id);

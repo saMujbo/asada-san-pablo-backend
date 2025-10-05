@@ -24,6 +24,7 @@ import { PhysicalSupplierModule } from './physical-supplier/physical-supplier.mo
 import { RequesAvailabilityWaterModule } from './reques-availability-water/reques-availability-water.module';
 import { CommentRequestModule } from './comment-request/comment-request.module';
 import { RequestsupervisionMeterModule } from './requestsupervision-meter/requestsupervision-meter.module';
+import { RequestChangeMeterModule } from './request-change-meter/request-change-meter.module';
 
 @Module({
   imports: [
@@ -66,7 +67,8 @@ import { RequestsupervisionMeterModule } from './requestsupervision-meter/reques
     PhysicalSupplierModule,
     RequesAvailabilityWaterModule,
     CommentRequestModule,
-    RequestsupervisionMeterModule
+    RequestsupervisionMeterModule,
+    RequestChangeMeterModule
   ],
 })
 export class AppModule {}

@@ -8,6 +8,8 @@ import { RequesAvailabilityWaterService } from 'src/reques-availability-water/re
 import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestSupervisionMeter } from 'src/requestsupervision-meter/entities/requestsupervision-meter.entity';
 import { RequestsupervisionMeterService } from 'src/requestsupervision-meter/requestsupervision-meter.service';
+import { RequestChangeMeter } from 'src/request-change-meter/entities/request-change-meter.entity';
+import { RequestChangeMeterService } from 'src/request-change-meter/request-change-meter.service';
 
 @Injectable()
 export class StateRequestService {
@@ -18,6 +20,8 @@ export class StateRequestService {
     private readonly RequesAvailabilityWaterSv :  RequesAvailabilityWaterService,
     @Inject(forwardRef(()=>RequestsupervisionMeterService))
     private readonly requesSupervisionMeterSv: RequestsupervisionMeterService,
+    @Inject(forwardRef(()=>RequestChangeMeterService))
+    private readonly requesChangeMeterSv : RequestChangeMeterService
     
   ){}
   async create(createStateRequestDto: CreateStateRequestDto) {
@@ -51,8 +55,12 @@ export class StateRequestService {
 
     const hasState = await this.RequesAvailabilityWaterSv.isOnRequestState(Id);
     const hasSateSupervision = await this.requesSupervisionMeterSv.isOnRequestState(Id)
+    const hasStateChangeMeter = await this.requesChangeMeterSv.isOnRequestState(Id)
 
-    if( hasSateSupervision || hasState || updateStateRequestDto.IsActive===false){
+    if( hasStateChangeMeter || 
+      hasSateSupervision || 
+      hasState || 
+      updateStateRequestDto.IsActive===false){
     throw new NotFoundException(
         `No se puede desactivar este state ${Id} porque está asociado a al menos a una request.`
     )}
@@ -69,7 +77,9 @@ export class StateRequestService {
   async remove(Id: number) {
     const stateRequest = await this.findOne(Id);
 
-    const hasRequest = await this.RequesAvailabilityWaterSv.isOnRequestState(Id)
+    const hasRequest = await this.RequesAvailabilityWaterSv.isOnRequestState(Id) || 
+    this.requesChangeMeterSv.isOnRequestState(Id)||
+    this.requesSupervisionMeterSv.isOnRequestState(Id)
 
     if(hasRequest){
       throw new BadGatewayException(

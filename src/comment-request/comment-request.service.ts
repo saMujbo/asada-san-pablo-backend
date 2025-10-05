@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { RequesAvailabilityWaterService } from 'src/reques-availability-water/reques-availability-water.service';
 import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestsupervisionMeterService } from 'src/requestsupervision-meter/requestsupervision-meter.service';
+import { RequestChangeMeterService } from 'src/request-change-meter/request-change-meter.service';
 
 
 @Injectable()
@@ -17,26 +18,31 @@ export class CommentRequestService {
     @Inject(forwardRef(()=>RequesAvailabilityWaterService))
     private readonly requestAvailabilitySv: RequesAvailabilityWaterService,
     @Inject(forwardRef(()=>RequestsupervisionMeterService))
-    private readonly requestRevisionMeter: RequestsupervisionMeterService
+    private readonly requestRevisionMeter: RequestsupervisionMeterService,
+    @Inject(forwardRef(()=>RequestChangeMeterService))
+    private readonly requestChangeMeter: RequestChangeMeterService
   ){}
   async create(createCommentRequestDto: CreateCommentRequestDto) {
     const foundrequesAvailabilityWS = await this.requestAvailabilitySv.findOne(createCommentRequestDto.RequestAvailabilityWaterId);
     const foundRequestSupervision = await this.requestRevisionMeter.findOne(createCommentRequestDto.RequestSupervisionMeterId)
+    const foundRequestChangeMeter = await this.requestChangeMeter.findOne(createCommentRequestDto.RequestChangeMeterId)
     const foundCommentRequest = this.commentRequestrepo.create({
       Subject: createCommentRequestDto.Subject,
       Comment: createCommentRequestDto.Comment,
-      requestAvailability: foundrequesAvailabilityWS
+      requestAvailability: foundrequesAvailabilityWS,
+      RequestSupervisionMeter: foundRequestSupervision,
+      RequestChangeMeter:foundRequestChangeMeter
     })
     return await this.commentRequestrepo.save(foundCommentRequest);
   }
 
   async findAll() {
-    return await this.commentRequestrepo.find({relations:['requestAvailability']});}
+    return await this.commentRequestrepo.find({relations:['requestAvailability',' RequestSupervisionMeter','RequestChangeMeter']});}
 
   async findOne(Id: number) {
     const foundCommentRequest = await this.commentRequestrepo.findOne({
       where:{Id},
-      relations:['requestAvailability']
+      relations:['requestAvailability',' RequestSupervisionMeter','RequestChangeMeter']
     })
     if(!foundCommentRequest) throw new NotFoundException(`CommentRequest with ${Id} not found`);
     return foundCommentRequest;

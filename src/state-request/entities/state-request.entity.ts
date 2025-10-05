@@ -1,4 +1,5 @@
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
+import { RequestChangeMeter } from "src/request-change-meter/entities/request-change-meter.entity";
 import { RequestSupervisionMeter } from "src/requestsupervision-meter/entities/requestsupervision-meter.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { ColumnMetadata } from "typeorm/metadata/ColumnMetadata";
@@ -22,4 +23,7 @@ export class StateRequest {
 
     @OneToMany(()=>RequestSupervisionMeter,(requestSupervisionMeter)=>requestSupervisionMeter.StateRequest)
     RequestSupervisionMeter?:RequestSupervisionMeter[];
+
+    @OneToMany(()=>RequestChangeMeter,(requestChangeMeter)=>requestChangeMeter.StateRequest)
+    RequestChangeMeter?:RequestChangeMeter[];
 }
