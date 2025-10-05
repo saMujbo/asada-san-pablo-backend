@@ -1,6 +1,8 @@
-    import { StateRequest } from "src/state-request/entities/state-request.entity";
+    import { combineLatest } from "rxjs";
+import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
-import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
     @Entity()
     export class RequesAvailabilityWater {
@@ -38,6 +40,8 @@ import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, Primar
     @Column({default: true})
     IsActive: boolean;
 
+    //Relations 
+
     @ManyToOne(()=> User,(user)=> user.RequesAvailabilityWater)
     @JoinColumn({ name: 'UserId' } )
     User: User;
@@ -45,4 +49,8 @@ import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, Primar
     @ManyToOne(()=> StateRequest,(stateRequest) => stateRequest.RequesAvailabilityWater)
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
+
+    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.requestAvailability)
+    commentRquest?: CommentRequest[];
+
 }

@@ -98,7 +98,7 @@ async search({ page = 1, limit = 10, UserName, StateName, State }: RequestAvaila
 
   async update(Id: number, updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto) {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({ where: { Id } });
-    if(!foundRequestAvailabilityWater) throw new NotFoundException(`RequesAvailabilityWater with Id ${Id} not found`)
+    if(!foundRequestAvailabilityWater) throw new NotFoundException(`RequesAvailabilityWater with ${Id} not found`)
     
       
       const foundUser = await this.userSerive.findOne(updateRequesAvailabilityWaterDto.UserId)
