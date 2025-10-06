@@ -9,7 +9,7 @@ import { StateRequestModule } from 'src/state-request/state-request.module';
 @Module({
   imports:[
     TypeOrmModule.forFeature([RequesAvailabilityWater]),
-    UsersModule,
+    forwardRef(()=> UsersModule),
     forwardRef(() => StateRequestModule)
 ],
   controllers: [RequesAvailabilityWaterController],

@@ -6,6 +6,11 @@ import { StateRequest } from './entities/state-request.entity';
 import { Repository } from 'typeorm';
 import { RequesAvailabilityWaterService } from 'src/reques-availability-water/reques-availability-water.service';
 import { hasNonEmptyString } from 'src/utils/validation.utils';
+import { RequestSupervisionMeter } from 'src/requestsupervision-meter/entities/requestsupervision-meter.entity';
+import { RequestsupervisionMeterService } from 'src/requestsupervision-meter/requestsupervision-meter.service';
+import { RequestChangeMeter } from 'src/request-change-meter/entities/request-change-meter.entity';
+import { RequestChangeMeterService } from 'src/request-change-meter/request-change-meter.service';
+import { RequestChangeNameMeterService } from 'src/request-change-name-meter/request-change-name-meter.service';
 
 @Injectable()
 export class StateRequestService {
@@ -14,6 +19,14 @@ export class StateRequestService {
     private readonly stateRequesRepo : Repository<StateRequest>,
     @Inject(forwardRef(()=>RequesAvailabilityWaterService))
     private readonly RequesAvailabilityWaterSv :  RequesAvailabilityWaterService,
+    @Inject(forwardRef(()=>RequestsupervisionMeterService))
+    private readonly requesSupervisionMeterSv: RequestsupervisionMeterService,
+    @Inject(forwardRef(()=>RequestChangeMeterService))
+    private readonly requesChangeMeterSv : RequestChangeMeterService,
+    @Inject(forwardRef(()=>RequestChangeNameMeterService))
+    private readonly requestChangeNameMeterSv : RequestChangeNameMeterService
+
+    
   ){}
   async create(createStateRequestDto: CreateStateRequestDto) {
     const newRequestState = await this.stateRequesRepo.create(createStateRequestDto)
@@ -45,8 +58,15 @@ export class StateRequestService {
     if(!foundProjectState) throw new NotFoundException(`RequestState with ${Id} not found`);
 
     const hasState = await this.RequesAvailabilityWaterSv.isOnRequestState(Id);
+    const hasSateSupervision = await this.requesSupervisionMeterSv.isOnRequestState(Id);
+    const hasStateChangeMeter = await this.requesChangeMeterSv.isOnRequestState(Id);
+    const hasStateChangeNameMeter = await this.requestChangeNameMeterSv.isOnRequestChangeNameMeter(Id);
 
-    if(hasState && updateStateRequestDto.IsActive===false){
+    if( hasStateChangeMeter || 
+      hasSateSupervision || 
+      hasState || 
+      hasStateChangeNameMeter ||
+      updateStateRequestDto.IsActive===false){
     throw new NotFoundException(
         `No se puede desactivar este state ${Id} porque está asociado a al menos a una request.`
     )}
@@ -63,7 +83,10 @@ export class StateRequestService {
   async remove(Id: number) {
     const stateRequest = await this.findOne(Id);
 
-    const hasRequest = await this.RequesAvailabilityWaterSv.isOnRequestState(Id)
+    const hasRequest = await this.RequesAvailabilityWaterSv.isOnRequestState(Id) || 
+    this.requesChangeMeterSv.isOnRequestState(Id)||
+    this.requesSupervisionMeterSv.isOnRequestState(Id) ||
+    this.requestChangeNameMeterSv.isOnRequestChangeNameMeter(Id)
 
     if(hasRequest){
       throw new BadGatewayException(

@@ -1,24 +1,23 @@
-    import { combineLatest } from "rxjs";
 import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
-import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 
-    @Entity()
-    export class RequesAvailabilityWater {
+@Entity()
+export class RequestChangeNameMeter {
     @PrimaryGeneratedColumn()
-    Id: number;
+    Id:number;
 
     @Column({ nullable: true })
     Justification: string;
-    
+
     @Column({ type: 'date', nullable: false })
     Date: Date;
-    
+        
     @BeforeInsert()
     setTodayIfMissing() {
-        if (!this.Date) {
-          this.Date = new Date(); // TypeORM + MySQL 'date' guarda solo YYYY-MM-DD
+    if (!this.Date) {
+        this.Date = new Date(); // TypeORM + MySQL 'date' guarda solo YYYY-MM-DD
         }
     }
     // ---- Required Documents ----
@@ -30,27 +29,19 @@ import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToM
 
     @Column({ nullable: true })
     LiteralCertificateFile: string;
+    
+    @Column({default:true})
+    IsActive: boolean
 
-    @Column({ nullable: true })
-    RequestLetterFile: string;
-
-    @Column({ nullable: true })
-    ConstructionPermitFile: string;
-
-    @Column({default: true})
-    IsActive: boolean;
-
-    //Relations 
-
-    @ManyToOne(()=> User,(user)=> user.RequesAvailabilityWater)
+    @ManyToOne(()=> User,(user)=> user.RequestChangeNameMeter)
     @JoinColumn({ name: 'UserId' } )
     User: User;
     
-    @ManyToOne(()=> StateRequest,(stateRequest) => stateRequest.RequesAvailabilityWater)
+    @ManyToOne(()=> StateRequest,(stateRequest) => stateRequest.RequestChangeNameMeter)
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 
-    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.requestAvailability)
+    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestChangeNameMeter)
     commentRquest?: CommentRequest[];
 
 }

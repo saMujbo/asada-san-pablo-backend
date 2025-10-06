@@ -1,5 +1,8 @@
 import { Project } from "src/project/entities/project.entity";
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
+import { RequestChangeMeter } from "src/request-change-meter/entities/request-change-meter.entity";
+import { RequestChangeNameMeter } from "src/request-change-name-meter/entities/request-change-name-meter.entity";
+import { RequestSupervisionMeter } from "src/requestsupervision-meter/entities/requestsupervision-meter.entity";
 import { Role } from "src/roles/entities/role.entity";
 import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
@@ -54,4 +57,13 @@ export class User {
 
     @OneToMany(()=>RequesAvailabilityWater,(requesAvailabilityWater)=>requesAvailabilityWater.User)
     RequesAvailabilityWater?:RequesAvailabilityWater[];
+
+    @OneToMany(()=>RequestSupervisionMeter,(requestSupervisionMeter)=>requestSupervisionMeter.User)
+    RequestSupervisionMeter?:RequestSupervisionMeter[];
+
+    @OneToMany(()=>RequestChangeMeter,(requestChangeMeter)=>requestChangeMeter.User)
+    RequestChangeMeter?:RequestChangeMeter[];
+
+    @OneToMany(()=>RequestChangeNameMeter,(requestChangeNameMeter)=>requestChangeNameMeter.User)
+    RequestChangeNameMeter?:RequestChangeNameMeter[];
 }

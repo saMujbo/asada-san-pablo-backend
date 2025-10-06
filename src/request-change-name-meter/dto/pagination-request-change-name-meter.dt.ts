@@ -2,9 +2,7 @@ import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsInt, Min, Max, IsOptional, IsString } from "class-validator";
 
-
-
-export class RequestAvailabilityWaterPagination{
+export class RequestChangeNameMeterPagination{
         @ApiPropertyOptional({ default: 1, minimum: 1 })
         @Transform(({ value }) => Number(value))
         @IsInt()

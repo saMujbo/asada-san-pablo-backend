@@ -16,12 +16,13 @@ export class RequesAvailabilityWaterService {
     private readonly requesAvailabilityWaterRepository: Repository<RequesAvailabilityWater>,
     @Inject(forwardRef(()=> StateRequestService))
     private readonly stateRequestSv: StateRequestService,
+    @Inject(forwardRef(()=> UsersService))
     private readonly userSerive:UsersService
   ) {}
   async create(createRequesAvailabilityWaterDto: CreateRequestAvailabilityWaterDto) {
     const Usersv = await this.userSerive.findOne(createRequesAvailabilityWaterDto.UserId);
     const StateRequestSv = await this.stateRequestSv.findDefaultState();
-    const newRequestAvailabilityWater = this.requesAvailabilityWaterRepository.create({
+    const newRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.create({
       Justification: createRequesAvailabilityWaterDto.Justification,
       IdCardFiles: createRequesAvailabilityWaterDto.IdCardFiles,
       PlanoPrintFiles: createRequesAvailabilityWaterDto.PlanoPrintFiles,
@@ -98,7 +99,7 @@ async search({ page = 1, limit = 10, UserName, StateName, State }: RequestAvaila
 
   async update(Id: number, updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto) {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({ where: { Id } });
-    if(!foundRequestAvailabilityWater) throw new NotFoundException(`RequesAvailabilityWater with Id ${Id} not found`)
+    if(!foundRequestAvailabilityWater) throw new NotFoundException(`RequesAvailabilityWater with ${Id} not found`)
     
       
       const foundUser = await this.userSerive.findOne(updateRequesAvailabilityWaterDto.UserId)
@@ -138,9 +139,9 @@ async search({ page = 1, limit = 10, UserName, StateName, State }: RequestAvaila
   }
 
   async isOnRequestState(Id:number){
-    const hasActiveProjectState = await this.requesAvailabilityWaterRepository.exist({
+    const hasActiveRequestState = await this.requesAvailabilityWaterRepository.exist({
       where: {StateRequest:{Id}, IsActive:true}
     })
-    return hasActiveProjectState;
+    return hasActiveRequestState;
   }
 }
