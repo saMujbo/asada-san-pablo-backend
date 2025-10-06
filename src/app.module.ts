@@ -25,6 +25,7 @@ import { RequesAvailabilityWaterModule } from './reques-availability-water/reque
 import { CommentRequestModule } from './comment-request/comment-request.module';
 import { RequestsupervisionMeterModule } from './requestsupervision-meter/requestsupervision-meter.module';
 import { RequestChangeMeterModule } from './request-change-meter/request-change-meter.module';
+import { RequestChangeNameMeterModule } from './request-change-name-meter/request-change-name-meter.module';
 
 @Module({
   imports: [
@@ -68,7 +69,8 @@ import { RequestChangeMeterModule } from './request-change-meter/request-change-
     RequesAvailabilityWaterModule,
     CommentRequestModule,
     RequestsupervisionMeterModule,
-    RequestChangeMeterModule
+    RequestChangeMeterModule,
+    RequestChangeNameMeterModule
   ],
 })
 export class AppModule {}

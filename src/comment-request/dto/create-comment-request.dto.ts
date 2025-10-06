@@ -26,4 +26,9 @@ import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
     @IsInt()
     @IsNotEmpty()
     RequestChangeMeterId: number;
+
+    @ApiProperty()
+    @IsInt()
+    @IsNotEmpty()
+    RequestChangeNameMeterId: number;
     }

@@ -7,13 +7,16 @@ import { RequesAvailabilityWaterModule } from 'src/reques-availability-water/req
 import { RequestSupervisionMeter } from 'src/requestsupervision-meter/entities/requestsupervision-meter.entity';
 import { RequestsupervisionMeterModule } from 'src/requestsupervision-meter/requestsupervision-meter.module';
 import { RequestChangeMeterModule } from 'src/request-change-meter/request-change-meter.module';
+import { RequestChangeNameMeter } from 'src/request-change-name-meter/entities/request-change-name-meter.entity';
+import { RequestChangeNameMeterModule } from 'src/request-change-name-meter/request-change-name-meter.module';
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([CommentRequest]),
     forwardRef(() => RequesAvailabilityWaterModule),
     forwardRef(()=> RequestsupervisionMeterModule),
-    forwardRef(()=> RequestChangeMeterModule)
+    forwardRef(()=> RequestChangeMeterModule),
+    forwardRef(()=>RequestChangeNameMeterModule)
   ],
   controllers: [CommentRequestController],
   providers: [CommentRequestService],

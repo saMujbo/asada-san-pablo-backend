@@ -8,7 +8,7 @@ import { RequesAvailabilityWaterService } from 'src/reques-availability-water/re
 import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestsupervisionMeterService } from 'src/requestsupervision-meter/requestsupervision-meter.service';
 import { RequestChangeMeterService } from 'src/request-change-meter/request-change-meter.service';
-
+import { RequestChangeNameMeterService } from 'src/request-change-name-meter/request-change-name-meter.service';
 
 @Injectable()
 export class CommentRequestService {
@@ -20,29 +20,33 @@ export class CommentRequestService {
     @Inject(forwardRef(()=>RequestsupervisionMeterService))
     private readonly requestRevisionMeter: RequestsupervisionMeterService,
     @Inject(forwardRef(()=>RequestChangeMeterService))
-    private readonly requestChangeMeter: RequestChangeMeterService
+    private readonly requestChangeMeter: RequestChangeMeterService,
+    @Inject(forwardRef(()=>RequestChangeMeterService))
+    private readonly requestChangeNameMeter: RequestChangeNameMeterService
   ){}
   async create(createCommentRequestDto: CreateCommentRequestDto) {
     const foundrequesAvailabilityWS = await this.requestAvailabilitySv.findOne(createCommentRequestDto.RequestAvailabilityWaterId);
-    const foundRequestSupervision = await this.requestRevisionMeter.findOne(createCommentRequestDto.RequestSupervisionMeterId)
-    const foundRequestChangeMeter = await this.requestChangeMeter.findOne(createCommentRequestDto.RequestChangeMeterId)
+    const foundRequestSupervision = await this.requestRevisionMeter.findOne(createCommentRequestDto.RequestSupervisionMeterId);
+    const foundRequestChangeMeter = await this.requestChangeMeter.findOne(createCommentRequestDto.RequestChangeMeterId);
+    const foundRequestChangeNameMeter = await this.requestChangeNameMeter.findOne(createCommentRequestDto.RequestChangeNameMeterId);
     const foundCommentRequest = this.commentRequestrepo.create({
       Subject: createCommentRequestDto.Subject,
       Comment: createCommentRequestDto.Comment,
       requestAvailability: foundrequesAvailabilityWS,
       RequestSupervisionMeter: foundRequestSupervision,
-      RequestChangeMeter:foundRequestChangeMeter
+      RequestChangeMeter:foundRequestChangeMeter,
+      RequestChangeNameMeter:foundRequestChangeNameMeter
     })
     return await this.commentRequestrepo.save(foundCommentRequest);
   }
 
   async findAll() {
-    return await this.commentRequestrepo.find({relations:['requestAvailability',' RequestSupervisionMeter','RequestChangeMeter']});}
+    return await this.commentRequestrepo.find({relations:['requestAvailability',' RequestSupervisionMeter','RequestChangeMeter','RequestChangeNameMeter']});}
 
   async findOne(Id: number) {
     const foundCommentRequest = await this.commentRequestrepo.findOne({
       where:{Id},
-      relations:['requestAvailability',' RequestSupervisionMeter','RequestChangeMeter']
+      relations:['requestAvailability',' RequestSupervisionMeter','RequestChangeMeter','RequestChangeNameMeter']
     })
     if(!foundCommentRequest) throw new NotFoundException(`CommentRequest with ${Id} not found`);
     return foundCommentRequest;
