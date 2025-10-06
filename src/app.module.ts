@@ -22,6 +22,8 @@ import { AgentSupplierModule } from './agent_supplier/agent_supplier.module';
 import { LegalSupplierModule } from './legal-supplier/legal-supplier.module';
 import { PhysicalSupplierModule } from './physical-supplier/physical-supplier.module';
 import { RequesAvailabilityWaterModule } from './reques-availability-water/reques-availability-water.module';
+import { DropboxModule } from './dropbox/dropbox.module';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { RequesAvailabilityWaterModule } from './reques-availability-water/reque
       load: [configuration],           // mapea tus vars a un objeto
       envFilePath: ['.env'],           // ruta(s) del .env
     }),
+    MulterModule.register({}), // usa memoria por defecto (buffer)
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -62,7 +65,8 @@ import { RequesAvailabilityWaterModule } from './reques-availability-water/reque
     AgentSupplierModule,
     LegalSupplierModule,
     PhysicalSupplierModule,
-    RequesAvailabilityWaterModule
+    RequesAvailabilityWaterModule,
+    DropboxModule
   ],
 })
 export class AppModule {}

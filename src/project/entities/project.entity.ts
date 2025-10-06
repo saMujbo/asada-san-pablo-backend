@@ -22,7 +22,7 @@ export class Project {
     EndDate: Date | null; // puede ser null si el proyecto sigue activo
 
     @Column({ type: 'text', nullable: true })
-    SpaceOfDocument: string | null; // p.ej. folderId/URL de Drive
+    SpaceOfDocument: string | null;
 
     @Column({ type: 'text' })
     Objective: string;
