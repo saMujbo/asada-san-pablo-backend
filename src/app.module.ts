@@ -22,10 +22,6 @@ import { AgentSupplierModule } from './agent_supplier/agent_supplier.module';
 import { LegalSupplierModule } from './legal-supplier/legal-supplier.module';
 import { PhysicalSupplierModule } from './physical-supplier/physical-supplier.module';
 import { RequesAvailabilityWaterModule } from './reques-availability-water/reques-availability-water.module';
-import { CommentRequestModule } from './comment-request/comment-request.module';
-import { RequestsupervisionMeterModule } from './requestsupervision-meter/requestsupervision-meter.module';
-import { RequestChangeMeterModule } from './request-change-meter/request-change-meter.module';
-import { RequestChangeNameMeterModule } from './request-change-name-meter/request-change-name-meter.module';
 
 @Module({
   imports: [
@@ -34,6 +30,7 @@ import { RequestChangeNameMeterModule } from './request-change-name-meter/reques
       load: [configuration],           // mapea tus vars a un objeto
       envFilePath: ['.env'],           // ruta(s) del .env
     }),
+    MulterModule.register({}), // usa memoria por defecto (buffer)
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -66,11 +63,7 @@ import { RequestChangeNameMeterModule } from './request-change-name-meter/reques
     AgentSupplierModule,
     LegalSupplierModule,
     PhysicalSupplierModule,
-    RequesAvailabilityWaterModule,
-    CommentRequestModule,
-    RequestsupervisionMeterModule,
-    RequestChangeMeterModule,
-    RequestChangeNameMeterModule
+    RequesAvailabilityWaterModule
   ],
 })
 export class AppModule {}

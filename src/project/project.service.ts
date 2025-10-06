@@ -7,9 +7,7 @@ import { Repository } from 'typeorm';
 import { hasNonEmptyString, isValidDate } from 'src/utils/validation.utils';
 import { ProjectPaginationDto } from './dto/pagination-project.dto';
 import { ProjectStateService } from './project-state/project-state.service';
-import { ProductService } from 'src/product/product.service';
 import { UsersService } from 'src/users/users.service';
-import { use } from 'passport';
 
 @Injectable()
 export class ProjectService {
