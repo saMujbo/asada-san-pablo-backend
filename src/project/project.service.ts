@@ -56,6 +56,8 @@ export class ProjectService {
     const qb = this.projectRepo.createQueryBuilder('project')
       .leftJoinAndSelect('project.ProjectState', 'ProjectState')
       .leftJoinAndSelect('project.User', 'User')
+      .leftJoinAndSelect('project.TraceProject', 'TraceProject')
+      .leftJoinAndSelect('project.ProjectFiles', 'ProjectFiles')
       .leftJoinAndSelect('project.ProjectProjection', 'ProjectProjection')
       .leftJoinAndSelect('ProjectProjection.ProductDetails', 'ProductDetails')
       .leftJoinAndSelect('ProductDetails.Product', 'Product')

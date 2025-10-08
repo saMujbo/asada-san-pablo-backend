@@ -9,8 +9,11 @@ import { Dropbox } from 'dropbox';
     {
       provide: 'DROPBOX',
       useFactory: async () => {
-        const opts: any = { accessToken: process.env.DROPBOX_ACCESS_TOKEN };
-        return new Dropbox(opts);
+        return new Dropbox({
+          clientId: process.env.DROPBOX_APP_KEY!,
+          clientSecret: process.env.DROPBOX_APP_SECRET!,
+          refreshToken: process.env.DROPBOX_REFRESH_TOKEN!, // <-- correcto
+        });
       },
     },
     DropboxService
