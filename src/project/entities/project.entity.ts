@@ -3,6 +3,7 @@ import { ProjectState } from "../project-state/entities/project-state.entity";
 import { ProjectProjection } from "src/project-projection/entities/project-projection.entity";
 import { User } from "src/users/entities/user.entity";
 import { TraceProject } from "src/trace-project/entities/trace-project.entity";
+import { ProjectFile } from "src/project-file/entities/project-file.entity";
 
 @Entity()
 export class Project {
@@ -58,4 +59,7 @@ export class Project {
     
     @OneToMany(()=>TraceProject,(traceProject)=>traceProject.Project)
     TraceProject:TraceProject[];
+
+    @OneToMany(() => ProjectFile, (pf) => pf.Project)
+    ProjectFiles: ProjectFile[];
 }

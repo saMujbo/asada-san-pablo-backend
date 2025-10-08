@@ -22,6 +22,9 @@ import { AgentSupplierModule } from './agent_supplier/agent_supplier.module';
 import { LegalSupplierModule } from './legal-supplier/legal-supplier.module';
 import { PhysicalSupplierModule } from './physical-supplier/physical-supplier.module';
 import { RequesAvailabilityWaterModule } from './reques-availability-water/reques-availability-water.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { DropboxModule } from './dropbox/dropbox.module';
+import { ProjectFileModule } from './project-file/project-file.module';
 
 @Module({
   imports: [
@@ -63,7 +66,9 @@ import { RequesAvailabilityWaterModule } from './reques-availability-water/reque
     AgentSupplierModule,
     LegalSupplierModule,
     PhysicalSupplierModule,
-    RequesAvailabilityWaterModule
+    RequesAvailabilityWaterModule,
+    DropboxModule,
+    ProjectFileModule
   ],
 })
 export class AppModule {}

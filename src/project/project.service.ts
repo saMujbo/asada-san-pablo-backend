@@ -160,6 +160,10 @@ export class ProjectService {
     return await this.projectRepo.save(project);
   }
 
+  async updateProject(project: Project) {
+    this.projectRepo.save(project);
+  }
+
   async remove(Id: number) {
     const project = await this.findOne(Id);
   
