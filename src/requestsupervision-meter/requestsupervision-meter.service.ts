@@ -65,12 +65,15 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, NIS, State }: Req
     qb.andWhere('req.NIS = :nis', { nis: NIS });
   }
 
-  // --- Solo este depende del parámetro State ---
   if (State !== undefined && State !== null && State !== '') {
-    const isActive = typeof State === 'string' ? State.toLowerCase() === 'true' : !!State;
-    qb.andWhere('req.IsActive = :isActive', { isActive });
-  }
+    // Si tu DTO manda string "true"/"false":
+    const isActive =
+      typeof State === 'string'
+        ? State.toLowerCase() === 'true'
+        : !!State;
 
+    qb.andWhere('req.IsActive = :State', { State }); // <-- nombre del parámetro correcto
+  }
   const [data, total] = await qb.getManyAndCount();
 
   return {

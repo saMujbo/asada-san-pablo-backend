@@ -61,7 +61,7 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestA
         ? State.toLowerCase() === 'true'
         : !!State;
 
-    qb.andWhere('req.IsActive = :isActive', { isActive }); // <-- nombre del parámetro correcto
+    qb.andWhere('req.IsActive = :State', { State}); // <-- nombre del parámetro correcto
   }
 
   // Filtro por nombre del encargado
