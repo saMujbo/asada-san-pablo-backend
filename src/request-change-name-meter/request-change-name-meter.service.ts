@@ -38,7 +38,7 @@ export class RequestChangeNameMeterService {
         'StateRequest',
         'User',]});
   }
-async search({ page = 1, limit = 10, UserName, StateName, State }: RequestChangeNameMeterPagination) {
+async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestChangeNameMeterPagination) {
   const pageNum = Math.max(1, Number(page) || 1);
   const take = Math.min(100, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * take;
@@ -67,8 +67,8 @@ async search({ page = 1, limit = 10, UserName, StateName, State }: RequestChange
   }
 
   // Filtro por nombre del estado (PENDIENTE, TERMINADO, etc.)
-  if (StateName) {
-    qb.andWhere('LOWER(stateRequest.Name) LIKE LOWER(:StateName)', { StateName: `%${StateName}%` });
+  if (typeof StateRequestId === 'number') {
+    qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
   }
 
   const [data, total] = await qb.getManyAndCount();

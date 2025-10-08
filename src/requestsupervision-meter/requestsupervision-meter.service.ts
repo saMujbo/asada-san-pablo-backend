@@ -39,7 +39,7 @@ export class RequestsupervisionMeterService {
         'StateRequest',
         'User',]});
   }
-async search({ page = 1, limit = 10, UserName, StateName, NIS, State }: RequestSupervisionPagination) {
+async search({ page = 1, limit = 10, UserName, StateRequestId, NIS, State }: RequestSupervisionPagination) {
   const pageNum = Math.max(1, Number(page) || 1);
   const take = Math.min(100, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * take;
@@ -56,10 +56,9 @@ async search({ page = 1, limit = 10, UserName, StateName, NIS, State }: RequestS
     qb.andWhere('LOWER(user.Name) LIKE LOWER(:userName)', { userName: `%${UserName.trim()}%` });
   }
 
-  if (StateName && StateName.trim() !== '') {
-    // si tus nombres están en MAYÚSCULA exacta, puedes usar igualdad:
-    // qb.andWhere('state.Name = :stateName', { stateName: StateName.trim().toUpperCase() });
-    qb.andWhere('LOWER(state.Name) LIKE LOWER(:stateName)', { stateName: `%${StateName.trim()}%` });
+  // Filtro por nombre del estado (PENDIENTE, TERMINADO, etc.)
+  if (typeof StateRequestId === 'number') {
+    qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
   }
 
   if (typeof NIS === 'number' && !Number.isNaN(NIS)) {
