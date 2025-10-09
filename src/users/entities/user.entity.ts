@@ -1,5 +1,6 @@
 import { Project } from "src/project/entities/project.entity";
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
+import { RequestAssociated } from "src/request-associated/entities/request-associated.entity";
 import { RequestChangeMeter } from "src/request-change-meter/entities/request-change-meter.entity";
 import { RequestChangeNameMeter } from "src/request-change-name-meter/entities/request-change-name-meter.entity";
 import { RequestSupervisionMeter } from "src/requestsupervision-meter/entities/requestsupervision-meter.entity";
@@ -66,4 +67,7 @@ export class User {
 
     @OneToMany(()=>RequestChangeNameMeter,(requestChangeNameMeter)=>requestChangeNameMeter.User)
     RequestChangeNameMeter?:RequestChangeNameMeter[];
+
+    @OneToMany(()=>RequestAssociated,(RequestAssociated)=>RequestAssociated.User)
+    RequestAssociated?:RequestAssociated[];
 }

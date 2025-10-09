@@ -1,4 +1,5 @@
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
+import { RequestAssociated } from "src/request-associated/entities/request-associated.entity";
 import { RequestChangeMeter } from "src/request-change-meter/entities/request-change-meter.entity";
 import { RequestChangeNameMeter } from "src/request-change-name-meter/entities/request-change-name-meter.entity";
 import { RequestSupervisionMeter } from "src/requestsupervision-meter/entities/requestsupervision-meter.entity";
@@ -30,4 +31,7 @@ export class StateRequest {
 
     @OneToMany(()=>RequestChangeNameMeter,(requestChangeNameMeter)=>requestChangeNameMeter.StateRequest)
     RequestChangeNameMeter?:RequestChangeNameMeter[];
+
+    @OneToMany(()=>RequestAssociated,(RequestAssciated)=>RequestAssciated.StateRequest)
+    RequestAssociated?:RequestAssociated[];
 }

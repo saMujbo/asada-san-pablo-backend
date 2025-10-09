@@ -25,6 +25,7 @@ import { RequesAvailabilityWaterModule } from './reques-availability-water/reque
 import { MulterModule } from '@nestjs/platform-express';
 import { DropboxModule } from './dropbox/dropbox.module';
 import { ProjectFileModule } from './project-file/project-file.module';
+import { RequestAssociatedModule } from './request-associated/request-associated.module';
 
 @Module({
   imports: [
@@ -68,7 +69,8 @@ import { ProjectFileModule } from './project-file/project-file.module';
     PhysicalSupplierModule,
     RequesAvailabilityWaterModule,
     DropboxModule,
-    ProjectFileModule
+    ProjectFileModule,
+    RequestAssociatedModule
   ],
 })
 export class AppModule {}

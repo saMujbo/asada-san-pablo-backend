@@ -293,7 +293,16 @@ export class UsersService {
 
 //   return users;
 // }
-
+// users.service.ts
+  async findByIdCardRaw(idCardRaw: string) {
+    const normalized = (idCardRaw ?? '').replace(/[^0-9]/g, ''); // quita guiones/espacios
+    // Compara contra IDcard normalizado en la consulta
+    return this.userRepo.createQueryBuilder('u')
+      .leftJoinAndSelect('u.Roles', 'r')
+      .where("REPLACE(REPLACE(REPLACE(u.IDcard, '-', ''), ' ', ''), '.', '') = :ced", { ced: normalized })
+      .getOne();
+  }
+  
 async findUsersByRoleAdmin() {
   return await this.userRepo.find({
     relations: ['Roles'],

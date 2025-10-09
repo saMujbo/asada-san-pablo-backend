@@ -11,6 +11,7 @@ import { RequestsupervisionMeterService } from 'src/requestsupervision-meter/req
 import { RequestChangeMeter } from 'src/request-change-meter/entities/request-change-meter.entity';
 import { RequestChangeMeterService } from 'src/request-change-meter/request-change-meter.service';
 import { RequestChangeNameMeterService } from 'src/request-change-name-meter/request-change-name-meter.service';
+import { RequestAssociatedService } from 'src/request-associated/request-associated.service';
 
 @Injectable()
 export class StateRequestService {
@@ -24,13 +25,12 @@ export class StateRequestService {
     @Inject(forwardRef(()=>RequestChangeMeterService))
     private readonly requesChangeMeterSv : RequestChangeMeterService,
     @Inject(forwardRef(()=>RequestChangeNameMeterService))
-    private readonly requestChangeNameMeterSv : RequestChangeNameMeterService
-
-    
+    private readonly requestChangeNameMeterSv : RequestChangeNameMeterService,
+    @Inject(forwardRef(()=>RequestAssociatedService))
+    private readonly requestAssociateService: RequestAssociatedService
   ){}
   async create(createStateRequestDto: CreateStateRequestDto) {
     const newRequestState = await this.stateRequesRepo.create(createStateRequestDto)
-
     return await this.stateRequesRepo.save(newRequestState);
   }
 
@@ -61,11 +61,13 @@ export class StateRequestService {
     const hasSateSupervision = await this.requesSupervisionMeterSv.isOnRequestState(Id);
     const hasStateChangeMeter = await this.requesChangeMeterSv.isOnRequestState(Id);
     const hasStateChangeNameMeter = await this.requestChangeNameMeterSv.isOnRequestChangeNameMeter(Id);
+    const hasStateAssociate = await this.requestAssociateService.isOnRequestState(Id)
 
     if( hasStateChangeMeter || 
       hasSateSupervision || 
       hasState || 
       hasStateChangeNameMeter ||
+      hasStateAssociate ||
       updateStateRequestDto.IsActive===false){
     throw new NotFoundException(
         `No se puede desactivar este state ${Id} porque está asociado a al menos a una request.`
@@ -86,7 +88,8 @@ export class StateRequestService {
     const hasRequest = await this.RequesAvailabilityWaterSv.isOnRequestState(Id) || 
     this.requesChangeMeterSv.isOnRequestState(Id)||
     this.requesSupervisionMeterSv.isOnRequestState(Id) ||
-    this.requestChangeNameMeterSv.isOnRequestChangeNameMeter(Id)
+    this.requestChangeNameMeterSv.isOnRequestChangeNameMeter(Id) ||
+    this.RequesAvailabilityWaterSv.isOnRequestState(Id)
 
     if(hasRequest){
       throw new BadGatewayException(
