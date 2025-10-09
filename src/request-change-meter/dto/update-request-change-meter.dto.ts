@@ -1,20 +1,20 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CreateRequestChangeMeterDto } from './create-request-change-meter.dto';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString, IsInt, IsPositive } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, IsPositive, IsOptional } from 'class-validator';
 
 export class UpdateRequestChangeMeterDto{
         @ApiProperty()
-        @IsNotEmpty()
+        @IsOptional()
         @IsString()
         Location: string;
         @ApiProperty()
-        @IsNotEmpty()
-        @IsString()
+        @IsOptional()
+        @IsInt()
         NIS:number;
 
         @ApiProperty()
-        @IsNotEmpty()
+        @IsOptional()
         @IsString()
         Justification: string;
 
@@ -22,12 +22,12 @@ export class UpdateRequestChangeMeterDto{
         @ApiProperty()
         @Type(() => Number)
         @IsInt()
-        @IsPositive()
+        @IsOptional()
         UserId: number;
 
         @ApiProperty()
         @Type(() => Number)
         @IsInt()
-        @IsPositive()
+        @IsOptional()
         StateRequestId: number;
 }

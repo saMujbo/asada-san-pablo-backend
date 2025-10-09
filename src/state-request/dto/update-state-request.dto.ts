@@ -5,12 +5,12 @@ import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 export class UpdateStateRequestDto {
             @ApiProperty()
             @IsString()
-            @IsNotEmpty()
+            @IsOptional()
             Name:string;
     
             @ApiProperty()
             @IsString()
-            @IsNotEmpty()
+            @IsOptional()
             Description: string;
 
             @ApiPropertyOptional({ description: 'Indica si el estado está activo' })

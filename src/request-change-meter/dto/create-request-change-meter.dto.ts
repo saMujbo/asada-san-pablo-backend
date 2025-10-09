@@ -24,8 +24,8 @@ import { IsNotEmpty, IsString, Matches, IsOptional, IsBoolean, IsInt, IsPositive
     @IsInt()
     UserId: number;
 
-    // @ApiProperty()
-    // @Type(() => Number)
-    // @IsInt()
-    // StateRequestId: number;
+    @ApiProperty()
+    @Type(() => Number)
+    @IsInt()
+    StateRequestId: number;
     }
