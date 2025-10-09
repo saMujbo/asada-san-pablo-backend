@@ -21,14 +21,14 @@ export class RequestsupervisionMeterService {
   ){}
 
   async create(createRequestsupervisionMeterDto: CreateRequestSupervisionMeterDto) {
+    // revisar bien los estados de las solicitudes
+    // por defecto debe de ir en estado pendiente
     const UserSv = await this.userSv.findOne(createRequestsupervisionMeterDto.UserId);
-    const StateRequestSv = await this.stateRequestSv.findDefaultState();
     const newRequest = await this.requestSupervisionMeterRepo.create({
       Justification:createRequestsupervisionMeterDto.Justification,
       Location:createRequestsupervisionMeterDto.Location,
       NIS:createRequestsupervisionMeterDto.NIS,
       User:UserSv,
-      StateRequest:StateRequestSv
     })
     return await this.requestSupervisionMeterRepo.save(newRequest);
   }

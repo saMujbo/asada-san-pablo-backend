@@ -26,10 +26,7 @@ import { ApiProperty } from '@nestjs/swagger';
     @IsInt()
     UserId: number;
 
-    @ApiProperty()
-    @Type(() => Number)
-    @IsInt()
-    StateRequestId: number;
+        // no debe de ir en el dto el estado 
     }
 
 
