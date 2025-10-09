@@ -27,13 +27,13 @@ export class RequestChangeMeterService {
 
   async create(createRequestChangeMeterDto: CreateRequestChangeMeterDto) {
     const Usersv = await this.userSerive.findOne(createRequestChangeMeterDto.UserId);
-    const StateRequestSv = await this.stateRequestSv.findDefaultState();
+    // const StateRequestSv = await this.stateRequestSv.findDefaultState();
     const newRequestChangeMeter = await this.requestChangeMeterRepo.create({
       Location: createRequestChangeMeterDto.Location,
       NIS:createRequestChangeMeterDto.NIS,
       Justification:createRequestChangeMeterDto.Justification,
       User:Usersv,
-      StateRequest:StateRequestSv
+      // StateRequest:StateRequestSv
     })
     return await this.requestChangeMeterRepo.save(newRequestChangeMeter);
   }
