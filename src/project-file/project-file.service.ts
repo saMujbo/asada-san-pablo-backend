@@ -18,7 +18,7 @@ export class ProjectFileService {
   private buildBasePath(project: Project) {
     // Si ya guardaste la ruta base en SpaceOfDocument, úsala.
     if (project.SpaceOfDocument) return project.SpaceOfDocument.startsWith('/') ? project.SpaceOfDocument : `/${project.SpaceOfDocument}`;
-    const base = `/Proyectos/${String(project.Id).padStart(4, '0')}-${slug(project.Name)}`;
+    const base = `/Proyectos/${slug(project.Name)}`;
     return base;
   }
 
@@ -48,7 +48,7 @@ export class ProjectFileService {
     const project = await this.projectSV.findOne(projectId);
 
     // Asegura carpeta
-    const targetFolder = await this.ensureProjectFolder(projectId, subfolder ?? 'Complementarios');
+    const targetFolder = await this.ensureProjectFolder(projectId, subfolder ?? 'Documentos');
 
     // Sube a Dropbox
     const payload = files.map((f) => ({

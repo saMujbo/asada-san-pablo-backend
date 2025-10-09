@@ -41,6 +41,7 @@ export class ProjectService {
     return await this.projectRepo.find({where:{IsActive:true}, relations:[
       'ProjectState', 
       'User',
+      'ProjectFiles',
       'ProjectProjection', 
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product',

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, ParseIntPipe, UploadedFiles } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, ParseIntPipe, UploadedFiles, Query } from '@nestjs/common';
 import { ProjectFileService } from './project-file.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
@@ -25,9 +25,8 @@ export class ProjectFileController {
 
   // GET /projects/:id/files/temp-link?fileId=123
   @Get('temp-link')
-  async tempLink(@Param('id', ParseIntPipe) id: number, @Body('fileId') fileId?: number) {
-    // si prefieres como query: cambia @Body por @Query
-    return this.projectFileService.tempLink(fileId!);
+  async tempLink(@Query('id', ParseIntPipe) fileId: number) {
+    return this.projectFileService.tempLink(fileId);
   }
 
   // DELETE /projects/:id/files?fileId=123
