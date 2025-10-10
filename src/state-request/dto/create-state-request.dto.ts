@@ -13,10 +13,4 @@ export class CreateStateRequestDto {
         @IsString()
         @IsNotEmpty()
         Description: string;
-
-        @ApiProperty()
-        @Type(() => Number)
-        @IsInt()
-        StateRequestId: number;
-
 }
