@@ -24,11 +24,6 @@ export class RequesAvailabilityWaterService {
     const StateRequestSv = await this.stateRequestSv.findDefaultState();
     const newRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.create({
       Justification: createRequesAvailabilityWaterDto.Justification,
-      IdCardFiles: createRequesAvailabilityWaterDto.IdCardFiles,
-      PlanoPrintFiles: createRequesAvailabilityWaterDto.PlanoPrintFiles,
-      LiteralCertificateFile: createRequesAvailabilityWaterDto.LiteralCertificateFile,
-      RequestLetterFile: createRequesAvailabilityWaterDto.RequestLetterFile,
-      ConstructionPermitFile: createRequesAvailabilityWaterDto.ConstructionPermitFile,
       User: Usersv,
       StateRequest: StateRequestSv
     })
@@ -114,19 +109,13 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestA
 
       if(updateRequesAvailabilityWaterDto.Justification !=undefined && updateRequesAvailabilityWaterDto.Justification != '' && updateRequesAvailabilityWaterDto.Justification != null)
         foundRequestAvailabilityWater.Justification = updateRequesAvailabilityWaterDto.Justification;
-      if(updateRequesAvailabilityWaterDto.IdCardFiles !=undefined && updateRequesAvailabilityWaterDto.IdCardFiles != null)
-        foundRequestAvailabilityWater.IdCardFiles = updateRequesAvailabilityWaterDto.IdCardFiles;
-      if(updateRequesAvailabilityWaterDto.PlanoPrintFiles != undefined && updateRequesAvailabilityWaterDto.PlanoPrintFiles != null)
-        foundRequestAvailabilityWater.PlanoPrintFiles = updateRequesAvailabilityWaterDto.PlanoPrintFiles;
-      if(updateRequesAvailabilityWaterDto.LiteralCertificateFile != undefined && updateRequesAvailabilityWaterDto.LiteralCertificateFile != null)
-        foundRequestAvailabilityWater.LiteralCertificateFile = updateRequesAvailabilityWaterDto.LiteralCertificateFile;
-      if(updateRequesAvailabilityWaterDto.RequestLetterFile != undefined && updateRequesAvailabilityWaterDto.RequestLetterFile != null)
-        foundRequestAvailabilityWater.RequestLetterFile = updateRequesAvailabilityWaterDto.RequestLetterFile;
-      if(updateRequesAvailabilityWaterDto.ConstructionPermitFile != undefined && updateRequesAvailabilityWaterDto.ConstructionPermitFile != null)
-        foundRequestAvailabilityWater.ConstructionPermitFile = updateRequesAvailabilityWaterDto.ConstructionPermitFile;
 
     return await this.requesAvailabilityWaterRepository.save(foundRequestAvailabilityWater)
   }
+
+  async updateRequest(reqWater: RequesAvailabilityWater) {
+    return await this.requesAvailabilityWaterRepository.save(reqWater);
+  } 
 
   async remove(Id: number) {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({ where: { Id } })
