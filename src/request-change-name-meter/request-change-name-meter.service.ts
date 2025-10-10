@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
 import { RequestChangeNameMeterPagination } from './dto/pagination-request-change-name-meter.dt';
+import { Project } from 'src/project/entities/project.entity';
 
 @Injectable()
 export class RequestChangeNameMeterService {
@@ -23,9 +24,6 @@ export class RequestChangeNameMeterService {
     const StateRequestSv = await this.stateRequestSv.findDefaultState();
     const newRequestChangeNameMeter = await this.requestChangeNameMeterRepo.create({
       Justification:createRequestChangeNameMeterDto.Justification,
-      IdCardFiles: createRequestChangeNameMeterDto.IdCardFiles,
-      PlanoPrintFiles:createRequestChangeNameMeterDto.PlanoPrintFiles,
-      LiteralCertificateFile: createRequestChangeNameMeterDto.LiteralCertificateFile,
       User:Usersv,
       StateRequest:StateRequestSv
     })
@@ -120,6 +118,9 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestC
     return await this.requestChangeNameMeterRepo.save(foundRequestChangeNameMeterr); 
   }
 
+    async updateRequestChangeNameMeter(RequestchangeNameMeter: RequestChangeNameMeter) {
+      this.requestChangeNameMeterRepo.save(RequestchangeNameMeter);
+    }
     async isOnRequestChangeNameMeter(Id:number){
     const hasActiveRequestState = await this.requestChangeNameMeterRepo.exist({
       where: {StateRequest:{Id}, IsActive:true}

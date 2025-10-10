@@ -1,4 +1,5 @@
 import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+import { ProjectFile } from "src/project-file/entities/project-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
 import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
@@ -21,14 +22,8 @@ export class RequestChangeNameMeter {
         }
     }
     // ---- Required Documents ----
-    @Column('simple-array', { nullable: true })
-    IdCardFiles: string[]; // original + copy
-
-    @Column('simple-array', { nullable: true })
-    PlanoPrintFiles: string[]; // original + copy
-
-    @Column({ nullable: true })
-    LiteralCertificateFile: string;
+    @Column({ type: 'text', nullable: true })
+    SpaceOfDocument: string | null;
     
     @Column({default:true})
     IsActive: boolean
@@ -43,5 +38,8 @@ export class RequestChangeNameMeter {
 
     @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestChangeNameMeter)
     commentRquest?: CommentRequest[];
+
+    @OneToMany(() => ProjectFile, (pf) => pf.Project)
+    ProjectFiles: ProjectFile[];
 
 }
