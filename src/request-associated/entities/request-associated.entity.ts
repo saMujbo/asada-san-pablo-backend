@@ -1,4 +1,5 @@
 import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+import { RequestAssociatedFile } from "src/request-associated-file/entities/request-associated-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
 import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
@@ -35,6 +36,9 @@ export class RequestAssociated {
     @Column()
     NIS:number;
 
+    @Column({ type: 'text', nullable: true })
+    SpaceOfDocument: string | null;
+    
     @Column({default: true})
     IsActive: boolean;
 
@@ -48,5 +52,8 @@ export class RequestAssociated {
 
     @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestAssociate)
     commentRquest?: CommentRequest[];
+
+    @OneToMany(() => RequestAssociatedFile, (ra) => ra.RequestAssociated)
+    RequestAssociatedFile: RequestAssociated[];
 
 }

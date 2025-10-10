@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RequestAssociated } from './entities/request-associated.entity';
 import { UsersModule } from 'src/users/users.module';
 import { StateRequestModule } from 'src/state-request/state-request.module';
+import { RequestAssociatedFileModule } from 'src/request-associated-file/request-associated-file.module';
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([RequestAssociated]),
     forwardRef(()=> UsersModule),
-    forwardRef(() => StateRequestModule)
+    forwardRef(() => StateRequestModule),
+    forwardRef(() => RequestAssociatedFileModule)
   ],
   controllers: [RequestAssociatedController],
   providers: [RequestAssociatedService],

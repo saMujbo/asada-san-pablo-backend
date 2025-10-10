@@ -5,36 +5,36 @@ import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, Primary
 
 @Entity()
 export class RequestChangeNameMeterFile {
-        @PrimaryGeneratedColumn()
-        Id: number;
-    
-        @Index()
-        @ManyToOne(() => RequestChangeNameMeter, (r) => r.RequestChangeNameMeterFile, { onDelete: 'CASCADE', nullable: false })
-        @JoinColumn({ name: 'RequestChangeNameMeterid' })
-        RequestChangeNameMeter: RequestChangeNameMeter;
-    
-        @ManyToOne(() => User, { nullable: true })
-        @JoinColumn({ name: 'UploadedByUserId' })
-        UploadedBy?: User | null;
-    
-        // Ruta completa en Dropbox (ej: /Proyectos/0007-plantas-potabilizadora/Planos/cedula.pdf)
-        @Column({ type: 'text' })
-        Path: string;
-    
-        // Nombre de archivo (lo que el usuario subió)
-        @Column()
-        FileName: string;
-    
-        @Column({ nullable: true })
-        MimeType?: string;
-    
-        @Column({ type: 'bigint', nullable: true })
-        Size?: number;
-    
-        // Útil para control de versiones y borrados
-        @Column({ nullable: true })
-        Rev?: string;
-    
-        @CreateDateColumn()
-        UploadedAt: Date;
+                @PrimaryGeneratedColumn()
+                Id: number;
+        
+                @Index()
+                @ManyToOne(() => RequestChangeNameMeter, (r) => r.RequestChangeNameMeterFile, { onDelete: 'CASCADE', nullable: false })
+                @JoinColumn({ name: 'RequestChangeNameMeterid' })
+                RequestChangeNameMeter: RequestChangeNameMeter;
+        
+                @ManyToOne(() => User, { nullable: true })
+                @JoinColumn({ name: 'UploadedByUserId' })
+                UploadedBy?: User | null;
+        
+                // Ruta completa en Dropbox (ej: /Proyectos/0007-plantas-potabilizadora/Planos/cedula.pdf)
+                @Column({ type: 'text' })
+                Path: string;
+        
+                // Nombre de archivo (lo que el usuario subió)
+                @Column()
+                FileName: string;
+        
+                @Column({ nullable: true })
+                MimeType?: string;
+        
+                @Column({ type: 'bigint', nullable: true })
+                Size?: number;
+        
+                // Útil para control de versiones y borrados
+                @Column({ nullable: true })
+                Rev?: string;
+        
+                @CreateDateColumn()
+                UploadedAt: Date;
 }

@@ -31,8 +31,8 @@
     @IsNotEmpty()
     NIS:number;
 
-    @ApiPropertyOptional({ example: 1 })
-    @IsOptional()
-    @IsInt()
-    StateRequestId?: number; // opcional: si no se envía, se usa el estado por defecto
+    // @ApiPropertyOptional({ example: 1 })
+    // @IsOptional()
+    // @IsInt()
+    // StateRequestId?: number; // opcional: si no se envía, se usa el estado por defecto
     }

@@ -38,10 +38,7 @@ export class RequestAssociatedService {
     throw new BadRequestException('El usuario no tiene rol ABONADO.');
   }
 
-  const state =
-    createRequestAssociatedDto.StateRequestId
-      ? await this.stateRequestSv.findOne(createRequestAssociatedDto.StateRequestId)
-      : await this.stateRequestSv.findDefaultState();
+  const state =  await this.stateRequestSv.findDefaultState();
 
   if (!state) {
     throw new BadRequestException('No se encontró un estado válido para la solicitud.');
@@ -127,4 +124,8 @@ export class RequestAssociatedService {
     })
     return hasActiveRequestState;
   }
+
+    async updateRequestAssociated(requestAssociated: RequestAssociated) {
+      this.requestAssociatedRepo.save(requestAssociated);
+    }
 }
