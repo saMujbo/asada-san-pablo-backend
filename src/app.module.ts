@@ -27,6 +27,7 @@ import { DropboxModule } from './dropbox/dropbox.module';
 import { ProjectFileModule } from './project-file/project-file.module';
 import { RequestAssociatedModule } from './request-associated/request-associated.module';
 import { RequestChangeNameMeterFileModule } from './request-change-name-meter-file/request-change-name-meter-file.module';
+import { RequestAvailabilityWaterFileModule } from './request-availability-water-file/request-availability-water-file.module';
 
 @Module({
   imports: [
@@ -72,7 +73,8 @@ import { RequestChangeNameMeterFileModule } from './request-change-name-meter-fi
     DropboxModule,
     ProjectFileModule,
     RequestAssociatedModule,
-    RequestChangeNameMeterFileModule
+    RequestChangeNameMeterFileModule,
+    RequestAvailabilityWaterFileModule
   ],
 })
 export class AppModule {}
