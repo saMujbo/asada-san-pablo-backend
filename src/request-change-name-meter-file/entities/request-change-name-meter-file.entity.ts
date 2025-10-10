@@ -9,9 +9,9 @@ export class RequestChangeNameMeterFile {
         Id: number;
     
         @Index()
-        @ManyToOne(() => RequestChangeNameMeter, (r) => r.ProjectFiles, { onDelete: 'CASCADE', nullable: false })
+        @ManyToOne(() => RequestChangeNameMeter, (r) => r.RequestChangeNameMeterFile, { onDelete: 'CASCADE', nullable: false })
         @JoinColumn({ name: 'RequestChangeNameMeterid' })
-        Project: Project;
+        RequestChangeNameMeter: RequestChangeNameMeter;
     
         @ManyToOne(() => User, { nullable: true })
         @JoinColumn({ name: 'UploadedByUserId' })

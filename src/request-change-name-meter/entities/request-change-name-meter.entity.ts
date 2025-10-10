@@ -40,7 +40,7 @@ export class RequestChangeNameMeter {
     @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestChangeNameMeter)
     commentRquest?: CommentRequest[];
 
-    @OneToMany(() => ProjectFile, (pf) => pf.Project)
+    @OneToMany(() => RequestChangeNameMeterFile, (rm) => rm.RequestChangeNameMeter)
     RequestChangeNameMeterFile: RequestChangeNameMeterFile[];
 
 }
