@@ -4,32 +4,32 @@
 
         export class UpdateRequestAssociatedDto {
         @ApiProperty({ example: '1-2345-6789' })
-        @IsNotEmpty()
+        @IsOptional()
         @IsString()
         IDcard: string; // se usa para buscar el usuario
 
         @ApiProperty()
-        @IsNotEmpty()
+        @IsOptional()
         @IsString()
         Name: string;
 
         @ApiProperty()
-        @IsNotEmpty()
+        @IsOptional()
         @IsString()
         Justification: string;
 
         @ApiProperty()
-        @IsNotEmpty()
+        @IsOptional()
         @IsString()
         Surname1: string;
 
         @ApiProperty()
-        @IsNotEmpty()
+        @IsOptional()
         @IsString()
         Surname2: string;
 
         @ApiProperty()
-        @IsNotEmpty()
+        @IsOptional()
         NIS:number;
 
         @ApiPropertyOptional({ example: 1 })
