@@ -48,7 +48,7 @@ export class RequestChangeNameMeterFileService {
 
   async uploadMany(RequestChangeNameMeterId: number, files: Express.Multer.File[], subfolder?: string, uploadedByUserId?: number) {
     if (!files?.length) throw new BadRequestException('No se enviaron archivos');
-    const project = await this.requestChangeNameMeterSv.findOne(RequestChangeNameMeterId);
+    const requestChangeMeter = await this.requestChangeNameMeterSv.findOne(RequestChangeNameMeterId);
 
     // Asegura carpeta
     const targetFolder = await this.ensureProjectFolder(RequestChangeNameMeterId, subfolder ?? 'Documentos');
@@ -63,7 +63,7 @@ export class RequestChangeNameMeterFileService {
     // Persiste metadatos
     const rows = results.map((r, i) =>
       this.projectFileRepo.create({
-        Project: project,
+        RequestChangeNameMeter: requestChangeMeter,
         Path: r.path_lower ?? `${targetFolder}/${files[i].originalname}`.toLowerCase(),
         FileName: r.name ?? files[i].originalname,
         MimeType: files[i].mimetype,
@@ -78,7 +78,7 @@ export class RequestChangeNameMeterFileService {
 
   async list(RequestChangeNameMeterId: number) {
     return this.projectFileRepo.find({
-      where: { Project: { Id: RequestChangeNameMeterId } },
+      where: { RequestChangeNameMeter: { Id: RequestChangeNameMeterId } },
       order: { UploadedAt: 'DESC' },
     });
   }
