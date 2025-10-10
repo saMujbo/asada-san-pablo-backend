@@ -54,6 +54,6 @@ export class RequestAssociated {
     commentRquest?: CommentRequest[];
 
     @OneToMany(() => RequestAssociatedFile, (ra) => ra.RequestAssociated)
-    RequestAssociatedFile: RequestAssociated[];
+    RequestAssociatedFile: RequestAssociatedFile[];
 
 }
