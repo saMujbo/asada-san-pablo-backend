@@ -1,5 +1,6 @@
 import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
 import { ProjectFile } from "src/project-file/entities/project-file.entity";
+import { RequestChangeNameMeterFile } from "src/request-change-name-meter-file/entities/request-change-name-meter-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
 import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
@@ -40,6 +41,6 @@ export class RequestChangeNameMeter {
     commentRquest?: CommentRequest[];
 
     @OneToMany(() => ProjectFile, (pf) => pf.Project)
-    ProjectFiles: ProjectFile[];
+    RequestChangeNameMeterFile: RequestChangeNameMeterFile[];
 
 }
