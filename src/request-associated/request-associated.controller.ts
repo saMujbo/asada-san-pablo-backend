@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { RequestAssociatedService } from './request-associated.service';
 import { CreateRequestAssociatedDto } from './dto/create-request-associated.dto';
 import { UpdateRequestAssociatedDto } from './dto/update-request-associated.dto';
+import { RequestAssociatedPagination } from './dto/pagination-request-associated.dtp';
 
 @Controller('request-associated')
 export class RequestAssociatedController {
@@ -16,7 +17,10 @@ export class RequestAssociatedController {
   findAll() {
     return this.requestAssociatedService.findAll();
   }
-
+  @Get('search')
+  search(@Query() pagination: RequestAssociatedPagination){
+    return this.requestAssociatedService.search(pagination);
+  }
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.requestAssociatedService.findOne(id);

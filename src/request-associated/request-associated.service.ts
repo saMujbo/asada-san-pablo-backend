@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
 import { hasNonEmptyString } from 'src/utils/validation.utils';
+import { RequestAssociatedPagination } from './dto/pagination-request-associated.dtp';
 
 @Injectable()
 export class RequestAssociatedService {
@@ -66,7 +67,52 @@ export class RequestAssociatedService {
       ]
     })
   }
+async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestAssociatedPagination) {
+  const pageNum = Math.max(1, Number(page) || 1);
+  const take = Math.min(100, Math.max(1, Number(limit) || 10));
+  const skip = (pageNum - 1) * take;
 
+  const qb = this.requestAssociatedRepo
+    .createQueryBuilder('req')
+    .leftJoinAndSelect('req.User', 'user')
+    .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+    .skip(skip)
+    .take(take);
+
+  // IsActive (opcional)
+  if (State !== undefined && State !== null && State !== '') {
+    // Si tu DTO manda string "true"/"false":
+    const isActive =
+      typeof State === 'string'
+        ? State.toLowerCase() === 'true'
+        : !!State;
+
+    qb.andWhere('req.IsActive = :State', { State}); // <-- nombre del parámetro correcto
+  }
+
+  // Filtro por nombre del encargado
+  if (UserName) {
+    qb.andWhere('LOWER(user.Name) LIKE LOWER(:UserName)', { UserName: `%${UserName}%` });
+  }
+
+  // Filtro por nombre del estado (PENDIENTE, TERMINADO, etc.)
+  if (typeof StateRequestId === 'number') {
+    qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
+  }
+
+  const [data, total] = await qb.getManyAndCount();
+
+  return {
+    data,
+    meta: {
+      page: pageNum,
+      limit: take,
+      pageCount: Math.max(1, Math.ceil(total / take)),
+      hasNextPage: pageNum * take < total,
+      hasPrevPage: pageNum > 1,
+    },
+  };
+}
   async findOne(Id: number) {
     const foundRequestAssociated = await this.requestAssociatedRepo.findOne({
       where:{Id,IsActive:true},relations:[
