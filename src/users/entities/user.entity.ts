@@ -1,4 +1,5 @@
 import { Project } from "src/project/entities/project.entity";
+import { Report } from "src/reports/entities/report.entity";
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
 import { RequestAssociated } from "src/request-associated/entities/request-associated.entity";
 import { RequestChangeMeter } from "src/request-change-meter/entities/request-change-meter.entity";
@@ -70,4 +71,7 @@ export class User {
 
     @OneToMany(()=>RequestAssociated,(RequestAssociated)=>RequestAssociated.User)
     RequestAssociated?:RequestAssociated[];
+
+    @OneToMany(()=>Report,(report)=>report.User)
+    Reports?:Report[];
 }
