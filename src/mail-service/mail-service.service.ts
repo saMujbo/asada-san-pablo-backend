@@ -9,6 +9,7 @@ import { WelcomeMailASADA } from './templates/WelcomeMesage';
 import { WelcomeMailASADADto } from './dto/welcome-mail-service.dto';
 import { AdminUserMailASADADto } from './dto/admin-create-user.dto';
 import { WelcomeTempPasswordMail } from './templates/Password-defa';
+import { NewReportMail } from './templates/NewReport';
 
 @Injectable()
 export class MailServiceService {
@@ -83,6 +84,44 @@ async sendWelcomeEmail(welcomeMailASADADto: WelcomeMailASADADto) {
   create(createMailServiceDto: CreateMailServiceDto) {
     return 'This action adds a new mailService';
   }
+
+  async sendReportCreatedEmail(dto: {
+    to?: string;               // si no envías, usamos REPORTS_MAIL_TO
+    subject?: string;          // opcional
+    Id: number;
+    Location: string;
+    Description?: string;
+    UserFullName?: string;
+    UserEmail?: string;
+    CreatedAt: string;         // ej: new Date().toLocaleString('es-CR')
+  }) {
+    try {
+      const to = dto.to ?? this.configService.get<string>('REPORTS_MAIL_TO') ?? 'admin@asada.cr';
+      const subject = dto.subject ?? `Nuevo reporte #${dto.Id} — ${dto.Location}`;
+
+      await this.mailService.sendMail({
+        from: 'RedSanPablo',
+        to,
+        subject,
+        text: `Nuevo reporte #${dto.Id}
+            Ubicación: ${dto.Location}
+            Descripción: ${dto.Description ?? '-'}
+            Usuario: ${dto.UserFullName ?? '-'} ${dto.UserEmail ? `(${dto.UserEmail})` : ''}
+            Fecha: ${dto.CreatedAt}`,
+        html: await NewReportMail({
+          Id: dto.Id,
+          Location: dto.Location,
+          Description: dto.Description,
+          UserFullName: dto.UserFullName,
+          UserEmail: dto.UserEmail,
+          CreatedAt: dto.CreatedAt,
+        }),
+      });
+    } catch (error) {
+      console.error('Error al enviar correo de reporte: ' + error);
+    }
+  }
+
 
   findAll() {
     return `This action returns all mailService`;
