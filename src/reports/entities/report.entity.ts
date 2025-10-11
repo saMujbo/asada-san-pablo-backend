@@ -1,11 +1,17 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity()
+@Entity('reports')
 export class Report {
     @PrimaryGeneratedColumn()
-    id: number;
+    Id: number;
+
+    @Column({ type: 'varchar', length: 255 })
+    Location: string;
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    CreatedAt: Date;
 
     @Column()
-    location: string;
+    // relacion con UserId
 }
 
