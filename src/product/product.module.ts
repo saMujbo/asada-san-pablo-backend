@@ -6,14 +6,18 @@ import { Product } from './entities/product.entity';
 import { CategoriesModule } from 'src/categories/categories.module';
 import { MaterialModule } from 'src/material/material.module';
 import { UnitMeasureModule } from 'src/unit_measure/unit_measure.module';
+import { LegalSupplierModule } from 'src/legal-supplier/legal-supplier.module';
+import { PhysicalSupplierModule } from 'src/physical-supplier/physical-supplier.module';
 
 @Module({
   imports:[
-      TypeOrmModule.forFeature([Product]),
-      forwardRef(() => CategoriesModule),
-      forwardRef(() => MaterialModule),
-      forwardRef(() => UnitMeasureModule),
-    ],
+    TypeOrmModule.forFeature([Product]),
+    forwardRef(() => CategoriesModule),
+    forwardRef(() => MaterialModule),
+    forwardRef(() => UnitMeasureModule),
+    forwardRef(() => LegalSupplierModule),
+    forwardRef(() => PhysicalSupplierModule),
+  ],
   controllers: [ProductController],
   providers: [ProductService],
   exports: [ProductService]

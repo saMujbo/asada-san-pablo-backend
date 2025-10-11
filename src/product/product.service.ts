@@ -1,7 +1,7 @@
-import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable, NotFoundException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { MaterialService } from 'src/material/material.service';
 import { UnitMeasureService } from 'src/unit_measure/unit_measure.service';
@@ -9,6 +9,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductPaginationDto } from './dto/productPaginationDto';
 import { changeState } from 'src/utils/changeState';
+import { LegalSupplierService } from 'src/legal-supplier/legal-supplier.service';
+import { PhysicalSupplierService } from 'src/physical-supplier/physical-supplier.service';
 
 @Injectable()
 export class ProductService {
@@ -20,29 +22,63 @@ export class ProductService {
     @Inject(forwardRef(() => MaterialService))
     private readonly materialService: MaterialService,
     @Inject(forwardRef(() => UnitMeasureService))
-    private readonly unitmeasureService: UnitMeasureService
+    private readonly unitmeasureService: UnitMeasureService,
+    @Inject(forwardRef(() => LegalSupplierService))
+    private readonly legalSupplierSv: LegalSupplierService,
+    @Inject(forwardRef(() => PhysicalSupplierService))
+    private readonly physicalSupplierSv: PhysicalSupplierService,
   ){}
   
   async create(createProductDto: CreateProductDto) {
+    const {
+      CategoryId, 
+      MaterialId, 
+      UnitMeasureId, 
+      LegalSupplierId, 
+      PhysicalSupplierId,
+      ...rest
+    } = createProductDto;
+
+    if ((LegalSupplierId == null) && (PhysicalSupplierId == null)) {
+      // En Nest es mejor BadRequestException
+      throw new BadRequestException('Faltan argumentos para agregar un producto!');
+    }
+
     const [category, material, unit] = await Promise.all([
-      this.categoryService.findOne(createProductDto.CategoryId),
-      this.materialService.findOne(createProductDto.MaterialId),
-      this.unitmeasureService.findOne(createProductDto.UnitMeasureId),
+      this.categoryService.findOne(CategoryId),
+      this.materialService.findOne(MaterialId),
+      this.unitmeasureService.findOne(UnitMeasureId),
     ]);
 
-    const newProduct = this.productRepo.create({
-      Name: createProductDto.Name,
-      Type: createProductDto.Type,
-      Observation: createProductDto.Observation,
-      Category: category,
-      Material: material,
-      UnitMeasure: unit,
-    });
-    return await this.productRepo.save(newProduct);
+    if(LegalSupplierId != null){
+      const legalSupplier = await this.legalSupplierSv.findOne(LegalSupplierId);
+
+      const newProduct = await this.productRepo.create({
+        Category: category,
+        Material: material,
+        UnitMeasure: unit,
+        LegalSupplier: legalSupplier,
+        ...rest
+      });
+      return await this.productRepo.save(newProduct);
+    }
+    else{
+      const physicalSupplier = await this.physicalSupplierSv.findOne(PhysicalSupplierId);
+
+      const newProduct = await this.productRepo.create({
+        Category: category,
+        Material: material,
+        UnitMeasure: unit,
+        PhysicalSupplier: physicalSupplier,
+        ...rest
+      });
+      return await this.productRepo.save(newProduct);
+    }
+    
   }
 
   async findAll() {
-    return this.productRepo.find({ relations: ['Category', 'Material', 'UnitMeasure'] });
+    return this.productRepo.find({ relations: ['Category', 'Material', 'UnitMeasure', 'PhysicalSupplier', 'LegalSupplier'], where: { IsActive: true } });
   }
 
   // products.service.ts
@@ -53,6 +89,8 @@ export class ProductService {
     categoryId,
     materialId,
     unitId,
+    supplierId,
+    state
   }: ProductPaginationDto) {
     const pageNum = Math.max(1, Number(page) || 1);
     const take = Math.min(100, Math.max(1, Number(limit) || 10));
@@ -63,6 +101,8 @@ export class ProductService {
       .leftJoinAndSelect('product.Category', 'category')
       .leftJoinAndSelect('product.Material', 'material')
       .leftJoinAndSelect('product.UnitMeasure', 'unit')
+      .leftJoinAndSelect('product.PhysicalSupplier', 'physical_supplier')
+      .leftJoinAndSelect('product.LegalSupplier', 'legal_supplier')
       .skip(skip)
       .take(take);
 
@@ -93,7 +133,13 @@ export class ProductService {
       qb.andWhere('unit.Id = :unitId', { unitId });
       // Alternativa: qb.andWhere('product.UnitMeasureId = :unitId', { unitId });
     }
-
+    if (typeof supplierId === 'number') {
+      qb.andWhere('supplier.Id = :supplierId', { supplierId });
+      // Alternativa: qb.andWhere('product.UnitMeasureId = :unitId', { unitId });
+    }
+    if(state){
+      qb.andWhere('product.IsActive = :state',{state})
+  }
     qb.orderBy('product.Name', 'ASC');
     // qb.distinct(true); // actívalo si en el futuro agregas joins 1:N que dupliquen filas
 
@@ -114,23 +160,35 @@ export class ProductService {
 
   async findOne(Id: number) {
     const foundProduct = await this.productRepo.findOne({
-      where: { Id, IsActive: true },
-      relations: ['Category', 'Material', 'UnitMeasure'],
+      where: { Id },
+      relations: ['Category', 'Material', 'UnitMeasure', 'PhysicalSupplier', 'LegalSupplier'],
     });
 
     if(!foundProduct) throw new ConflictException(`Product with Id ${Id} not found`);
     return foundProduct;
   }
   
-
+  async findAllByIds(IDsArray:number[]){
+    const products = await this.productRepo.find({
+      where:{Id: In(IDsArray)},
+    });
+    if(products.length !== IDsArray.length){
+      const encontrados = new Set(products.map(p=>p.Id));
+      const faltantes = IDsArray.filter(id=> !encontrados.has(id));
+      throw new NotFoundException(`Productos inexistentes:[${faltantes.join(',')}]`);
+    }
+    return products;
+  }
+  
   async update(Id: number, updateProductDto: UpdateProductDto) {
-    const updateProduct = await this.findOne(Id);
+    const updateProduct = await this.productRepo.findOne({ where: {Id} });
+    if(!updateProduct) throw new NotFoundException(`Product with Id ${Id} not found`);
 
     if (updateProductDto.Name !== undefined) updateProduct.Name = updateProductDto.Name;
     if (updateProductDto.Type !== undefined) updateProduct.Type = updateProductDto.Type;
     if (updateProductDto.Observation !== undefined) updateProduct.Observation = updateProductDto.Observation;
     if (updateProductDto.IsActive !== undefined && updateProductDto.IsActive != null) 
-          updateProduct.IsActive = updateProductDto.IsActive;
+        updateProduct.IsActive = updateProductDto.IsActive;
     // relaciones (si vienen)
     if (updateProductDto.CategoryId !== undefined)
       updateProduct.Category = await this.categoryService.findOne(updateProductDto.CategoryId);
@@ -138,7 +196,11 @@ export class ProductService {
       updateProduct.Material = await this.materialService.findOne(updateProductDto.MaterialId);
     if (updateProductDto.UnitMeasureId !== undefined)
       updateProduct.UnitMeasure = await this.unitmeasureService.findOne(updateProductDto.UnitMeasureId);
-    
+
+    if (updateProductDto.LegalSupplierId !== undefined)
+      updateProduct.LegalSupplier = await this.legalSupplierSv.findOne(updateProductDto.LegalSupplierId);
+    if (updateProductDto.PhysicalSupplierId !== undefined)
+      updateProduct.PhysicalSupplier = await this.physicalSupplierSv.findOne(updateProductDto.PhysicalSupplierId);
     
     return await this.productRepo.save(updateProduct);
   }
@@ -159,21 +221,35 @@ export class ProductService {
 
   async isOnCategory(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
-      where: { Category: { Id }, IsActive: true },
+      where: { Category: { Id } },
     });
     return hasActiveProducts;
   }
 
+  async isOnLegalSupplier(Id: number) {
+    const hasActiveProducts = await this.productRepo.exist({
+      where: { LegalSupplier: { Id } },
+    });
+    return hasActiveProducts;
+  }
+
+  async isOnPhysicalSupplier(Id: number) {
+    const hasActiveProducts = await this.productRepo.exist({
+      where: { PhysicalSupplier: { Id } },
+    });
+    return hasActiveProducts;
+  }
+  
   async isOnMaterial(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
-      where: { Material: { Id }, IsActive: true },
+      where: { Material: { Id } },
     });
     return hasActiveProducts;
   }
 
   async isOnUnit(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
-      where: { UnitMeasure: { Id }, IsActive: true },
+      where: { UnitMeasure: { Id } },
     });
     return hasActiveProducts;
   }

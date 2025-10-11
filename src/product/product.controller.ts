@@ -8,6 +8,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { Roles } from 'src/auth/auth-roles/roles.decorator';
 import { Role } from 'src/auth/auth-roles/roles.enum';
 import { CategoriesPaginationDto } from 'src/categories/dto/categoriesPaginationDto';
+import { ProductPaginationDto } from './dto/productPaginationDto';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
@@ -27,7 +28,7 @@ export class ProductController {
   }
 
   @Get('search')
-  search(@Query() pagination: CategoriesPaginationDto) {
+  search(@Query() pagination: ProductPaginationDto) {
     return this.productService.search(pagination);
   }
 

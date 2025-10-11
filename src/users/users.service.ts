@@ -3,7 +3,6 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ForgotPassword } from 'src/auth/dto/forgotPassword-auth.dto';
 import { RolesService } from 'src/roles/roles.service';
 import * as bcrypt from 'bcrypt';
@@ -14,6 +13,8 @@ import { UpdateEmailDto } from './dto/updateEmail-user';
 import { use } from 'passport';
 import { changeState } from 'src/utils/changeState';
 import { UpdateMeDto } from './dto/updateMeDto';
+import { PaginationDto } from './dto/pagination.dto';
+import { AdminCreateUserDto } from './dto/admin-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -43,7 +44,7 @@ export class UsersService {
     });
   }
 
-  async findAllPagination({ page, limit, name, roleId }: PaginationDto) {
+  async search({ page, limit, name, roleId, state }: PaginationDto) {
     const skip = (page - 1) * limit;
 
     const qb = this.userRepo
@@ -68,6 +69,10 @@ export class UsersService {
       qb.andWhere('role.id = :roleId', { roleId });
     }
 
+    if (state) {
+      qb.andWhere('user.IsActive = :state', { state });
+    }
+    
     // Orden sugerido (ajusta a tu preferencia)
     qb.orderBy('user.Name', 'ASC').addOrderBy('user.Surname1', 'ASC');
 
@@ -87,7 +92,7 @@ export class UsersService {
   }
 
   async findOne(Id: number) {
-      const found = await this.userRepo.findOne({where: {Id},  relations: ['Roles'] });
+      const found = await this.userRepo.findOne({ where: { Id, IsActive: true }, relations: ['Roles'] });
 
       if (!found) throw new ConflictException(`User with Id ${Id} not found`);
 
@@ -95,7 +100,7 @@ export class UsersService {
   }
 
   async findByEmail(Email: string) {
-    return await this.userRepo.findOne({ where: { Email }, relations: ['Roles'] });
+    return await this.userRepo.findOne({ where: { Email, IsActive: true }, relations: ['Roles'] });
   }
 
   async findByIDcardEmail(userObjectForgot: ForgotPassword) {
@@ -107,19 +112,29 @@ export class UsersService {
       return user;
   }
 
+
   async update(Id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.userRepo.findOne({ where:{ Id} });
+    const user = await this.userRepo.findOne({ where:{ Id } });
 
     if (!user) {throw new ConflictException(`User with Id ${Id} not found`);}
 
-    if (updateUserDto.Address !== undefined && updateUserDto.Address != null && updateUserDto.Address !== '') user.Address = updateUserDto.Address;
-    if (updateUserDto.PhoneNumber !== undefined && updateUserDto.PhoneNumber != null && updateUserDto.PhoneNumber !== '') user.PhoneNumber = updateUserDto.PhoneNumber;
-    if (updateUserDto.Birthdate !== undefined) user.Birthdate = updateUserDto.Birthdate as any;
-    if (updateUserDto.IsActive !== undefined && updateUserDto.IsActive != null) 
-      user.IsActive = updateUserDto.IsActive;
+    const { roleIds, ...rest } = updateUserDto;
+
+    // 2) Roles a asignar
+    const roles = roleIds?.length
+      ? await this.rolesService.findAllByIDs(roleIds)
+      : [await this.rolesService.findDefaultRole()];
+
+    if(updateUserDto.Nis !== undefined && updateUserDto.Nis != null && updateUserDto.Nis !== '') user.Nis = updateUserDto.Nis;
+    if(updateUserDto.Email !== undefined && updateUserDto.Email != null && updateUserDto.Email !== '') user.Email = updateUserDto.Email;
+    if(updateUserDto.PhoneNumber !== undefined && updateUserDto.PhoneNumber != null && updateUserDto.PhoneNumber !== '') user.PhoneNumber = updateUserDto.PhoneNumber;
+    if(updateUserDto.Address !== undefined && updateUserDto.Address != null && updateUserDto.Address !== '') user.Address = updateUserDto.Address;
+    if(updateUserDto.Birthdate !== undefined) user.Birthdate = updateUserDto.Birthdate as any;
+    if(updateUserDto.IsActive !== undefined && updateUserDto.IsActive != null) user.IsActive = updateUserDto.IsActive;
+    user.Roles = roles;
     
     return await this.userRepo.save(user);
-  }
+}
 
   async remove(Id: number) {
     const user = await this.userRepo.findOneBy({ Id });
@@ -266,4 +281,37 @@ export class UsersService {
     return { message: 'Email updated', email: user.Email };
   }
 
+//  async findUsersByRole() {
+//   const users = await this.userRepo.find({
+//     relations: ['Roles'],
+//     where: {
+//       Roles: {
+//         Rolname: 'ADMIN',
+//       },
+//     },
+//   });
+
+//   return users;
+// }
+// users.service.ts
+  async findByIdCardRaw(idCardRaw: string) {
+    const normalized = (idCardRaw ?? '').replace(/[^0-9]/g, ''); // quita guiones/espacios
+    // Compara contra IDcard normalizado en la consulta
+    return this.userRepo.createQueryBuilder('u')
+      .leftJoinAndSelect('u.Roles', 'r')
+      .where("REPLACE(REPLACE(REPLACE(u.IDcard, '-', ''), ' ', ''), '.', '') = :ced", { ced: normalized })
+      .getOne();
+  }
+  
+async findUsersByRoleAdmin() {
+  return await this.userRepo.find({
+    relations: ['Roles'],
+    where: {
+      Roles: { Rolname: 'ADMIN' },
+    },
+  });
 }
+
+}
+
+

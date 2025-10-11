@@ -12,6 +12,23 @@ import { CategoriesModule } from './categories/categories.module';
 import { UnitMeasureModule } from './unit_measure/unit_measure.module';
 import { MaterialModule } from './material/material.module';
 import { ProductModule } from './product/product.module';
+import { ProjectModule } from './project/project.module';
+import { TraceProjectModule } from './trace-project/trace-project.module';
+import { ProjectStateModule } from './project/project-state/project-state.module';
+import { ProjectProjectionModule } from './project-projection/project-projection.module';
+import { ProductDetailModule } from './product/product-detail/product-detail.module';
+import { ActualExpenseModule } from './actual-expense/actual-expense.module';
+import { AgentSupplierModule } from './agent_supplier/agent_supplier.module';
+import { LegalSupplierModule } from './legal-supplier/legal-supplier.module';
+import { PhysicalSupplierModule } from './physical-supplier/physical-supplier.module';
+import { RequesAvailabilityWaterModule } from './reques-availability-water/reques-availability-water.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { DropboxModule } from './dropbox/dropbox.module';
+import { ProjectFileModule } from './project-file/project-file.module';
+import { RequestAssociatedModule } from './request-associated/request-associated.module';
+import { RequestChangeNameMeterFileModule } from './request-change-name-meter-file/request-change-name-meter-file.module';
+import { RequestAvailabilityWaterFileModule } from './request-availability-water-file/request-availability-water-file.module';
+import { RequestAssociatedFileModule } from './request-associated-file/request-associated-file.module';
 
 @Module({
   imports: [
@@ -20,6 +37,7 @@ import { ProductModule } from './product/product.module';
       load: [configuration],           // mapea tus vars a un objeto
       envFilePath: ['.env'],           // ruta(s) del .env
     }),
+    MulterModule.register({}), // usa memoria por defecto (buffer)
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -42,7 +60,23 @@ import { ProductModule } from './product/product.module';
     MaterialModule,
     CategoriesModule,
     UnitMeasureModule,
-    ProductModule
+    ProductModule,
+    ProjectModule,
+    TraceProjectModule,
+    ProjectStateModule,
+    ProductDetailModule,
+    ProjectProjectionModule,
+    ActualExpenseModule,
+    AgentSupplierModule,
+    LegalSupplierModule,
+    PhysicalSupplierModule,
+    RequesAvailabilityWaterModule,
+    DropboxModule,
+    ProjectFileModule,
+    RequestAssociatedModule,
+    RequestChangeNameMeterFileModule,
+    RequestAvailabilityWaterFileModule,
+    RequestAssociatedFileModule
   ],
 })
 export class AppModule {}

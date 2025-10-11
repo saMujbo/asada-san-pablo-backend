@@ -34,4 +34,9 @@ export class PaginationDto {
   // convierte "" en undefined
   @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   roleId?: number;
+
+  @ApiPropertyOptional({description: 'Filtro por estado (true o false)'})
+  @IsOptional()
+  @IsString()
+  state?: string;
 }

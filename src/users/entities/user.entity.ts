@@ -1,5 +1,11 @@
+import { Project } from "src/project/entities/project.entity";
+import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
+import { RequestAssociated } from "src/request-associated/entities/request-associated.entity";
+import { RequestChangeMeter } from "src/request-change-meter/entities/request-change-meter.entity";
+import { RequestChangeNameMeter } from "src/request-change-name-meter/entities/request-change-name-meter.entity";
+import { RequestSupervisionMeter } from "src/requestsupervision-meter/entities/requestsupervision-meter.entity";
 import { Role } from "src/roles/entities/role.entity";
-import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class User {
@@ -42,8 +48,26 @@ export class User {
     @Column()
     Password:string;
 
-
+    //RELATIONS
     @ManyToMany(()=>Role)
     @JoinTable({ name: 'user_roles_role' })
     Roles:Role[];
+
+    @OneToMany(() => Project, (project) => project.User)
+    Projects?: Project[];
+
+    @OneToMany(()=>RequesAvailabilityWater,(requesAvailabilityWater)=>requesAvailabilityWater.User)
+    RequesAvailabilityWater?:RequesAvailabilityWater[];
+
+    @OneToMany(()=>RequestSupervisionMeter,(requestSupervisionMeter)=>requestSupervisionMeter.User)
+    RequestSupervisionMeter?:RequestSupervisionMeter[];
+
+    @OneToMany(()=>RequestChangeMeter,(requestChangeMeter)=>requestChangeMeter.User)
+    RequestChangeMeter?:RequestChangeMeter[];
+
+    @OneToMany(()=>RequestChangeNameMeter,(requestChangeNameMeter)=>requestChangeNameMeter.User)
+    RequestChangeNameMeter?:RequestChangeNameMeter[];
+
+    @OneToMany(()=>RequestAssociated,(RequestAssociated)=>RequestAssociated.User)
+    RequestAssociated?:RequestAssociated[];
 }

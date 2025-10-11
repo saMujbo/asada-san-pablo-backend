@@ -61,7 +61,7 @@ export class RegisterAuth extends PartialType(LoginAuthDto){
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    @Matches(/^[0-9]{8}$/, { message: 'PhoneNumber debe tener 8 dígitos numéricos' })
+   // @Matches(/^[0-9]{8}$/, { message: 'PhoneNumber debe tener 8 dígitos numéricos' })
     PhoneNumber: string;
     
     @ApiProperty()

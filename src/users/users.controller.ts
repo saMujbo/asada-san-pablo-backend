@@ -3,15 +3,12 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { Roles } from 'src/auth/auth-roles/roles.decorator';
-import { Role } from 'src/auth/auth-roles/roles.enum';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { UpdateEmailDto } from './dto/updateEmail-user';
+import { PaginationDto } from './dto/pagination.dto';
+import { AdminCreateUserDto } from './dto/admin-user.dto';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -41,11 +38,16 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get('/role-admin')
+  async getUsersByRole() {
+    return this.usersService.findUsersByRoleAdmin();
+  }
+
   //@UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Get('pagination')
+  @Get('search')
   //@Roles(Role.ADMIN) // Only allow ADMIN role to access this endpoint
-  findAllPagination(@Query() pagination: PaginationDto) {
-    return this.usersService.findAllPagination(pagination);
+  search(@Query() pagination: PaginationDto) {
+    return this.usersService.search(pagination);
   }
 
   @Get(':id')
@@ -82,5 +84,7 @@ export class UsersController {
   async updateMyEmail( @GetUser('id') id: number, @Body() dto: UpdateEmailDto ){
     return await this.usersService.updateMyEmail(id, dto);
   }
+
+  
 
 }

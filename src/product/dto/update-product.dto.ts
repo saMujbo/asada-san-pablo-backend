@@ -1,17 +1,44 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateProductDto } from './create-product.dto';
-import { IsBoolean, IsInt, IsOptional, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdateProductDto extends PartialType(CreateProductDto) {
+export class UpdateProductDto {
+
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    Name: string;
+    
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    Type: string;
+    
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+    Observation: string;
+
+    @ApiProperty()
     @IsOptional() @IsInt() @Min(1)
     CategoryId?: number;
 
+    @ApiProperty()
     @IsOptional() @IsInt() @Min(1)
     MaterialId?: number;
 
+    @ApiProperty()
     @IsOptional() @IsInt() @Min(1)
     UnitMeasureId?: number;
+
+    @ApiProperty()
+    @IsOptional() @IsInt() @Min(1)
+    LegalSupplierId?: number;
+
+    @ApiProperty()
+    @IsOptional() @IsInt() @Min(1)
+    PhysicalSupplierId?: number;
 
     @ApiProperty()
     @IsBoolean()

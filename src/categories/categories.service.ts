@@ -23,7 +23,7 @@ export class CategoriesService {
   }
 
   async findAll() {
-    return await this.categoryRepo.find();
+    return await this.categoryRepo.find({ where: { IsActive: true } });
   }
 
   async search({ page = 1, limit = 10, name, state }: CategoriesPaginationDto) {
@@ -62,8 +62,6 @@ export class CategoriesService {
       },
     };
   }
-
-
 
   async findOne(Id: number) {
     const categoryFound = await this.categoryRepo.findOne({ 

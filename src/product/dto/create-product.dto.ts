@@ -25,4 +25,14 @@ export class CreateProductDto {
     @ApiProperty()
     @IsInt() @Min(1)
     UnitMeasureId: number;
+
+    @ApiProperty()
+    @IsInt() @Min(1)
+    @IsOptional()
+    LegalSupplierId: number;
+
+    @ApiProperty()
+    @IsInt() @Min(1)
+    @IsOptional()
+    PhysicalSupplierId: number;
 }

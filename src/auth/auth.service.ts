@@ -1,4 +1,4 @@
-import { HttpException, Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpException, Inject, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RegisterAuth } from './dto/register-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
@@ -18,6 +18,7 @@ import { Roles } from './auth-roles/roles.decorator';
 
 @Injectable()
 export class AuthService {
+  dataSource: any;
   constructor (
     private readonly userService: UsersService,
     private readonly roleService: RolesService,
@@ -50,56 +51,66 @@ export class AuthService {
     const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
     const url = `${await this.configService.get('FrontEndBaseURL')}/login`;
     try {
-    await this.mailClient.sendWelcomeTempPasswordEmail({
+    await this.mailClient.sendWelcomeEmail({
       to: createAuthDto.Email,
       subject: '¡Bienvenido a RedSanPablo!',
       message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
       LoginURL: url,
-      Name: createAuthDto.Name,
-      temPasswordL: ''
+      Name: createAuthDto.Name
     });
   } catch (error) {
     console.error('Error al enviar correo de bienvenida:', error);
   }
     return newUser;
   }
+
   async adminCreateUser(adminCreateUserDto: AdminCreateUserDto){
-    const {...rest } = adminCreateUserDto;
-    const defaultRole = await this.roleService.findOne(2);
+    const { roleIds, ...rest } = adminCreateUserDto;
 
-    if (!defaultRole) {
-      throw new Error('❌ Rol por defecto "GUEST" no existe en la base de datos');
-    }
+    // 2) Roles a asignar
+    const roles = roleIds?.length
+      ? await this.roleService.findAllByIDs(roleIds)
+      : [await this.roleService.findDefaultRole()];
 
+    // 3) Password temporal
     const plainTempPassword = generateRandomPassword(8);
     const hashed = await bcrypt.hash(plainTempPassword, 10);
 
-  const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
-    const url = `${await this.configService.get('FrontEndBaseURL')}/login`;
-    try {
-    await this.mailClient.sendWelcomeTempPasswordEmail({
-      to: adminCreateUserDto.Email,
-      subject: '¡Bienvenido a RedSanPablo!',
-      message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
-      LoginURL: url,
-      Name: adminCreateUserDto.Name,
-      temPasswordL: plainTempPassword
+    // 4) Transacción para crear y asociar roles
+    const newUser = await this.userService.createRegister({
+      ...rest,
+      Password: hashed,
+      Roles: roles, // <- lo correcto
     });
-  } catch (error) {
-    console.error('Error al enviar correo de bienvenida:', error);
-  }
-  return newUser;
+
+    // 5) Enviar correo (si falla, no rompas la creación)
+    const url = `${this.configService.get<string>('FrontEndBaseURL')}/login`;
+    try {
+      await this.mailClient.sendWelcomeTempPasswordEmail({
+        to: newUser.Email,
+        subject: '¡Bienvenido a RedSanPablo!',
+        message: 'Su cuenta ha sido creada exitosamente en la plataforma RedSanPablo.',
+        LoginURL: url,
+        Name: newUser.Name,
+        temPasswordL: plainTempPassword, // <- nombre correcto
+      });
+    } catch (error) {
+      // Loguea y sigue; el usuario quedó creado
+      console.error('Error al enviar correo de bienvenida:', error);
+    }
+
+    return newUser;
   }
 
   async login(userObjectLogin: LoginAuthDto) {
     const { Email, Password } = userObjectLogin;
     const findUser = await this.userService.findByEmail(Email);
 
-    if (!findUser) throw new HttpException('Usuario no encontrado', 404);
+    if (!findUser) throw new NotFoundException('Usuario no encontrado');
 
     const isPasswordValid = await bcrypt.compare(Password, findUser.Password);
 
-    if (!isPasswordValid) throw new HttpException('Contraseña invalida', 403);
+    if (!isPasswordValid) throw new ConflictException('Contraseña invalida');
 
     const rolesNames = findUser.Roles?.map((role) => role.Rolname);
 

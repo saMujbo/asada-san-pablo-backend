@@ -12,6 +12,7 @@ import { UsersModule } from 'src/users/users.module';
 import { MailerService } from '@nestjs-modules/mailer';
 import { MailServiceModule } from 'src/mail-service/mail-service.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { DropboxAuthController } from './dropbox-auth.controller';
 
 @Module({
   imports:[
@@ -30,7 +31,7 @@ import { CacheModule } from '@nestjs/cache-manager';
       }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, DropboxAuthController],
   providers: [AuthService, RolesGuard],
   exports: [AuthService],
 })
