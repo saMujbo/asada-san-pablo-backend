@@ -29,6 +29,7 @@ import { RequestAssociatedModule } from './request-associated/request-associated
 import { RequestChangeNameMeterFileModule } from './request-change-name-meter-file/request-change-name-meter-file.module';
 import { RequestAvailabilityWaterFileModule } from './request-availability-water-file/request-availability-water-file.module';
 import { RequestAssociatedFileModule } from './request-associated-file/request-associated-file.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -76,7 +77,8 @@ import { RequestAssociatedFileModule } from './request-associated-file/request-a
     RequestAssociatedModule,
     RequestChangeNameMeterFileModule,
     RequestAvailabilityWaterFileModule,
-    RequestAssociatedFileModule
+    RequestAssociatedFileModule,
+    ReportsModule
   ],
 })
 export class AppModule {}
