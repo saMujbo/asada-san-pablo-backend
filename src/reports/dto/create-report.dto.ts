@@ -17,4 +17,12 @@ export class CreateReportDto {
   @ApiProperty({ example: 1, description: 'User ID of the report creator' })
   @IsNotEmpty()
   UserId: number;  // Añadir UserId al DTO
+
+  @ApiProperty({ example: 1, description: 'Location ID of the report' })
+  @IsNotEmpty()
+  LocationId: number;
+
+  @ApiProperty({ example: 1, description: 'Type ID of the report' })
+  @IsNotEmpty()
+  ReportTypeId: number;
 }

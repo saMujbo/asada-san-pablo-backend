@@ -31,6 +31,8 @@ import { RequestAvailabilityWaterFileModule } from './request-availability-water
 import { RequestAssociatedFileModule } from './request-associated-file/request-associated-file.module';
 import { ReportsModule } from './reports/reports.module';
 import { CommentModule } from './comment/comment.module';
+import { ReportLocationModule } from './report-location/report-location.module';
+import { ReportTypesModule } from './report-types/report-types.module';
 
 @Module({
   imports: [
@@ -80,7 +82,9 @@ import { CommentModule } from './comment/comment.module';
     RequestAvailabilityWaterFileModule,
     RequestAssociatedFileModule,
     ReportsModule,
-    CommentModule
+    CommentModule,
+    ReportLocationModule,
+    ReportTypesModule
   ],
 })
 export class AppModule {}
