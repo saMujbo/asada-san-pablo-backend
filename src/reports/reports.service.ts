@@ -16,7 +16,7 @@ export class ReportsService {
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
     private readonly reportsGateway: ReportsGateway,
-     private readonly mailService: MailServiceService, 
+    private readonly mailService: MailServiceService, 
   ) {}
 
   async create(createReportDto: CreateReportDto) {

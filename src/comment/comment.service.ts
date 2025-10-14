@@ -31,8 +31,11 @@ export class CommentService {
     return commentFound;
   }
 
-  update(id: number, updateCommentDto: UpdateCommentDto) {
-    return `This action updates a #${id} comment`;
+  async update(id: number) {
+    const commentFound = await this.findOne(id);
+    commentFound.IsRead = true;
+
+    return await this.commentRepo.save(commentFound);
   }
 
   async remove(Id: number) {

@@ -1,4 +1,4 @@
-import { PrimaryGeneratedColumn, Column, Entity } from "typeorm";
+import { PrimaryGeneratedColumn, Column, Entity, BeforeInsert } from "typeorm";
 
 @Entity()
 export class Comment {
@@ -7,6 +7,16 @@ export class Comment {
 
     @Column()
     Message: string;
+
+    @Column({
+    name: 'created_at',
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+    })
+    CreatedAt: Date;
+
+    @Column({ default: false })
+    IsRead: boolean;
 
     @Column({ default: true })
     IsActive: boolean;
