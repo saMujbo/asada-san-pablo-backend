@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { CommentPaginationDto } from './dto/commentPagination.dto';
 
 @Controller('comment')
 export class CommentController {
@@ -15,6 +16,11 @@ export class CommentController {
   @Get()
   findAll() {
     return this.commentService.findAll();
+  }
+
+  @Get('search')
+  search(@Query() pagination: CommentPaginationDto) {
+    return this.commentService.search(pagination);
   }
 
   @Get(':id')
