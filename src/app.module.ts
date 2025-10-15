@@ -30,6 +30,7 @@ import { RequestChangeNameMeterFileModule } from './request-change-name-meter-fi
 import { RequestAvailabilityWaterFileModule } from './request-availability-water-file/request-availability-water-file.module';
 import { RequestAssociatedFileModule } from './request-associated-file/request-associated-file.module';
 import { ReportsModule } from './reports/reports.module';
+import { CommentModule } from './comment/comment.module';
 import { ReportLocationModule } from './report-location/report-location.module';
 import { ReportTypesModule } from './report-types/report-types.module';
 
@@ -81,6 +82,7 @@ import { ReportTypesModule } from './report-types/report-types.module';
     RequestAvailabilityWaterFileModule,
     RequestAssociatedFileModule,
     ReportsModule,
+    CommentModule,
     ReportLocationModule,
     ReportTypesModule
   ],
