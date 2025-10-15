@@ -22,7 +22,7 @@ export class ReportsService {
     @InjectRepository(ReportLocation)
     private readonly reportLocationRepository: Repository<ReportLocation>,
     private readonly reportsGateway: ReportsGateway,
-     private readonly mailService: MailServiceService, 
+    private readonly mailService: MailServiceService, 
   ) {}
 
   async create(createReportDto: CreateReportDto) {
