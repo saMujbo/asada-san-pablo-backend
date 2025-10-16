@@ -39,13 +39,18 @@ export class UsersController {
   }
 
   @Get('/role-admin')
-  async getUsersByRole() {
+  async getAdmins() {
     return this.usersService.findUsersByRoleAdmin();
   }
 
   @Get('/role-fontanero')
   async getUsersByRoleFontanero() {
     return this.usersService.findUsersByRoleFontanero();
+  }
+  
+  @Get('/role-abonado')
+  async getAbonados() {
+    return this.usersService.findUsersByRole();
   }
 
   //@UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -89,7 +94,5 @@ export class UsersController {
   async updateMyEmail( @GetUser('id') id: number, @Body() dto: UpdateEmailDto ){
     return await this.usersService.updateMyEmail(id, dto);
   }
-
-  
 
 }
