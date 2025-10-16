@@ -281,19 +281,19 @@ export class UsersService {
     return { message: 'Email updated', email: user.Email };
   }
 
-//  async findUsersByRole() {
-//   const users = await this.userRepo.find({
-//     relations: ['Roles'],
-//     where: {
-//       Roles: {
-//         Rolname: 'ADMIN',
-//       },
-//     },
-//   });
+  async findUsersByRole() {
+    const users = await this.userRepo.find({
+      relations: ['Roles'],
+      where: {
+        Roles: {
+          Rolname: 'ABONADO',
+        },
+      },
+    });
 
-//   return users;
-// }
-// users.service.ts
+    return users.length;
+  }
+
   async findByIdCardRaw(idCardRaw: string) {
     const normalized = (idCardRaw ?? '').replace(/[^0-9]/g, ''); // quita guiones/espacios
     // Compara contra IDcard normalizado en la consulta
