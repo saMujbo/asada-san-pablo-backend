@@ -48,6 +48,17 @@ export class UsersController {
     return this.usersService.findUsersByRole();
   }
 
+<<<<<<< HEAD
+  @Get('/role-fontanero')
+  async getUsersByRoleFontanero() {
+    return this.usersService.findUsersByRoleFontanero();
+=======
+  @Get('/role-abonado')
+  async getAbonados() {
+    return this.usersService.findUsersByRole();
+>>>>>>> origin/desarrollo-prueba
+  }
+
   //@UseGuards(AuthGuard('jwt'), RolesGuard)
   @Get('search')
   //@Roles(Role.ADMIN) // Only allow ADMIN role to access this endpoint

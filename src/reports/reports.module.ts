@@ -8,9 +8,10 @@ import { ReportsGateway } from './reports.gateway';
 import { MailServiceModule } from 'src/mail-service/mail-service.module';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
+import { ReportState } from 'src/report-states/entities/report-state.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Report, User, ReportLocation, ReportType]), MailServiceModule],
+  imports: [TypeOrmModule.forFeature([Report, User, ReportLocation, ReportType, ReportState]), MailServiceModule],
   controllers: [ReportsController],
   providers: [ReportsService, ReportsGateway],
 })

@@ -26,8 +26,12 @@ export class ReportTypesService {
     return this.reportTypeRepository.save(reportType);
   }
 
-  findAll() {
-    return this.reportTypeRepository.find();
+  async findAll() {
+    const found = await this.reportTypeRepository.find();
+    if (!found) {
+      throw new Error('No se encontraron tipos de reportes');
+    }
+    return found;
   }
 
   findOne(id: number) {
