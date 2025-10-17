@@ -186,4 +186,13 @@ export class ProjectService {
     });
     return hasActiveTraceProject;
   }
+
+  async countByState(stateId: number): Promise<number> {
+    return this.projectRepo.count({
+      where: {
+        ProjectState: { Id: stateId }, // ajusta el nombre de la relación si difiere
+        IsActive: true,
+      },
+    });
+  }
 }
