@@ -7,5 +7,5 @@ export function configureCloudinary() {
         api_secret: process.env.CLOUDINARY_API_SECRET,
         secure: true,
     });
-    return cloudinary;
+    return cloudinary;
 }
