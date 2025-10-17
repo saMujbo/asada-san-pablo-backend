@@ -312,6 +312,15 @@ async findUsersByRoleAdmin() {
   });
 }
 
+async findUsersByRoleFontanero() {
+  return await this.userRepo.find({
+    relations: ['Roles'],
+    where: {
+      Roles: { Rolname: 'FONTANERO' },
+    },
+  });
+}
+
 }
 
 

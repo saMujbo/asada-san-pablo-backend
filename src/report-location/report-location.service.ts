@@ -29,7 +29,11 @@ export class ReportLocationService {
   }
 
   async findAll() {
-    return await this.reportLocationRepository.find();
+    const found = await this.reportLocationRepository.find();
+    if(!found) {
+      throw new HttpException('No se encontraron ubicaciones', HttpStatus.NOT_FOUND);
+    }
+    return found;
   }
 
   async findOne(id: number) {

@@ -34,6 +34,16 @@ export class ReportsGateway {
       Name: string;
     };
     CreatedAt: Date;
+    ReportState: {
+      Id: number;
+      Name: string;
+    };
+    UserInCharge: {
+      Id: number;
+      Name: string;
+      Email: string;
+      FullName: string;
+    } | null;
   }) {
     this.server.emit('report.created', payload);
   }
