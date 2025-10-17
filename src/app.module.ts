@@ -34,6 +34,8 @@ import { CommentModule } from './comment/comment.module';
 import { ReportLocationModule } from './report-location/report-location.module';
 import { ReportTypesModule } from './report-types/report-types.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ReportStatesModule } from './report-states/report-states.module';
+
 
 @Module({
   imports: [
@@ -85,7 +87,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ReportsModule,
     CommentModule,
     ReportLocationModule,
-    ReportTypesModule
+    ReportTypesModule,
+    ReportStatesModule
   ],
 })
 export class AppModule {}
