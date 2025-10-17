@@ -77,4 +77,16 @@ export class ProjectStateService {
     projectState.IsActive = false;
     return await this.projectStateRepo.save(projectState);
   }
+
+  async countProjectsInProcess(): Promise<number> {
+    const inProcess = await this.projectStateRepo.findOne({
+      where: { Name: 'EN PROCESO', IsActive: true }, // ajusta el nombre exacto si usas 'En Proceso'
+    });
+
+    if (!inProcess) {
+      throw new NotFoundException('Estado "EN PROCESO" no encontrado');
+    }
+
+    return this.projectSv.countByState(inProcess.Id);
+  }
 }
