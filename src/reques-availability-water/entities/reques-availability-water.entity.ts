@@ -1,8 +1,9 @@
     import { combineLatest } from "rxjs";
 import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+import { RequestAvailabilityWaterFile } from "src/request-availability-water-file/entities/request-availability-water-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
-import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
     @Entity()
     export class RequesAvailabilityWater {
@@ -22,26 +23,13 @@ import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToM
         }
     }
     // ---- Required Documents ----
-    @Column('simple-array', { nullable: true })
-    IdCardFiles: string[]; // original + copy
-
-    @Column('simple-array', { nullable: true })
-    PlanoPrintFiles: string[]; // original + copy
-
-    @Column({ nullable: true })
-    LiteralCertificateFile: string;
-
-    @Column({ nullable: true })
-    RequestLetterFile: string;
-
-    @Column({ nullable: true })
-    ConstructionPermitFile: string;
+    @Column({ type: 'text', nullable: true })
+    SpaceOfDocument: string | null;
 
     @Column({default: true})
     IsActive: boolean;
 
-    //Relations 
-
+    //Relations
     @ManyToOne(()=> User,(user)=> user.RequesAvailabilityWater)
     @JoinColumn({ name: 'UserId' } )
     User: User;
@@ -53,4 +41,6 @@ import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToM
     @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.requestAvailability)
     commentRquest?: CommentRequest[];
 
+    @OneToMany(() => RequestAvailabilityWaterFile, (reqf) => reqf.RequesAvailabilityWater)
+    RequestAvailabilityWaterFiles: RequestAvailabilityWaterFile[];
 }

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { Transform } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import { IsInt, Min, Max, IsOptional, IsString } from "class-validator";
 
 export class RequestSupervisionPagination{
@@ -22,10 +22,13 @@ export class RequestSupervisionPagination{
         @IsString()
         UserName?: string;
 
-        @ApiPropertyOptional({ description: 'Filtro por nombre del estado (Pendiente, Terminado, etc.)' })
+        @ApiPropertyOptional({ description: 'ID de proveedor para filtrar' })
         @IsOptional()
-        @IsString()
-        StateName?: string;
+        @Type(() => Number)
+        @IsInt()
+        // convierte "" en undefined
+        @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+        StateRequestId?: number;
         
         @ApiPropertyOptional({ description: 'Filtro por nombre del estado (Pendiente, Terminado, etc.)' })
         @IsOptional()

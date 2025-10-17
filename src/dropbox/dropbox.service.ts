@@ -39,19 +39,31 @@ export class DropboxService {
     return result.entries;
   }
 
+  // src/dropbox/dropbox.service.ts
   async ensureFolder(path: string) {
     const p = path.startsWith('/') ? path : `/${path}`;
+
     try {
       const { result } = await this.dbx.filesCreateFolderV2({ path: p, autorename: false });
-      return result.metadata;
+      return result.metadata; // carpeta creada
     } catch (e: any) {
-      // Si ya existe, la API lanza error; podemos devolver metadata básica
-      if (e?.error?.error?.path?.reason?.['.tag'] === 'conflict') {
-        return { path_lower: p, name: p.split('/').pop() };
+      // Ya existe la carpeta -> OK silencioso
+      const summary: string | undefined = e?.error?.error_summary;
+      const tag: string | undefined = e?.error?.error?.['.tag'];
+      const pathTag: string | undefined = e?.error?.error?.path?.['.tag'];
+      const conflictTag: string | undefined = e?.error?.error?.path?.conflict?.['.tag'];
+
+      const isConflict =
+        summary?.startsWith('path/conflict') ||
+        tag === 'path' && pathTag === 'conflict' && conflictTag === 'folder';
+
+      if (isConflict) {
+        return { path_lower: p.toLowerCase(), name: p.split('/').pop() };
       }
-      throw e;
+      throw e; // cualquier otro error sí se propaga
     }
   }
+
 
   async getTempLink(path: string) {
     const { result } = await this.dbx.filesGetTemporaryLink({
