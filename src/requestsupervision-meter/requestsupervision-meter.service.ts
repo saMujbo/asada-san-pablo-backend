@@ -20,6 +20,17 @@ export class RequestsupervisionMeterService {
     private readonly userSv: UsersService
   ){}
 
+  async countPendingRequests(): Promise<number> {
+    const pendingState = await this.requestSupervisionMeterRepo
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('stateRequest.Name = :stateName', { stateName: 'PENDIENTE' })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return pendingState;
+  }
+
   async create(createRequestsupervisionMeterDto: CreateRequestSupervisionMeterDto) {
     
     const UserSv = await this.userSv.findOne(createRequestsupervisionMeterDto.UserId);
