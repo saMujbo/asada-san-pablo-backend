@@ -43,14 +43,14 @@ export class UsersController {
     return this.usersService.findUsersByRoleAdmin();
   }
 
-  @Get('/role-fontanero')
-  async getUsersByRoleFontanero() {
-    return this.usersService.findUsersByRoleFontanero();
-  }
-  
   @Get('/role-abonado')
   async getAbonados() {
     return this.usersService.findUsersByRole();
+  }
+
+  @Get('/role-fontanero')
+  async getUsersByRoleFontanero() {
+    return this.usersService.findUsersByRoleFontanero();
   }
 
   //@UseGuards(AuthGuard('jwt'), RolesGuard)
