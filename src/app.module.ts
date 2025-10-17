@@ -85,7 +85,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ReportsModule,
     CommentModule,
     ReportLocationModule,
-    ReportTypesModule
+    ReportTypesModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}
