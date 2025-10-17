@@ -9,6 +9,7 @@ import { ReportsGateway } from './reports.gateway';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
+import { ReportsPaginationDto } from './dto/Pagination-report.dto';
 
 @Injectable()
 export class ReportsService {
@@ -33,7 +34,7 @@ export class ReportsService {
     // Cargar el reporte con la información del usuario
     const loadReport = await this.reportRepository.findOne({
       where: { Id: saved.Id },
-      relations: ['User', 'ReportLocation', 'ReportType'], // Esto carga la relación User y ReportLocation
+      relations: ['User', 'ReportLocation', 'ReportType', 'ReportState', 'UserInCharge'], // Esto carga la relación User y ReportLocation
 
     });
 
@@ -62,6 +63,16 @@ export class ReportsService {
         Id: loadReport.ReportType.Id,
         Name: loadReport.ReportType.Name,
       },
+      ReportState: {
+        Id: loadReport.ReportState.IdReportState,
+        Name: loadReport.ReportState.Name,
+      },
+      UserInCharge: loadReport.UserInCharge ? {
+        Id: loadReport.UserInCharge.Id,
+        Name: loadReport.UserInCharge.Name,
+        Email: loadReport.UserInCharge.Email,
+        FullName: `${loadReport.UserInCharge.Name} ${loadReport.UserInCharge.Surname1} ${loadReport.UserInCharge.Surname2 || ''}`.trim(),
+      } : null,
       CreatedAt: saved.CreatedAt,
     });
 
@@ -83,11 +94,59 @@ export class ReportsService {
     return loadReport;
   }
 
-  findAll() {
-    return this.reportRepository.find({
-      relations: ['User', 'ReportLocation'], // Incluir información del usuario y ubicación
-      order: { CreatedAt: 'DESC' } // Ordenar por fecha más reciente primero
+  async createAdminReport(createReportDto: CreateReportDto) {
+    // creamos el reporte y nada mas, sin necesidad de cargar relaciones ni emitir eventos
+    const report = this.reportRepository.create(createReportDto);
+    const saved = await this.reportRepository.save(report);
+    const loadReport = await this.reportRepository.findOne({
+      where: { Id: saved.Id },
     });
+    return loadReport;
+  }
+
+  async findAll(paginationDto: ReportsPaginationDto){
+    // Sanitiza page/limit (por si llegan como string o fuera de rango)
+    const pageNum = Math.max(1, Number(paginationDto.page) || 1);
+    const take = Math.min(100, Math.max(1, Number(paginationDto.limit) || 10));
+    const skip = (pageNum - 1) * take;
+    const { stateId, locationId, ReportTypeId } = paginationDto;
+
+    const qb = this.reportRepository
+      .createQueryBuilder('report')
+      // Relaciones (aunque tengas eager, aquí es explícito y optimiza el SELECT)
+      .leftJoinAndSelect('report.User', 'user')
+      .leftJoinAndSelect('report.UserInCharge', 'userInCharge')
+      .leftJoinAndSelect('report.ReportLocation', 'reportLocation')
+      .leftJoinAndSelect('report.ReportType', 'reportType')
+      .leftJoinAndSelect('report.ReportState', 'reportState')
+      .skip(skip)
+      .take(take)
+      .orderBy('report.CreatedAt', 'DESC');
+
+    if (stateId) {
+      qb.andWhere('report.ReportStateId = :stateId', { stateId });
+    }
+    if (locationId) {
+      qb.andWhere('report.LocationId = :locationId', { locationId });
+    }
+
+    if (ReportTypeId) {
+      qb.andWhere('report.ReportTypeId = :ReportTypeId', { ReportTypeId });
+    }
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page: pageNum,
+        limit: take,
+        pageCount: Math.max(1, Math.ceil(total / take)),
+        hasNextPage: pageNum * take < total,
+        hasPrevPage: pageNum > 1,
+      },
+    };
   }
 
   findOne(id: number) {

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
+import { ReportsPaginationDto } from './dto/Pagination-report.dto';
 
 @Controller('reports')
 export class ReportsController {
@@ -12,9 +13,14 @@ export class ReportsController {
     return this.reportsService.create(createReportDto);
   }
 
-  @Get()
-  findAll() {
-    return this.reportsService.findAll();
+  @Post('admin')
+  createAdminReport(@Body() createReportDto: CreateReportDto) {
+    return this.reportsService.createAdminReport(createReportDto);
+  }
+
+  @Get('search')
+  findAll(@Query() paginationDto: ReportsPaginationDto) {
+    return this.reportsService.findAll(paginationDto);
   }
 
   @Get(':id')
