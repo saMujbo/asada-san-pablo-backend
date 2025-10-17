@@ -33,6 +33,16 @@ export class RequestAssociatedService {
     return pendingState;
   }
 
+  async countApprovedRequests(): Promise<number> {
+    const approvedState = await this.requestAssociatedRepo
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('LOWER(stateRequest.Name) IN (:...states)', { states: ['aprobado', 'aprobada'] })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+    return approvedState;
+  }
+
   async create(createRequestAssociatedDto: CreateRequestAssociatedDto) {
   if (!createRequestAssociatedDto.IDcard) {
     throw new BadRequestException('Debe ingresar una cédula válida.');

@@ -10,4 +10,10 @@ export class DashboardController {
     const totalPendingRequests = await this.stateRequestService.countAllPendingRequests();
     return { totalPendingRequests };
   }
+
+  @Get('approved-requests')
+  async getApprovedRequests() {
+    const totalApprovedRequests = await this.stateRequestService.countAllApprovedRequests();
+    return { totalApprovedRequests };
+  }
 }

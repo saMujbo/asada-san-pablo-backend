@@ -32,4 +32,22 @@ export class DashboardService {
       associatedRequests
     );
   }
+
+   // Método para obtener todas las solicitudes aprobadas
+  async getTotalApprovedRequests(): Promise<number> {
+    const waterRequests = await this.requesAvailabilityWaterService.countApprovedRequests();
+    const supervisionRequests = await this.requestSupervisionMeterService.countApprovedRequests();
+    const changeMeterRequests = await this.requestChangeMeterService.countApprovedRequests();
+    const changeNameMeterRequests = await this.requestChangeNameMeterService.countApprovedRequests();
+    const associatedRequests = await this.requestAssociatedService.countApprovedRequests();
+
+    // Sumar todos los resultados
+    return (
+      waterRequests +
+      supervisionRequests +
+      changeMeterRequests +
+      changeNameMeterRequests +
+      associatedRequests
+    );
+  }
 }
