@@ -32,6 +32,17 @@ export class RequestChangeNameMeterService {
     return pendingState;
   }
 
+  async countApprovedRequests(): Promise<number> {
+    const approvedState = await this.requestChangeNameMeterRepo
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('LOWER(stateRequest.Name) IN (:...states)', { states: ['aprobado', 'aprobada'] })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return approvedState;
+  }
+
   async create(createRequestChangeNameMeterDto: CreateRequestChangeNameMeterDto) {
     const Usersv = await this.userSerive.findOne(createRequestChangeNameMeterDto.UserId);
     const StateRequestSv = await this.stateRequestSv.findDefaultState();

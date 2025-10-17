@@ -46,6 +46,22 @@ export class StateRequestService {
     );
   }
 
+  async countAllApprovedRequests(): Promise<number> {
+    const waterRequests = await this.RequesAvailabilityWaterSv.countApprovedRequests();
+    const supervisionRequests = await this.requesSupervisionMeterSv.countApprovedRequests();
+    const changeMeterRequests = await this.requesChangeMeterSv.countApprovedRequests();
+    const changeNameMeterRequests = await this.requestChangeNameMeterSv.countApprovedRequests();
+    const associatedRequests = await this.requestAssociateService.countApprovedRequests();
+
+    return (
+      waterRequests +
+      supervisionRequests +
+      changeMeterRequests +
+      changeNameMeterRequests +
+      associatedRequests
+    );
+  }
+
   async create(createStateRequestDto: CreateStateRequestDto) {
     const newRequestState = await this.stateRequesRepo.create(createStateRequestDto)
     return await this.stateRequesRepo.save(newRequestState);

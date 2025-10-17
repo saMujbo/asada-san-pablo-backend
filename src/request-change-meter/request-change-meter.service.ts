@@ -36,6 +36,17 @@ export class RequestChangeMeterService {
 
     return pendingState;
   }
+  
+  async countApprovedRequests(): Promise<number> {
+    const approvedState = await this.requestChangeMeterRepo
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('LOWER(stateRequest.Name) IN (:...states)', { states: ['aprobado', 'aprobada'] })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return approvedState;
+  }
 
   async create(createRequestChangeMeterDto: CreateRequestChangeMeterDto) {
     const Usersv = await this.userSerive.findOne(createRequestChangeMeterDto.UserId);

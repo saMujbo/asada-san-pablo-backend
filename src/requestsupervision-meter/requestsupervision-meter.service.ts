@@ -31,6 +31,18 @@ export class RequestsupervisionMeterService {
     return pendingState;
   }
 
+  // Método público para contar las solicitudes aprobadas de supervisión de medidor
+  async countApprovedRequests(): Promise<number> {
+    const approvedState = await this.requestSupervisionMeterRepo
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('LOWER(stateRequest.Name) IN (:...states)', { states: ['aprobado', 'aprobada'] })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return approvedState;
+  }
+
   async create(createRequestsupervisionMeterDto: CreateRequestSupervisionMeterDto) {
     
     const UserSv = await this.userSv.findOne(createRequestsupervisionMeterDto.UserId);
