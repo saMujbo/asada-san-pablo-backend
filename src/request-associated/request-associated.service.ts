@@ -21,6 +21,18 @@ export class RequestAssociatedService {
     
   ){}
 
+  // Método público para contar las solicitudes pendientes asociadas
+  async countPendingRequests(): Promise<number> {
+    const pendingState = await this.requestAssociatedRepo
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('stateRequest.Name = :stateName', { stateName: 'PENDIENTE' })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return pendingState;
+  }
+
   async create(createRequestAssociatedDto: CreateRequestAssociatedDto) {
   if (!createRequestAssociatedDto.IDcard) {
     throw new BadRequestException('Debe ingresar una cédula válida.');

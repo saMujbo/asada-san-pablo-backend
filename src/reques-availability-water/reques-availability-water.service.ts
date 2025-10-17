@@ -19,6 +19,19 @@ export class RequesAvailabilityWaterService {
     @Inject(forwardRef(()=> UsersService))
     private readonly userSerive:UsersService
   ) {}
+
+  // Método público para contar las solicitudes pendientes de disponibilidad de agua
+  async countPendingRequests(): Promise<number> {
+    const pendingState = await this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('stateRequest.Name = :stateName', { stateName: 'PENDIENTE' })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return pendingState;
+  }
+  
   async create(createRequesAvailabilityWaterDto: CreateRequestAvailabilityWaterDto) {
     const Usersv = await this.userSerive.findOne(createRequesAvailabilityWaterDto.UserId);
     const StateRequestSv = await this.stateRequestSv.findDefaultState();

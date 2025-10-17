@@ -29,6 +29,23 @@ export class StateRequestService {
     @Inject(forwardRef(()=>RequestAssociatedService))
     private readonly requestAssociateService: RequestAssociatedService
   ){}
+
+  async countAllPendingRequests(): Promise<number> {
+    const waterRequests = await this.RequesAvailabilityWaterSv.countPendingRequests();
+    const supervisionRequests = await this.requesSupervisionMeterSv.countPendingRequests();
+    const changeMeterRequests = await this.requesChangeMeterSv.countPendingRequests();
+    const changeNameMeterRequests = await this.requestChangeNameMeterSv.countPendingRequests();
+    const associatedRequests = await this.requestAssociateService.countPendingRequests();
+
+    return (
+      waterRequests +
+      supervisionRequests +
+      changeMeterRequests +
+      changeNameMeterRequests +
+      associatedRequests
+    );
+  }
+
   async create(createStateRequestDto: CreateStateRequestDto) {
     const newRequestState = await this.stateRequesRepo.create(createStateRequestDto)
     return await this.stateRequesRepo.save(newRequestState);

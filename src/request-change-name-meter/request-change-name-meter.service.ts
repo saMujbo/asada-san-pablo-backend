@@ -19,6 +19,19 @@ export class RequestChangeNameMeterService {
     @Inject(forwardRef(()=> UsersService))
         private readonly userSerive:UsersService
   ){}
+
+  // Método público para contar las solicitudes pendientes de cambio de nombre de medidor
+  async countPendingRequests(): Promise<number> {
+    const pendingState = await this.requestChangeNameMeterRepo
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('stateRequest.Name = :stateName', { stateName: 'PENDIENTE' })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return pendingState;
+  }
+
   async create(createRequestChangeNameMeterDto: CreateRequestChangeNameMeterDto) {
     const Usersv = await this.userSerive.findOne(createRequestChangeNameMeterDto.UserId);
     const StateRequestSv = await this.stateRequestSv.findDefaultState();
