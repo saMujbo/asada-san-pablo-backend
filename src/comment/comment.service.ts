@@ -3,8 +3,9 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Comment } from './entities/comment.entity';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { CommentPaginationDto } from './dto/commentPagination.dto';
+import { RecentCountDto } from './dto/recent-count.dto';
 
 @Injectable()
 export class CommentService {
@@ -75,5 +76,24 @@ export class CommentService {
 
     commentDefuse.IsActive = false;
     return await this.commentRepo.save(commentDefuse);
+  }
+
+  async recentCount({ hours, days, unread }: RecentCountDto) {
+    // Ventana: prioriza days si viene, si no usa hours; default 24h
+    const windowHours = days ? (Number(days) * 24) : (Number(hours) || 24);
+    const from = new Date(Date.now() - windowHours * 60 * 60 * 1000);
+
+    const where: any = {
+      IsActive: true,
+      CreatedAt: MoreThan(from),
+    };
+
+    if (unread !== undefined) {
+      // unread viene como string 'true' | 'false'
+      where.IsRead = (unread === 'true') ? false : true;
+    }
+
+    const count = await this.commentRepo.count({ where });
+    return { count, from, windowHours, unread: unread ?? 'any' };
   }
 }
