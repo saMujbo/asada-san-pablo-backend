@@ -1,6 +1,8 @@
-import { PrimaryGeneratedColumn, Column, Entity, BeforeInsert } from "typeorm";
+import { PrimaryGeneratedColumn, Column, Entity, BeforeInsert, Index } from "typeorm";
 
 @Entity()
+@Index(["IsRead", "CreatedAt"])
+@Index(["IsActive", "CreatedAt"])
 export class Comment {
     @PrimaryGeneratedColumn()
     Id: number;

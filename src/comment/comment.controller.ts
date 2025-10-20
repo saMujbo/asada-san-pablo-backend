@@ -3,6 +3,7 @@ import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { CommentPaginationDto } from './dto/commentPagination.dto';
+import { RecentCountDto } from './dto/recent-count.dto';
 
 @Controller('comment')
 export class CommentController {
@@ -21,6 +22,11 @@ export class CommentController {
   @Get('search')
   search(@Query() pagination: CommentPaginationDto) {
     return this.commentService.search(pagination);
+  }
+
+  @Get('recent-count')
+  recentCount(@Query() dto: RecentCountDto) {
+    return this.commentService.recentCount(dto);
   }
 
   @Get(':id')
