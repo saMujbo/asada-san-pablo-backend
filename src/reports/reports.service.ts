@@ -163,4 +163,10 @@ export class ReportsService {
   remove(id: number) {
     return this.reportRepository.delete(id);
   }
+
+  async countByState(stateId: number): Promise<number> {
+    return this.reportRepository.count({
+      where: { ReportStateId: stateId }, 
+    });
+  }
 }
