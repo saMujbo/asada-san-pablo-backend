@@ -1,12 +1,20 @@
 import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class RequestChangeMeter {
     @PrimaryGeneratedColumn()
     Id:number;
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    Date: Date;
+
+    @BeforeInsert()
+    setTodayIfMissing() {
+    if (!this.Date) this.Date = new Date(); // guarda YYYY-MM-DD en MySQL
+    }
 
     @Column()
     Location:string;

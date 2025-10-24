@@ -37,4 +37,20 @@ export class ReportsController {
   remove(@Param('id') id: string) {
     return this.reportsService.remove(+id);
   }
+
+  // GET reportes por mes - grafica
+  @Get('stats/monthly')
+  getMonthly(
+    @Query('months') months?: string,
+    @Query('state') stateName?: string,
+    @Query('locationId') locationId?: string,
+    @Query('reportTypeId') reportTypeId?: string,
+  ) {
+    return this.reportsService.getMonthlyCounts({
+      months: months ? Number(months) : 12,
+      stateName,
+      locationId: locationId ? Number(locationId) : undefined,
+      reportTypeId: reportTypeId ? Number(reportTypeId) : undefined,
+    });
+  }
 }

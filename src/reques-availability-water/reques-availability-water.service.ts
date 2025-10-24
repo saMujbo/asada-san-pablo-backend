@@ -8,7 +8,7 @@ import { UsersService } from 'src/users/users.service';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { RequestAvailabilityWaterPagination } from './dto/pagination-request-availabaility.dto';
 
-
+type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
 export class RequesAvailabilityWaterService {
   constructor(
@@ -157,5 +157,31 @@ export class RequesAvailabilityWaterService {
       where: {StateRequest:{Id}, IsActive:true}
     })
     return hasActiveRequestState;
+  }
+
+  async getMonthlyCounts(months = 12) {
+    const now = new Date();
+    const from = new Date(now);
+    from.setMonth(from.getMonth() - (months - 1), 1);
+    from.setHours(0, 0, 0, 0);
+
+    const rows = await this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .select('YEAR(req.Date)', 'year')   
+      .addSelect('MONTH(req.Date)', 'month') 
+      .addSelect('COUNT(*)', 'count')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.Date >= :from', { from })
+      .groupBy('YEAR(req.Date)')
+      .addGroupBy('MONTH(req.Date)')
+      .orderBy('YEAR(req.Date)', 'ASC')
+      .addOrderBy('MONTH(req.Date)', 'ASC')
+      .getRawMany<MonthlyPoint>();
+
+    return rows.map(r => ({
+      year: Number(r.year),
+      month: Number(r.month),
+      count: Number(r.count),
+    }));
   }
 }
