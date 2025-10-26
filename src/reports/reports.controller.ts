@@ -1,8 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportsPaginationDto } from './dto/Pagination-report.dto';
+import { TokenGuard } from 'src/auth/guards/token.guard';
+import { GetUser } from 'src/auth/get-user.decorator';
 
 @Controller('reports')
 export class ReportsController {
@@ -52,5 +54,23 @@ export class ReportsController {
       locationId: locationId ? Number(locationId) : undefined,
       reportTypeId: reportTypeId ? Number(reportTypeId) : undefined,
     });
+  }
+
+  /** Resumen para el usuario autenticado */
+  @UseGuards(TokenGuard)
+  @Get('me/count')
+  async getMyReportsCount(@GetUser('id') userId: number) {
+    return this.reportsService.getMyReportsSummary(userId);
+  }
+
+  /** Conteo por estado específico del usuario autenticado */
+  @UseGuards(TokenGuard)
+  @Get('me/count-by-state')
+  async getMyReportsCountByState(
+    @GetUser('id') userId: number,
+    @Query('state') stateName: string,
+  ) {
+    const count = await this.reportsService.countByStateNameForUser(userId, stateName);
+    return { state: stateName, count };
   }
 }
