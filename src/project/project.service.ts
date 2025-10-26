@@ -62,6 +62,9 @@ export class ProjectService {
       .leftJoinAndSelect('project.ProjectProjection', 'ProjectProjection')
       .leftJoinAndSelect('ProjectProjection.ProductDetails', 'ProductDetails')
       .leftJoinAndSelect('ProductDetails.Product', 'Product')
+      .leftJoinAndSelect('project.TotalActualExpense', 'TotalActualExpense')
+      .leftJoinAndSelect('TotalActualExpense.ProductDetails', 'ProductDetail')
+      .leftJoinAndSelect('ProductDetail.Product', 'Products')
       .skip(skip)
       .take(take);
 
@@ -185,5 +188,14 @@ export class ProjectService {
       where: {TraceProject:{Id}, IsActive:true},
     });
     return hasActiveTraceProject;
+  }
+
+  async countByState(stateId: number): Promise<number> {
+    return this.projectRepo.count({
+      where: {
+        ProjectState: { Id: stateId }, // ajusta el nombre de la relación si difiere
+        IsActive: true,
+      },
+    });
   }
 }

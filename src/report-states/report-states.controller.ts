@@ -31,4 +31,10 @@ export class ReportStatesController {
   remove(@Param('id') id: string) {
     return this.reportStatesService.remove(+id);
   }
+
+  @Get('en-proceso/count')
+  async countEnProceso() {
+    const totalReportsInProcess = await this.reportStatesService.countReportsInProcess();
+    return { totalReportsInProcess };
+  }
 }

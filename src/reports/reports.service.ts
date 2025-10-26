@@ -11,6 +11,12 @@ import { ReportLocation } from 'src/report-location/entities/report-location.ent
 import { ReportType } from 'src/report-types/entities/report-type.entity';
 import { ReportsPaginationDto } from './dto/Pagination-report.dto';
 
+type MonthlyOpts = {
+  months?: number;            // por defecto 12
+  stateName?: string;         // opcional, ej: 'En Proceso'
+  locationId?: number;        // opcional
+  reportTypeId?: number;      // opcional
+};
 @Injectable()
 export class ReportsService {
   constructor(
@@ -162,5 +168,85 @@ export class ReportsService {
 
   remove(id: number) {
     return this.reportRepository.delete(id);
+  }
+
+  async countByState(stateId: number): Promise<number> {
+    return this.reportRepository.count({
+      where: { ReportStateId: stateId }, 
+    });
+  }
+
+  // 👉 Devuelve [{ year, month, count }] para los últimos N meses (rellenado con ceros)
+  async getMonthlyCounts({ months = 12, stateName, locationId, reportTypeId }: MonthlyOpts) {
+    const now = new Date();
+    const from = new Date(now);
+    from.setMonth(from.getMonth() - (months - 1), 1); // desde el primer día del mes N-meses-atrás
+    from.setHours(0, 0, 0, 0);
+
+    const qb = this.reportRepository
+      .createQueryBuilder('r')
+      .select('YEAR(r.CreatedAt)', 'year')   // MySQL/MariaDB y SQL Server soportan YEAR/MONTH
+      .addSelect('MONTH(r.CreatedAt)', 'month')
+      .addSelect('COUNT(*)', 'count')
+      .where('r.CreatedAt >= :from', { from });
+
+    // Filtros opcionales
+    if (stateName) {
+      qb.leftJoin('r.ReportState', 's')
+        .andWhere('LOWER(s.Name) = LOWER(:stateName)', { stateName });
+    }
+    if (locationId) qb.andWhere('r.LocationId = :locationId', { locationId });
+    if (reportTypeId) qb.andWhere('r.ReportTypeId = :reportTypeId', { reportTypeId });
+
+    qb.groupBy('YEAR(r.CreatedAt)')
+      .addGroupBy('MONTH(r.CreatedAt)')
+      .orderBy('YEAR(r.CreatedAt)', 'ASC')
+      .addOrderBy('MONTH(r.CreatedAt)', 'ASC');
+
+    const raw = await qb.getRawMany<{ year: string; month: string; count: string }>();
+
+    // Rellenar meses faltantes con 0 para que el gráfico sea continuo
+    const map = new Map<string, number>();
+    raw.forEach(r => {
+      const key = `${r.year}-${String(r.month).padStart(2, '0')}`;
+      map.set(key, Number(r.count));
+    });
+
+    const result: Array<{ year: number; month: number; count: number }> = [];
+    const cursor = new Date(from);
+    for (let i = 0; i < months; i++) {
+      const y = cursor.getFullYear();
+      const m = cursor.getMonth() + 1;
+      const key = `${y}-${String(m).padStart(2, '0')}`;
+      result.push({ year: y, month: m, count: map.get(key) ?? 0 });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    return result;
+  }
+
+  async countAllByUser(userId: number): Promise<number> {
+    return this.reportRepository
+      .createQueryBuilder('r')
+      .where('r.UserId = :uid', { uid: userId })
+      .getCount();
+  }
+
+  async countByStateNameForUser(userId: number, stateName: string): Promise<number> {
+    return this.reportRepository
+      .createQueryBuilder('r')
+      .leftJoin('r.ReportState', 's')
+      .where('r.UserId = :uid', { uid: userId })
+      .andWhere('LOWER(TRIM(s.Name)) = LOWER(TRIM(:name))', { name: stateName })
+      .getCount();
+  }
+
+  /** Resumen común (total, en proceso, resueltos) por usuario */
+  async getMyReportsSummary(userId: number) {
+    const [total, inProcess] = await Promise.all([
+      this.countAllByUser(userId),
+      this.countByStateNameForUser(userId, 'En Proceso'),
+    ]);
+    return { total, inProcess };
   }
 }

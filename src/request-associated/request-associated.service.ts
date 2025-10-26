@@ -9,6 +9,7 @@ import { UsersService } from 'src/users/users.service';
 import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestAssociatedPagination } from './dto/pagination-request-associated.dtp';
 
+type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
 export class RequestAssociatedService {
   constructor(
@@ -31,6 +32,16 @@ export class RequestAssociatedService {
       .getCount();
 
     return pendingState;
+  }
+
+  async countApprovedRequests(): Promise<number> {
+    const approvedState = await this.requestAssociatedRepo
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('LOWER(stateRequest.Name) IN (:...states)', { states: ['aprobado', 'aprobada'] })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+    return approvedState;
   }
 
   async create(createRequestAssociatedDto: CreateRequestAssociatedDto) {
@@ -183,7 +194,51 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestA
     return hasActiveRequestState;
   }
 
-    async updateRequestAssociated(requestAssociated: RequestAssociated) {
-      this.requestAssociatedRepo.save(requestAssociated);
-    }
+  async updateRequestAssociated(requestAssociated: RequestAssociated) {
+    this.requestAssociatedRepo.save(requestAssociated);
+  }
+
+  async getMonthlyCounts(months = 12) {
+    const now = new Date();
+    const from = new Date(now);
+    from.setMonth(from.getMonth() - (months - 1), 1);
+    from.setHours(0, 0, 0, 0);
+
+    const rows = await this.requestAssociatedRepo
+      .createQueryBuilder('req')
+      .select('YEAR(req.Date)', 'year')   // Si usas Postgres: EXTRACT(YEAR FROM req."Date") AS year
+      .addSelect('MONTH(req.Date)', 'month') // Postgres: EXTRACT(MONTH FROM ...)
+      .addSelect('COUNT(*)', 'count')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.Date >= :from', { from })
+      .groupBy('YEAR(req.Date)')
+      .addGroupBy('MONTH(req.Date)')
+      .orderBy('YEAR(req.Date)', 'ASC')
+      .addOrderBy('MONTH(req.Date)', 'ASC')
+      .getRawMany<MonthlyPoint>();
+
+    return rows.map(r => ({
+      year: Number(r.year),
+      month: Number(r.month),
+      count: Number(r.count),
+    }));
+  }
+
+  async countAllByUser(userId: number): Promise<number> {
+    return this.requestAssociatedRepo
+      .createQueryBuilder('req')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .getCount();
+  }
+
+  async countPendingByUser(userId: number): Promise<number> {
+    return this.requestAssociatedRepo
+      .createQueryBuilder('req')
+      .leftJoin('req.StateRequest', 'state')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .andWhere('UPPER(state.Name) = :p', { p: 'PENDIENTE' })
+      .getCount();
+  }
 }

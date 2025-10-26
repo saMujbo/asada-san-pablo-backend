@@ -34,8 +34,7 @@ import { CommentModule } from './comment/comment.module';
 import { ReportLocationModule } from './report-location/report-location.module';
 import { ReportTypesModule } from './report-types/report-types.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { ReportStatesModule } from './report-states/report-states.module';
-
+import { TotalActualExpenseModule } from './total-actual-expense/total-actual-expense.module';
 
 @Module({
   imports: [
@@ -88,7 +87,8 @@ import { ReportStatesModule } from './report-states/report-states.module';
     CommentModule,
     ReportLocationModule,
     ReportTypesModule,
-    ReportStatesModule
+    DashboardModule,
+    TotalActualExpenseModule
   ],
 })
 export class AppModule {}

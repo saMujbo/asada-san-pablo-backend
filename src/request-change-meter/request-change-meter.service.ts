@@ -13,7 +13,7 @@ import { StateRequest } from 'src/state-request/entities/state-request.entity';
 import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestChangeMeterPagination } from './dto/pagination-request-change-meter.dto';
 
-
+type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
 export class RequestChangeMeterService {
   constructor(
@@ -35,6 +35,17 @@ export class RequestChangeMeterService {
       .getCount();
 
     return pendingState;
+  }
+  
+  async countApprovedRequests(): Promise<number> {
+    const approvedState = await this.requestChangeMeterRepo
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('LOWER(stateRequest.Name) IN (:...states)', { states: ['aprobado', 'aprobada'] })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return approvedState;
   }
 
   async create(createRequestChangeMeterDto: CreateRequestChangeMeterDto) {
@@ -153,5 +164,49 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestC
       where: {StateRequest:{Id}, IsActive:true}
     })
     return hasActiveRequestState;
+  }
+
+  async getMonthlyCounts(months = 12) {
+    const now = new Date();
+    const from = new Date(now);
+    from.setMonth(from.getMonth() - (months - 1), 1);
+    from.setHours(0, 0, 0, 0);
+
+    const rows = await this.requestChangeMeterRepo
+      .createQueryBuilder('req')
+      .select('YEAR(req.Date)', 'year')   // Si usas Postgres: EXTRACT(YEAR FROM req."Date") AS year
+      .addSelect('MONTH(req.Date)', 'month') // Postgres: EXTRACT(MONTH FROM ...)
+      .addSelect('COUNT(*)', 'count')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.Date >= :from', { from })
+      .groupBy('YEAR(req.Date)')
+      .addGroupBy('MONTH(req.Date)')
+      .orderBy('YEAR(req.Date)', 'ASC')
+      .addOrderBy('MONTH(req.Date)', 'ASC')
+      .getRawMany<MonthlyPoint>();
+
+    return rows.map(r => ({
+      year: Number(r.year),
+      month: Number(r.month),
+      count: Number(r.count),
+    }));
+  }
+
+  async countAllByUser(userId: number): Promise<number> {
+    return this.requestChangeMeterRepo
+      .createQueryBuilder('req')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .getCount();
+  }
+
+  async countPendingByUser(userId: number): Promise<number> {
+    return this.requestChangeMeterRepo
+      .createQueryBuilder('req')
+      .leftJoin('req.StateRequest', 'state')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .andWhere('UPPER(state.Name) = :p', { p: 'PENDIENTE' })
+      .getCount();
   }
 }

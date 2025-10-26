@@ -1,15 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateReportStateDto } from './dto/create-report-state.dto';
 import { UpdateReportStateDto } from './dto/update-report-state.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ReportState } from './entities/report-state.entity';
+import { ReportsService } from 'src/reports/reports.service';
 
 @Injectable()
 export class ReportStatesService {
   constructor(
     @InjectRepository(ReportState)
     private  reportStateRepository: Repository<ReportState>,
+    @Inject(forwardRef(() => ReportsService))
+    private readonly reportsService: ReportsService,
   ) {}
 
   async create(createReportStateDto: CreateReportStateDto) {
@@ -41,5 +44,22 @@ export class ReportStatesService {
 
   remove(id: number) {
     return `This action removes a #${id} reportState`;
+  }
+
+  async countReportsInProcess(): Promise<number> {
+    // Busca el estado "En Proceso" (case-insensitive y solo activos)
+    const enProceso = await this.reportStateRepository
+      .createQueryBuilder('s')
+      .where('s.IsActive = :act', { act: true })
+      .andWhere('LOWER(TRIM(s.Name)) = LOWER(TRIM(:name))', { name: 'En Proceso' })
+      .select(['s.IdReportState'])
+      .getOne();
+
+    if (!enProceso) {
+      // si no existe, devolvemos 0 para no romper el dashboard
+      return 0;
+    }
+
+    return this.reportsService.countByState(enProceso.IdReportState);
   }
 }
