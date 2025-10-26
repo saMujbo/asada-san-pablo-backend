@@ -184,4 +184,22 @@ export class RequesAvailabilityWaterService {
       count: Number(r.count),
     }));
   }
+
+  async countAllByUser(userId: number): Promise<number> {
+    return this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .getCount();
+  }
+
+  async countPendingByUser(userId: number): Promise<number> {
+    return this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .leftJoin('req.StateRequest', 'state')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .andWhere('UPPER(state.Name) = :p', { p: 'PENDIENTE' })
+      .getCount();
+  }
 }

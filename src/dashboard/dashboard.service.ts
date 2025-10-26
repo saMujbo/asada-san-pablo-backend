@@ -107,4 +107,48 @@ export class DashboardService {
       return { year: y, month: m, count: sum.get(k) ?? 0 };
     });
   }
+
+  // ---- RESUMEN DE MIS SOLICITUDES (totales y desglose por tipo)
+  async getMyRequestsSummary(userId: number) {
+    const [
+      a, b, c, d, e,
+      pA, pB, pC, pD, pE,
+      // okA, okB, okC, okD, okE,
+    ] = await Promise.all([
+      this.requesAvailabilityWaterService.countAllByUser(userId),
+      this.requestSupervisionMeterService.countAllByUser(userId),
+      this.requestChangeMeterService.countAllByUser(userId),
+      this.requestChangeNameMeterService.countAllByUser(userId),
+      this.requestAssociatedService.countAllByUser(userId),
+
+      this.requesAvailabilityWaterService.countPendingByUser(userId),
+      this.requestSupervisionMeterService.countPendingByUser(userId),
+      this.requestChangeMeterService.countPendingByUser(userId),
+      this.requestChangeNameMeterService.countPendingByUser(userId),
+      this.requestAssociatedService.countPendingByUser(userId),
+
+      // this.requesAvailabilityWaterService.countApprovedByUser(userId),
+      // this.supervisionSv.countApprovedByUser(userId),
+      // this.changeMeterSv.countApprovedByUser(userId),
+      // this.changeNameSv.countApprovedByUser(userId),
+      // this.associatedSv.countApprovedByUser(userId),
+    ]);
+
+    const total = a + b + c + d + e;
+    const pending = pA + pB + pC + pD + pE;
+    // const approved = okA + okB + okC + okD + okE;
+
+    return {
+      total,
+      pending,
+      // approved,
+      byType: {
+        availability: a,
+        supervision: b,
+        changeMeter: c,
+        changeName: d,
+        associated: e,
+      },
+    };
+  }
 }

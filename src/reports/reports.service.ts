@@ -224,4 +224,29 @@ export class ReportsService {
 
     return result;
   }
+
+  async countAllByUser(userId: number): Promise<number> {
+    return this.reportRepository
+      .createQueryBuilder('r')
+      .where('r.UserId = :uid', { uid: userId })
+      .getCount();
+  }
+
+  async countByStateNameForUser(userId: number, stateName: string): Promise<number> {
+    return this.reportRepository
+      .createQueryBuilder('r')
+      .leftJoin('r.ReportState', 's')
+      .where('r.UserId = :uid', { uid: userId })
+      .andWhere('LOWER(TRIM(s.Name)) = LOWER(TRIM(:name))', { name: stateName })
+      .getCount();
+  }
+
+  /** Resumen común (total, en proceso, resueltos) por usuario */
+  async getMyReportsSummary(userId: number) {
+    const [total, inProcess] = await Promise.all([
+      this.countAllByUser(userId),
+      this.countByStateNameForUser(userId, 'En Proceso'),
+    ]);
+    return { total, inProcess };
+  }
 }

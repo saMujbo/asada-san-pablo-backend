@@ -189,4 +189,22 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, NIS, State }: Req
       count: Number(r.count),
     }));
   }
+
+  async countAllByUser(userId: number): Promise<number> {
+    return this.requestSupervisionMeterRepo
+      .createQueryBuilder('req')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .getCount();
+  }
+
+  async countPendingByUser(userId: number): Promise<number> {
+    return this.requestSupervisionMeterRepo
+      .createQueryBuilder('req')
+      .leftJoin('req.StateRequest', 'state')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .andWhere('UPPER(state.Name) = :p', { p: 'PENDIENTE' })
+      .getCount();
+  }
 }
