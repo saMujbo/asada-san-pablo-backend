@@ -69,10 +69,10 @@ export class ReportsService {
         Id: loadReport.ReportType.Id,
         Name: loadReport.ReportType.Name,
       },
-      ReportState: {
+      ReportState: loadReport.ReportState ? {
         Id: loadReport.ReportState.IdReportState,
         Name: loadReport.ReportState.Name,
-      },
+      } : null,
       UserInCharge: loadReport.UserInCharge ? {
         Id: loadReport.UserInCharge.Id,
         Name: loadReport.UserInCharge.Name,
@@ -249,4 +249,29 @@ export class ReportsService {
     ]);
     return { total, inProcess };
   }
+
+  async assignUserInCharge(reportId: number, userInChargeId: number) {
+    // Verificar que el reporte existe
+    const report = await this.reportRepository.findOne({ where: { Id: reportId } });
+    if (!report) {
+      throw new Error('Reporte no encontrado');
+    }
+
+    // Verificar que el usuario existe
+    const user = await this.usersRepository.findOne({ where: { Id: userInChargeId } });
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    // Asignar el usuario al reporte
+    report.UserInChargeId = userInChargeId;
+    const updatedReport = await this.reportRepository.save(report);
+
+    // Cargar el reporte con todas las relaciones para retornar información completa
+    return this.reportRepository.findOne({
+      where: { Id: reportId },
+      relations: ['User', 'UserInCharge', 'ReportLocation', 'ReportType', 'ReportState']
+    });
+  }
+
 }

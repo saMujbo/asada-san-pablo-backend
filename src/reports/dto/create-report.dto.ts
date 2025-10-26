@@ -1,6 +1,6 @@
 // src/reports/dto/create-report.dto.ts
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class CreateReportDto {
   @ApiProperty({ example: 'San Pablo', description: 'Location of the report' })
@@ -28,12 +28,13 @@ export class CreateReportDto {
   @IsInt()
   ReportTypeId: number;
 
-  @ApiProperty({ example: 1, description: 'State ID of the report' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ example: 1, description: 'State ID of the report' })
+  @IsOptional()
   @IsInt()
-  ReportStateId: number;
+  ReportStateId?: number;
 
-  @ApiProperty({ example: 2, description: 'User ID of the person in charge of the report', required: false })
+  @ApiPropertyOptional({ example: 2, description: 'User ID of the person in charge of the report' })
+  @IsOptional()
   @IsInt()
-  UserInChargeId: number;
+  UserInChargeId?: number;
 }
