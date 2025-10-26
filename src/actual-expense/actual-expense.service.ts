@@ -13,6 +13,7 @@ export class ActualExpenseService {
       private readonly actualExpenseRepo: Repository<ActualExpense>,
       private readonly traceProjectService: TraceProjectService,
   ) {}
+  
   async create(createActualExpenseDto: CreateActualExpenseDto) {
         const traceProject = await this.traceProjectService.findOne(createActualExpenseDto.TraceProjectId);
     const newActualExpense = await this.actualExpenseRepo.create({
@@ -27,7 +28,10 @@ export class ActualExpenseService {
 
   async findOne(Id: number) {
     const actualExpense = await this.actualExpenseRepo.findOne({ where: { Id, IsActive: true },
-      relations: ['TraceProject']
+      relations: [
+        'TraceProject',
+        'ProductDetails',
+      ]
     });
     if (!actualExpense) {
       throw new NotFoundException(`ActualExpense with ID ${Id} not found`);
