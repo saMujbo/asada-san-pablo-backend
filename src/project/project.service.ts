@@ -62,6 +62,9 @@ export class ProjectService {
       .leftJoinAndSelect('project.ProjectProjection', 'ProjectProjection')
       .leftJoinAndSelect('ProjectProjection.ProductDetails', 'ProductDetails')
       .leftJoinAndSelect('ProductDetails.Product', 'Product')
+      .leftJoinAndSelect('project.TotalActualExpense', 'TotalActualExpense')
+      .leftJoinAndSelect('TotalActualExpense.ProductDetails', 'ProductDetail')
+      .leftJoinAndSelect('ProductDetail.Product', 'Products')
       .skip(skip)
       .take(take);
 
