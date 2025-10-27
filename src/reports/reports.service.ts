@@ -158,12 +158,33 @@ export class ReportsService {
   findOne(id: number) {
     return this.reportRepository.findOne({
       where: { Id: id },
-      relations: ['User', 'ReportLocation'] // Incluir información del usuario y ubicación
+      relations: ['User', 'ReportLocation', 'ReportType', 'ReportState', 'UserInCharge'] // Incluir todas las relaciones
     });
   }
 
-  update(id: number, updateReportDto: UpdateReportDto) {
-    return this.reportRepository.update(id, updateReportDto);
+  async update(id: number, updateReportDto: UpdateReportDto) {
+    // Verificar que el reporte existe
+    const existingReport = await this.reportRepository.findOne({ where: { Id: id } });
+    if (!existingReport) {
+      throw new Error('Reporte no encontrado');
+    }
+
+    // Si se está actualizando el UserInChargeId, verificar que el usuario existe
+    if (updateReportDto.UserInChargeId) {
+      const user = await this.usersRepository.findOne({ where: { Id: updateReportDto.UserInChargeId } });
+      if (!user) {
+        throw new Error('Usuario encargado no encontrado');
+      }
+    }
+
+    // Actualizar el reporte
+    await this.reportRepository.update(id, updateReportDto);
+
+    // Retornar el reporte actualizado con todas las relaciones
+    return this.reportRepository.findOne({
+      where: { Id: id },
+      relations: ['User', 'UserInCharge', 'ReportLocation', 'ReportType', 'ReportState']
+    });
   }
 
   remove(id: number) {
@@ -273,5 +294,7 @@ export class ReportsService {
       relations: ['User', 'UserInCharge', 'ReportLocation', 'ReportType', 'ReportState']
     });
   }
+
+
 
 }

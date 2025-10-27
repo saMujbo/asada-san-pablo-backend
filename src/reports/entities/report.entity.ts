@@ -34,6 +34,9 @@ export class Report {
   @Column({ type: 'int', nullable: true, default: null })
   UserInChargeId: number;
 
+  @Column({type: 'varchar', length: 255, nullable: true})
+  AdditionalInfo: string;
+
   // relacion con el usuario que crea el reporte
   @ManyToOne(() => User, { eager: true })
   @JoinColumn({ name: 'UserId' })
