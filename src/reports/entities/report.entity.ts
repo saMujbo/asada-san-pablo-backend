@@ -28,11 +28,14 @@ export class Report {
   @Column({ type: 'int', nullable: false })
   ReportTypeId: number;
 
-  @Column({ type: 'int', nullable: false })
+  @Column({ type: 'int', nullable: true, default: null })
   ReportStateId: number;
 
   @Column({ type: 'int', nullable: true, default: null })
   UserInChargeId: number;
+
+  @Column({type: 'varchar', length: 255, nullable: true})
+  AdditionalInfo: string;
 
   // relacion con el usuario que crea el reporte
   @ManyToOne(() => User, { eager: true })
@@ -40,7 +43,7 @@ export class Report {
   User: User;
 
   // relación con el usuario encargado del reporte
-  @ManyToOne(() => User, { eager: true })
+  @ManyToOne(() => User, { eager: true, nullable: true })
   @JoinColumn({ name: 'UserInChargeId' })
   UserInCharge: User;
 
@@ -63,10 +66,10 @@ export class Report {
   // Relación con ReportState
   @ManyToOne(() => ReportState, (reportStates) => reportStates.Reports, {
     eager: true,
+    nullable: true,
     onDelete: 'RESTRICT', 
   })
   @JoinColumn({ name: 'ReportStateId' })
   ReportState: ReportState;
 
 }
-  
