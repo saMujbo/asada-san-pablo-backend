@@ -1,27 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateActualExpenseDto } from './dto/create-actual-expense.dto';
 import { UpdateActualExpenseDto } from './dto/update-actual-expense.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ActualExpense } from './entities/actual-expense.entity';
 import { Repository } from 'typeorm';
 import { TraceProjectService } from 'src/trace-project/trace-project.service';
+import { TotalActualExpenseService } from 'src/total-actual-expense/total-actual-expense.service';
 
 @Injectable()
 export class ActualExpenseService {
   constructor(
       @InjectRepository(ActualExpense)
       private readonly actualExpenseRepo: Repository<ActualExpense>,
-      private readonly traceProjectService: TraceProjectService,
+      @Inject(forwardRef(() => TraceProjectService))
+      private readonly traceProjectService: TraceProjectService
   ) {}
   
   async create(createActualExpenseDto: CreateActualExpenseDto) {
-        const traceProject = await this.traceProjectService.findOne(createActualExpenseDto.TraceProjectId);
+    const traceProject = await this.traceProjectService.findOne(createActualExpenseDto.TraceProjectId);
     const newActualExpense = await this.actualExpenseRepo.create({
       Observation: createActualExpenseDto.Observation,
       TraceProject: traceProject,
     })
-    return await this.actualExpenseRepo.save(newActualExpense);
+
+    const actuala_expenseSave = await this.actualExpenseRepo.save(newActualExpense);
+    return actuala_expenseSave;
   }
+  
   async findAll() {
     return await this.actualExpenseRepo.find({ where: { IsActive: true }});
   }
@@ -30,7 +35,9 @@ export class ActualExpenseService {
     const actualExpense = await this.actualExpenseRepo.findOne({ where: { Id, IsActive: true },
       relations: [
         'TraceProject',
-        'ProductDetails',
+        'TraceProject.Project',
+        'ProductDetails', 
+        'ProductDetails.Product'
       ]
     });
     if (!actualExpense) {

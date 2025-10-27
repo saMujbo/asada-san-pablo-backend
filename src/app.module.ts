@@ -33,6 +33,7 @@ import { ReportsModule } from './reports/reports.module';
 import { CommentModule } from './comment/comment.module';
 import { ReportLocationModule } from './report-location/report-location.module';
 import { ReportTypesModule } from './report-types/report-types.module';
+import { ReportStatesModule } from './report-states/report-states.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { TotalActualExpenseModule } from './total-actual-expense/total-actual-expense.module';
 
@@ -87,6 +88,7 @@ import { TotalActualExpenseModule } from './total-actual-expense/total-actual-ex
     CommentModule,
     ReportLocationModule,
     ReportTypesModule,
+    ReportStatesModule,
     DashboardModule,
     TotalActualExpenseModule
   ],

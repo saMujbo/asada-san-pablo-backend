@@ -10,7 +10,7 @@ export class TraceProject {
   @PrimaryGeneratedColumn()
   Id: number;
 
-  @Column()
+  @Column({ unique: true })
   Name: string;
 
   // Sugerencia: valida en el DTO; en la entidad basta con el tipo/columna

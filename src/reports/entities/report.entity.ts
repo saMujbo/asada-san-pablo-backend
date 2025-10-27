@@ -73,3 +73,4 @@ export class Report {
   ReportState: ReportState;
 
 }
+  

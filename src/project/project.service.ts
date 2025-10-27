@@ -8,6 +8,7 @@ import { hasNonEmptyString, isValidDate } from 'src/utils/validation.utils';
 import { ProjectPaginationDto } from './dto/pagination-project.dto';
 import { ProjectStateService } from './project-state/project-state.service';
 import { UsersService } from 'src/users/users.service';
+import { TotalActualExpenseService } from 'src/total-actual-expense/total-actual-expense.service';
 
 @Injectable()
 export class ProjectService {
@@ -16,7 +17,9 @@ export class ProjectService {
     private readonly projectRepo: Repository<Project>,
     @Inject(forwardRef(() => ProjectStateService))
     private readonly projectStateSv: ProjectStateService,
-    private readonly userSv: UsersService
+    private readonly userSv: UsersService,
+    @Inject(forwardRef(() => TotalActualExpenseService))
+    private readonly totalAESv: TotalActualExpenseService,
   ){}
 
   async create(createProjectDto: CreateProjectDto) {
@@ -34,6 +37,7 @@ export class ProjectService {
     const project = this.projectRepo.create({ ProjectState: projectState, User: user, ...rest });
     await this.projectRepo.save(project);
 
+    await this.totalAESv.create({ProjectId: project.Id});
     return project;
   }
 
@@ -46,7 +50,9 @@ export class ProjectService {
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product',
       'ProjectProjection.ProductDetails.Product.Category',
-      'ProjectProjection.ProductDetails.Product.UnitMeasure'] });
+      'ProjectProjection.ProductDetails.Product.UnitMeasure',
+      'TotalActualExpense'
+    ] });
   }
   
   async search({ page = 1, limit = 10, name, state, projectState}:ProjectPaginationDto){

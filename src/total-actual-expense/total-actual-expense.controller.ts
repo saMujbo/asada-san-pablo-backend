@@ -22,13 +22,13 @@ export class TotalActualExpenseController {
     return this.totalActualExpenseService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTotalActualExpenseDto: UpdateTotalActualExpenseDto) {
-    return this.totalActualExpenseService.update(+id, updateTotalActualExpenseDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateTotalActualExpenseDto: UpdateTotalActualExpenseDto) {
+  //   return this.totalActualExpenseService.update(+id, updateTotalActualExpenseDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.totalActualExpenseService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.totalActualExpenseService.remove(+id);
+  // }
 }
