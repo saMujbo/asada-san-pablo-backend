@@ -133,20 +133,11 @@ export class RequesAvailabilityWaterService {
   async update(Id: number, updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto) {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({ where: { Id } });
     if(!foundRequestAvailabilityWater) throw new NotFoundException(`RequesAvailabilityWater with ${Id} not found`)
-    
-      
-      const foundUser = await this.userSerive.findOne(updateRequesAvailabilityWaterDto.UserId)
-      if(!foundUser){throw new NotFoundException(`user with Id ${Id} not found`)}
-        if(updateRequesAvailabilityWaterDto.UserId != undefined && updateRequesAvailabilityWaterDto.UserId !=null)
-          foundRequestAvailabilityWater.User = foundUser;
 
       const foundState = await this.stateRequestSv.findOne(updateRequesAvailabilityWaterDto.StateRequestId)
         if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
           if(updateRequesAvailabilityWaterDto.StateRequestId != undefined && updateRequesAvailabilityWaterDto.StateRequestId != null)
             foundRequestAvailabilityWater.StateRequest = foundState
-
-      if(updateRequesAvailabilityWaterDto.Justification !=undefined && updateRequesAvailabilityWaterDto.Justification != '' && updateRequesAvailabilityWaterDto.Justification != null)
-        foundRequestAvailabilityWater.Justification = updateRequesAvailabilityWaterDto.Justification;
 
     return await this.requesAvailabilityWaterRepository.save(foundRequestAvailabilityWater)
   }
