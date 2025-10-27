@@ -49,7 +49,7 @@ export class UsersController {
   }
 
   @Get('/role-fontanero')
-  async getUsersByRoleFontanero() {
+  async getFontaneros() {
     return this.usersService.findUsersByRoleFontanero();
   }
 

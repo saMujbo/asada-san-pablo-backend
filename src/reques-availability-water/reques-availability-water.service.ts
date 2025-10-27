@@ -61,52 +61,65 @@ export class RequesAvailabilityWaterService {
         'StateRequest',
         'User',]});
   }
-  async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestAvailabilityWaterPagination) {
-    const pageNum = Math.max(1, Number(page) || 1);
-    const take = Math.min(100, Math.max(1, Number(limit) || 10));
-    const skip = (pageNum - 1) * take;
+  async search({
+  page = 1,
+  limit = 10,
+  q,
+  StateRequestId,
+  State,     // si lo sigues usando en el endpoint general
+  userId,    // <-- viene solo desde /me/search (inyectado)
+}: RequestAvailabilityWaterPagination & { userId?: number; q?: string }) {
+  const pageNum = Math.max(1, Number(page) || 1);
+  const take = Math.min(100, Math.max(1, Number(limit) || 10));
+  const skip = (pageNum - 1) * take;
 
-    const qb = this.requesAvailabilityWaterRepository
-      .createQueryBuilder('req')
-      .leftJoinAndSelect('req.User', 'user')
-      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
-      .skip(skip)
-      .take(take);
+  const qb = this.requesAvailabilityWaterRepository
+    .createQueryBuilder('req')
+    .leftJoinAndSelect('req.User', 'user')
+    .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+    .orderBy('req.Date', 'DESC')
+    .skip(skip)
+    .take(take);
 
-    // IsActive (opcional)
-    if (State !== undefined && State !== null && State !== '') {
-      // Si tu DTO manda string "true"/"false":
-      const isActive =
-        typeof State === 'string'
-          ? State.toLowerCase() === 'true'
-          : !!State;
-
-      qb.andWhere('req.IsActive = :State', { State}); // <-- nombre del parámetro correcto
-    }
-
-    // Filtro por nombre del encargado
-    if (UserName) {
-      qb.andWhere('LOWER(user.Name) LIKE LOWER(:UserName)', { UserName: `%${UserName}%` });
-    }
-
-    // Filtro por nombre del estado (PENDIENTE, TERMINADO, etc.)
-    if (typeof StateRequestId === 'number') {
-      qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
-    }
-
-    const [data, total] = await qb.getManyAndCount();
-
-    return {
-      data,
-      meta: {
-        page: pageNum,
-        limit: take,
-        pageCount: Math.max(1, Math.ceil(total / take)),
-        hasNextPage: pageNum * take < total,
-        hasPrevPage: pageNum > 1,
-      },
-    };
+  // isActive: si viene State en el search general, conviértelo;
+  // si viene userId (me/search) y no se especificó nada, por defecto solo activos.
+  let isActiveFilter: boolean | undefined = undefined;
+  if (State !== undefined && State !== null && State !== '') {
+    isActiveFilter = typeof State === 'string' ? State.toLowerCase() === 'true' : !!State;
+  } else if (typeof userId === 'number') {
+    isActiveFilter = true; // default para "mis solicitudes"
   }
+  if (typeof isActiveFilter === 'boolean') {
+    qb.andWhere('req.IsActive = :isActive', { isActive: isActiveFilter });
+  }
+
+  if (typeof StateRequestId === 'number') {
+    qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
+  }
+
+  if (typeof userId === 'number') {
+    qb.andWhere('req.UserId = :uid', { uid: userId });
+  }
+
+  if (q && q.trim() !== '') {
+    qb.andWhere('(LOWER(req.Justification) LIKE :q OR LOWER(user.Name) LIKE :q)', {
+      q: `%${q.toLowerCase()}%`,
+    });
+  }
+
+  const [data, total] = await qb.getManyAndCount();
+  return {
+    data,
+    meta: {
+      page: pageNum,
+      limit: take,
+      total,
+      pageCount: Math.max(1, Math.ceil(total / take)),
+      hasNextPage: pageNum * take < total,
+      hasPrevPage: pageNum > 1,
+    },
+  };
+}
 
   async findOne(Id: number) {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({
@@ -120,20 +133,11 @@ export class RequesAvailabilityWaterService {
   async update(Id: number, updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto) {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({ where: { Id } });
     if(!foundRequestAvailabilityWater) throw new NotFoundException(`RequesAvailabilityWater with ${Id} not found`)
-    
-      
-      const foundUser = await this.userSerive.findOne(updateRequesAvailabilityWaterDto.UserId)
-      if(!foundUser){throw new NotFoundException(`user with Id ${Id} not found`)}
-        if(updateRequesAvailabilityWaterDto.UserId != undefined && updateRequesAvailabilityWaterDto.UserId !=null)
-          foundRequestAvailabilityWater.User = foundUser;
 
       const foundState = await this.stateRequestSv.findOne(updateRequesAvailabilityWaterDto.StateRequestId)
         if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
           if(updateRequesAvailabilityWaterDto.StateRequestId != undefined && updateRequesAvailabilityWaterDto.StateRequestId != null)
             foundRequestAvailabilityWater.StateRequest = foundState
-
-      if(updateRequesAvailabilityWaterDto.Justification !=undefined && updateRequesAvailabilityWaterDto.Justification != '' && updateRequesAvailabilityWaterDto.Justification != null)
-        foundRequestAvailabilityWater.Justification = updateRequesAvailabilityWaterDto.Justification;
 
     return await this.requesAvailabilityWaterRepository.save(foundRequestAvailabilityWater)
   }
@@ -201,5 +205,47 @@ export class RequesAvailabilityWaterService {
       .andWhere('req.UserId = :uid', { uid: userId })
       .andWhere('UPPER(state.Name) = :p', { p: 'PENDIENTE' })
       .getCount();
+  }
+
+  // Listado simple por usuario (sin paginar)
+  async findAllByUser(userId: number) {
+  return this.requesAvailabilityWaterRepository.find({
+    where: { IsActive: true, User: { Id: userId } },
+    relations: ['StateRequest'],
+    order: { Date: 'DESC' },
+  });
+  }
+
+  // Listado paginado por usuario
+  async searchByUser(
+    userId: number,
+    { page = 1, limit = 10 }: { page?: number; limit?: number }
+  ) {
+    const pageNum = Math.max(1, Number(page) || 1);
+    const take = Math.min(100, Math.max(1, Number(limit) || 10));
+    const skip = (pageNum - 1) * take;
+
+    const qb = this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'state')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .orderBy('req.Date', 'DESC')
+      .skip(skip)
+      .take(take);
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        page: pageNum,
+        limit: take,
+        total,
+        pageCount: Math.max(1, Math.ceil(total / take)),
+        hasNextPage: pageNum * take < total,
+        hasPrevPage: pageNum > 1,
+      },
+    };
   }
 }

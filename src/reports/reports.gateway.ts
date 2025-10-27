@@ -37,7 +37,7 @@ export class ReportsGateway {
     ReportState: {
       Id: number;
       Name: string;
-    };
+    } | null;
     UserInCharge: {
       Id: number;
       Name: string;
