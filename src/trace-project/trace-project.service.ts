@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTraceProjectDto } from './dto/create-trace-project.dto';
 import { UpdateTraceProjectDto } from './dto/update-trace-project.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +12,7 @@ export class TraceProjectService {
   constructor(
     @InjectRepository(TraceProject)
     private readonly traceProjectRepo: Repository<TraceProject>,
+    @Inject(forwardRef(() => ProjectService))
     private readonly projecService:ProjectService
   ){}
   

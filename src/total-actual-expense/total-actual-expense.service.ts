@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTotalActualExpenseDto } from './dto/create-total-actual-expense.dto';
 import { UpdateTotalActualExpenseDto } from './dto/update-total-actual-expense.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,13 +6,16 @@ import { TotalActualExpense } from './entities/total-actual-expense.entity';
 import { Repository } from 'typeorm';
 import { ProjectService } from 'src/project/project.service';
 import { ActualExpenseService } from 'src/actual-expense/actual-expense.service';
+import { ProductDetail } from 'src/product/product-detail/entities/product-detail.entity';
 
 @Injectable()
 export class TotalActualExpenseService {
   constructor(
     @InjectRepository(TotalActualExpense)
     private readonly totalAERepo: Repository<TotalActualExpense>,
-    // @Inject(forwardRef(() => ProjectStateService))
+    @InjectRepository(ProductDetail)
+        private readonly productDetailRepo: Repository<ProductDetail>,
+    @Inject(forwardRef(() => ProjectService))
     private readonly projectSv: ProjectService,
     private readonly actualExpenseSv: ActualExpenseService,
   ){}
@@ -63,18 +66,56 @@ export class TotalActualExpenseService {
     return foundTotalAE;
   }
 
-  async update(Id: number, updateTotalActualExpenseDto: UpdateTotalActualExpenseDto) {
-    const foundTotalAE = await this.findOne(Id);
-    const actualExpense = await this.actualExpenseSv.findOne(updateTotalActualExpenseDto.ActualExpenseId);
-    actualExpense.ProductDetails.forEach(pd => {
-      if(!foundTotalAE.ActualExpenseIds) {
-        foundTotalAE.ActualExpenseIds = [];
-      }
-      if(!foundTotalAE.ActualExpenseIds.includes(actualExpense.Id)){
-        foundTotalAE.ActualExpenseIds.push(actualExpense.Id);
-        foundTotalAE.ProductDetails = foundTotalAE.ProductDetails.concat(actualExpense.ProductDetails);
-      }
+  async findByProject(IdProject: number) {
+    const foundTotalAE = await this.totalAERepo.findOne({
+        where: { Project: { Id: IdProject } },
+        relations: ['ProductDetails', 'ProductDetails.Product', 'Project']
     });
+
+    if(!foundTotalAE) throw new NotFoundException(`TotalActualExpense with IdProject ${IdProject} not found`);
+    return foundTotalAE;
+  }
+
+  async update(IdProject: number, actualExpenseId: number) {
+    const foundTotalAE = await this.findByProject(IdProject);
+
+    const actualExpense = await this.actualExpenseSv.findOne(actualExpenseId);
+    
+    // Verificar si ya se procesó este ActualExpense
+    if (!foundTotalAE.ActualExpenseIds) {
+        foundTotalAE.ActualExpenseIds = [];
+    }
+    
+    if (foundTotalAE.ActualExpenseIds.includes(actualExpense.Id)) {
+        // Ya fue procesado, no hacer nada o lanzar excepción
+        return foundTotalAE;
+    }
+
+    // Agregar el ID del ActualExpense
+    foundTotalAE.ActualExpenseIds.push(actualExpense.Id);
+
+    // Procesar cada ProductDetail del ActualExpense
+    for (const aeProductDetail of actualExpense.ProductDetails) {
+        // Buscar si ya existe un ProductDetail con el mismo producto en TotalActualExpense
+        const existingPD = foundTotalAE.ProductDetails.find(
+            pd => pd.Product.Id === aeProductDetail.Product.Id
+        );
+
+        if (existingPD) {
+            // Si existe, sumar la cantidad
+            existingPD.Quantity += aeProductDetail.Quantity;
+            await this.productDetailRepo.save(existingPD);
+        } else {
+            // Si no existe, crear un nuevo ProductDetail para TotalActualExpense
+            const newPD = this.productDetailRepo.create({
+                Quantity: aeProductDetail.Quantity,
+                Product: aeProductDetail.Product,
+                TotalActualExpense: foundTotalAE
+            });
+            const savedPD = await this.productDetailRepo.save(newPD);
+            foundTotalAE.ProductDetails.push(savedPD);
+        }
+    }
 
     return await this.totalAERepo.save(foundTotalAE);
   }
