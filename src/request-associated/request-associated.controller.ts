@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Put } from '@nestjs/common';
 import { RequestAssociatedService } from './request-associated.service';
 import { CreateRequestAssociatedDto } from './dto/create-request-associated.dto';
 import { UpdateRequestAssociatedDto } from './dto/update-request-associated.dto';
@@ -51,7 +51,7 @@ export class RequestAssociatedController {
     return this.requestAssociatedService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: number, @Body() updateRequestAssociatedDto: UpdateRequestAssociatedDto) {
     return this.requestAssociatedService.update(id, updateRequestAssociatedDto);
   }

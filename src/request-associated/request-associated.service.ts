@@ -169,25 +169,6 @@ async search({
       foundRequestAssociated.StateRequest = foundState;
     }
 
-    if(updateRequestAssociatedDto.IDcard !== undefined && updateRequestAssociatedDto.IDcard != null && updateRequestAssociatedDto.IDcard != ''){
-      foundRequestAssociated.IDcard = updateRequestAssociatedDto.IDcard;
-      return await this.requestAssociatedRepo.save(foundRequestAssociated);
-    }
-    if(hasNonEmptyString(updateRequestAssociatedDto.Name)){
-      foundRequestAssociated.Name = updateRequestAssociatedDto.Name}
-    if(hasNonEmptyString(updateRequestAssociatedDto.Justification)){
-      foundRequestAssociated.Justificattion = updateRequestAssociatedDto.Justification;
-    }
-    if(hasNonEmptyString(updateRequestAssociatedDto.Surname1)){
-      foundRequestAssociated.Surname1 = updateRequestAssociatedDto.Surname1;
-    }
-    
-    if(hasNonEmptyString(updateRequestAssociatedDto.Surname2)){
-      foundRequestAssociated.Surname2 = updateRequestAssociatedDto.Surname2;
-    }
-
-    if(updateRequestAssociatedDto.NIS != undefined && updateRequestAssociatedDto.NIS != null )
-      foundRequestAssociated.NIS = updateRequestAssociatedDto.NIS;
   }
 
   async remove(Id: number) {
