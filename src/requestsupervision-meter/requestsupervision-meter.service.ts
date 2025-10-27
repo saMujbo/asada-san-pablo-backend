@@ -125,25 +125,13 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, NIS, State }: Req
   async update(Id: number, updateRequestsupervisionMeterDto: UpdateRequestsupervisionMeterDto) {
     const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({where:{Id, IsActive:true}}) 
     if(!foundRequestSupervision) throw new NotFoundException(`Request with ${Id} not found`)
-    
-      //user
-      const foundUser = await this.userSv.findOne(updateRequestsupervisionMeterDto.UserId)
-    if(!foundUser){throw new NotFoundException(`user with Id ${Id} not found`)}
-    if(updateRequestsupervisionMeterDto.UserId != undefined && updateRequestsupervisionMeterDto.UserId !=null)
-        foundRequestSupervision.User = foundUser;
+  
 
     //satate
       const foundState = await this.stateRequestSv.findOne(updateRequestsupervisionMeterDto.StateRequestId)
     if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
     if(updateRequestsupervisionMeterDto.StateRequestId != undefined && updateRequestsupervisionMeterDto.StateRequestId != null)
         foundRequestSupervision.StateRequest = foundState
-
-    if(hasNonEmptyString(updateRequestsupervisionMeterDto.Justification)&& updateRequestsupervisionMeterDto !=null)
-      foundRequestSupervision.Justification = updateRequestsupervisionMeterDto.Justification
-    if(hasNonEmptyString(updateRequestsupervisionMeterDto.Location)&& updateRequestsupervisionMeterDto.Location !=null)
-      foundRequestSupervision.Location = updateRequestsupervisionMeterDto.Location;
-    if(updateRequestsupervisionMeterDto.NIS !=undefined && updateRequestsupervisionMeterDto.NIS != null)
-      foundRequestSupervision.NIS = updateRequestsupervisionMeterDto.NIS
 
     return await this.requestSupervisionMeterRepo.save(foundRequestSupervision)
 }
