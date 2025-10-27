@@ -144,8 +144,8 @@ async search({
         if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
         if(updateRequestChangeMeterDto.StateRequestId != undefined && updateRequestChangeMeterDto.StateRequestId != null)
         foundRequestChangeMeter.StateRequest = foundState;
-
-    return await this.requestChangeMeterRepo.save(foundRequestChangeMeter);
+        await this.requestChangeMeterRepo.save(foundRequestChangeMeter);
+    return foundRequestChangeMeter;
   }
 
   async remove(Id: number) {

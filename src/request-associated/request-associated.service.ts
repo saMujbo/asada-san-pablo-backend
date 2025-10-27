@@ -167,8 +167,9 @@ async search({
         throw new NotFoundException(`state with Id ${updateRequestAssociatedDto.StateRequestId} not found`);
       }
       foundRequestAssociated.StateRequest = foundState;
+      await this.requestAssociatedRepo.save(foundRequestAssociated);
+      return foundRequestAssociated;
     }
-
   }
 
   async remove(Id: number) {

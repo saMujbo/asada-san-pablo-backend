@@ -133,11 +133,6 @@ async search({
     const foundRequestChangeNameMeter = await this.requestChangeNameMeterRepo.findOne({where:{Id}});
     if(!foundRequestChangeNameMeter)  throw new NotFoundException(`Request with ${Id} not found`)
 
-          const foundUser = await this.userSerive.findOne(updateRequestChangeNameMeterDto.UserId)
-      if(!foundUser){throw new NotFoundException(`user with Id ${Id} not found`)}
-      if(updateRequestChangeNameMeterDto.UserId != undefined && updateRequestChangeNameMeterDto.UserId !=null)
-      foundRequestChangeNameMeter.User = foundUser;
-
       const foundState = await this.stateRequestSv.findOne(updateRequestChangeNameMeterDto.StateRequestId)
       if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
       if(updateRequestChangeNameMeterDto.StateRequestId != undefined && updateRequestChangeNameMeterDto.StateRequestId != null)
