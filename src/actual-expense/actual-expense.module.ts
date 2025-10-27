@@ -10,9 +10,7 @@ import { TotalActualExpenseModule } from 'src/total-actual-expense/total-actual-
 @Module({
   imports: [
     TypeOrmModule.forFeature([ActualExpense]),
-    forwardRef(() => TraceProjectModule), // 👈 cambiado a forwardRef
-    forwardRef(() => TotalActualExpenseModule), // 👈 cambiado a forwardRef
-    
+    forwardRef(() => TraceProjectModule),    
   ],
   controllers: [ActualExpenseController],
   providers: [ActualExpenseService],

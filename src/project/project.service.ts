@@ -50,7 +50,9 @@ export class ProjectService {
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product',
       'ProjectProjection.ProductDetails.Product.Category',
-      'ProjectProjection.ProductDetails.Product.UnitMeasure'] });
+      'ProjectProjection.ProductDetails.Product.UnitMeasure',
+      'TotalActualExpense'
+    ] });
   }
   
   async search({ page = 1, limit = 10, name, state, projectState}:ProjectPaginationDto){

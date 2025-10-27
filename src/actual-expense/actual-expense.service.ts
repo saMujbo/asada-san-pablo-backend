@@ -13,9 +13,7 @@ export class ActualExpenseService {
       @InjectRepository(ActualExpense)
       private readonly actualExpenseRepo: Repository<ActualExpense>,
       @Inject(forwardRef(() => TraceProjectService))
-      private readonly traceProjectService: TraceProjectService,
-      @Inject(forwardRef(() => TotalActualExpenseService))
-      private readonly totalAc: TotalActualExpenseService,
+      private readonly traceProjectService: TraceProjectService
   ) {}
   
   async create(createActualExpenseDto: CreateActualExpenseDto) {
@@ -24,10 +22,9 @@ export class ActualExpenseService {
       Observation: createActualExpenseDto.Observation,
       TraceProject: traceProject,
     })
-    await this.actualExpenseRepo.save(newActualExpense);
 
-    this.totalAc.update(newActualExpense.TraceProject.Project.Id, newActualExpense.Id);
-    return newActualExpense;
+    const actuala_expenseSave = await this.actualExpenseRepo.save(newActualExpense);
+    return actuala_expenseSave;
   }
   
   async findAll() {
@@ -38,6 +35,7 @@ export class ActualExpenseService {
     const actualExpense = await this.actualExpenseRepo.findOne({ where: { Id, IsActive: true },
       relations: [
         'TraceProject',
+        'TraceProject.Project',
         'ProductDetails', 
         'ProductDetails.Product'
       ]

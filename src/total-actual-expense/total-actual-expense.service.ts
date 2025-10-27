@@ -79,8 +79,12 @@ export class TotalActualExpenseService {
   async update(IdProject: number, actualExpenseId: number) {
     const foundTotalAE = await this.findByProject(IdProject);
 
+    console.log('Found TotalActualExpense:', foundTotalAE);
+
     const actualExpense = await this.actualExpenseSv.findOne(actualExpenseId);
     
+    console.log('ActualExpense to process:', actualExpense);
+
     // Verificar si ya se procesó este ActualExpense
     if (!foundTotalAE.ActualExpenseIds) {
         foundTotalAE.ActualExpenseIds = [];

@@ -30,6 +30,7 @@ export class TraceProjectService {
     return await this.traceProjectRepo.find({
       where:{IsActive:true},
       relations:[
+        'Project',
         "ActualExpense",
         'ActualExpense.ProductDetails', 
         'ActualExpense.ProductDetails.Product',
@@ -43,6 +44,7 @@ export class TraceProjectService {
     const foundTraceProject = await this.traceProjectRepo.findOne({
     where:{Id,IsActive:true},
     relations:[
+      'Project',
       "ActualExpense",
       'ActualExpense.ProductDetails', 
       'ActualExpense.ProductDetails.Product',

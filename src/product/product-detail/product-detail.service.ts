@@ -40,7 +40,11 @@ export class ProductDetailService {
         Product: product,
         ActualExpense: actualExpense,
       });
-      return await this.productDetailRepo.save(newProductDetail);
+      const pruductDetailSave = await this.productDetailRepo.save(newProductDetail);
+
+      await this.TotalAESv.update(actualExpense.TraceProject.Project.Id, actualExpense.Id);
+
+      return pruductDetailSave;
     } else {
       const projectProjection = await this.projectProjectionSv.findOne(ProjectProjectionId);
 
@@ -58,11 +62,11 @@ export class ProductDetailService {
 
     const product = await this.productSv.findOne(ProductId);
     
-
+    
   }
 
   async findAll() {
-    return await this.productDetailRepo.find({ relations: ['Product', 'ProjectProjection'] });
+    return await this.productDetailRepo.find({ relations: ['Product', 'ProjectProjection', 'ActualExpense', 'TotalActualExpense'] });
   }
 
   async findOne(id: number) {
