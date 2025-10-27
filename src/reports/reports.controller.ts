@@ -27,16 +27,26 @@ export class ReportsController {
     return this.reportsService.findAll(paginationDto);
   }
 
+  @ApiOperation({ summary: 'Obtener un reporte por ID' })
+  @ApiResponse({ status: 200, description: 'Reporte encontrado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.reportsService.findOne(+id);
   }
 
+  @ApiOperation({ summary: 'Actualizar un reporte' })
+  @ApiResponse({ status: 200, description: 'Reporte actualizado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos' })
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateReportDto: UpdateReportDto) {
     return this.reportsService.update(+id, updateReportDto);
   }
 
+  @ApiOperation({ summary: 'Eliminar un reporte' })
+  @ApiResponse({ status: 200, description: 'Reporte eliminado exitosamente' })
+  @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.reportsService.remove(+id);
