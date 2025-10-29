@@ -8,9 +8,9 @@ import { IsOptional, IsString, IsArray, IsBoolean, IsInt, IsPositive, IsNotEmpty
     @IsString()
     Justification?: string;
 
-    @IsOptional()
-    @IsBoolean()
-    IsActive?: boolean;
+    // @IsOptional()
+    // @IsBoolean()
+    // IsActive?: boolean;
 
     // FK requeridas
     @ApiProperty()
@@ -18,8 +18,8 @@ import { IsOptional, IsString, IsArray, IsBoolean, IsInt, IsPositive, IsNotEmpty
     @IsNotEmpty()
     UserId: number;
 
-    @ApiProperty()
-    @IsInt()
-    @IsNotEmpty()
-    StateRequestId: number;
+    // @ApiProperty()
+    // @IsInt()
+    // @IsNotEmpty()
+    // StateRequestId: number;
     }

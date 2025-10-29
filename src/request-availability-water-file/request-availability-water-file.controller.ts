@@ -18,8 +18,8 @@ export class RequestAvailabilityWaterFileController {
     }
   
     // GET /projects/:id/files
-    @Get()
-    async list(@Param('id', ParseIntPipe) id: number) {
+    @Get(':id')
+    async list(@Param('id') id: number) {
       return this.requestAvailabilityWaterFileService.list(id);
     }
   
