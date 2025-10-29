@@ -94,5 +94,16 @@ export class UsersController {
   async updateMyEmail( @GetUser('id') id: number, @Body() dto: UpdateEmailDto ){
     return await this.usersService.updateMyEmail(id, dto);
   }
+  
 
+
+  @Get('abonados/search')
+  @ApiQuery({ 
+  name: 'q', 
+  required: false, 
+  description: 'Término de búsqueda (nombre, apellido, cédula o NIS)' 
+  })
+  async searchAbonados(@Query('q') searchTerm?: string) {
+  return this.usersService.searchAbonados(searchTerm);
+  }
 }

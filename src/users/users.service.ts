@@ -321,6 +321,58 @@ async findUsersByRoleFontanero() {
   });
 }
 
+async searchAbonados(searchTerm?: string) {
+  const qb = this.userRepo
+    .createQueryBuilder('user')
+    .leftJoinAndSelect('user.Roles', 'role')
+    .where('role.Rolname = :rolename', { rolename: 'ABONADO' })
+    .andWhere('user.IsActive = :isActive', { isActive: true });
+
+  // Si hay término de búsqueda, buscar por nombre completo o cédula
+  if (searchTerm && searchTerm.trim() !== '') {
+    const term = searchTerm.trim().toLowerCase();
+    const normalizedTerm = term.replace(/[^0-9]/g, '');
+
+    qb.andWhere(
+      `(
+        LOWER(user.Name) LIKE :term 
+        OR LOWER(user.Surname1) LIKE :term 
+        OR LOWER(user.Surname2) LIKE :term
+        OR LOWER(CONCAT(user.Name, ' ', user.Surname1, ' ', user.Surname2)) LIKE :term
+        OR REPLACE(REPLACE(REPLACE(user.IDcard, '-', ''), ' ', ''), '.', '') LIKE :normalizedTerm
+        OR user.Nis LIKE :term
+      )`,
+      { 
+        term: `%${term}%`,
+        normalizedTerm: `%${normalizedTerm}%`
+      }
+    );
+  }
+
+  // Ordenar por nombre
+  qb.orderBy('user.Name', 'ASC')
+    .addOrderBy('user.Surname1', 'ASC');
+
+  if (!searchTerm || searchTerm.trim() === '') {
+    qb.take(5);
+  }
+  const users = await qb.getMany();
+
+  return users.map(user => ({
+    Id: user.Id,
+    IDcard: user.IDcard,
+    Nis: user.Nis,
+    FullName: `${user.Name} ${user.Surname1} ${user.Surname2}`.trim(),
+    Name: user.Name,
+    Surname1: user.Surname1,
+    Surname2: user.Surname2,
+    Email: user.Email,
+    PhoneNumber: user.PhoneNumber,
+    Address: user.Address,
+    Birthdate: user.Birthdate,
+  }));
+}
+
 }
 
 
