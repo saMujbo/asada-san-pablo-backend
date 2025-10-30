@@ -36,6 +36,8 @@ import { ReportTypesModule } from './report-types/report-types.module';
 import { ReportStatesModule } from './report-states/report-states.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { TotalActualExpenseModule } from './total-actual-expense/total-actual-expense.module';
+import { ServiceModule } from './service/service.module';
+import { FaqModule } from './faq/faq.module';
 
 @Module({
   imports: [
@@ -90,7 +92,9 @@ import { TotalActualExpenseModule } from './total-actual-expense/total-actual-ex
     ProjectFileModule,
     RequestChangeNameMeterFileModule,
     RequestAvailabilityWaterFileModule,
-    RequestAssociatedFileModule
+    RequestAssociatedFileModule,
+    ServiceModule,
+    FaqModule
   ],
 })
 export class AppModule {}

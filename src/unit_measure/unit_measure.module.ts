@@ -6,10 +6,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductModule } from 'src/product/product.module';
 
 @Module({
-    imports:[
-      TypeOrmModule.forFeature([UnitMeasure]),
-      forwardRef(() => ProductModule),
-    ],
+  imports:[
+    TypeOrmModule.forFeature([UnitMeasure]),
+    forwardRef(() => ProductModule),
+  ],
   controllers: [UnitMeasureController],
   providers: [UnitMeasureService],
   exports: [UnitMeasureService],
