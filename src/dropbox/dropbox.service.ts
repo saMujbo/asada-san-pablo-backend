@@ -78,4 +78,42 @@ export class DropboxService {
     });
     return result.metadata;
   }
+
+  async getFolderLink(folderPath: string) {
+    try {
+      const sharedLink = await this.dbx.sharingCreateSharedLinkWithSettings({
+        path: folderPath,
+      });
+      return sharedLink.result.url; // Enlace recién creado
+    } catch (error) {
+      if (error.error.error.shared_link_already_exists.metadata.url) {
+        // Si el enlace ya existe, devolver el enlace existente
+        return error.error.error.shared_link_already_exists.metadata.url;
+      }
+      throw error; // En caso de otros errores
+    }
+  }
+
+  async getTempLinksForFolder(folderPath: string) {
+    // Obtener lista de archivos en la carpeta
+    const { result } = await this.dbx.filesListFolder({ path: folderPath });
+    
+    // Obtener el enlace temporal para cada archivo
+    const tempLinks = await Promise.all(
+      result.entries.map(async (entry) => {
+        if (entry['.tag'] === 'file') {  // Asegúrate de que sea un archivo
+          // entry.path_lower puede ser undefined según los tipos, así que comprobamos y usamos path_display como fallback
+          const path = entry.path_lower ?? entry.path_display;
+          if (!path) return null;
+          const { result: fileResult } = await this.dbx.filesGetTemporaryLink({ path });
+          return fileResult.link; // Guarda el enlace temporal
+        }
+        return null;
+      })
+    );
+
+    // Filtra cualquier enlace nulo (si es que hay carpetas u otros elementos no archivos)
+    return tempLinks.filter(Boolean) as string[];
+  }
+
 }

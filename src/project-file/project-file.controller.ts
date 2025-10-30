@@ -29,6 +29,11 @@ export class ProjectFileController {
     return this.projectFileService.tempLink(fileId);
   }
 
+  @Get('folder-link/:id')
+    async getFolderLink(@Param('id') fileId: number) {
+      return this.projectFileService.getFolderLink(fileId);  // Devuelve el link de la carpeta
+    }
+
   // DELETE /projects/:id/files?fileId=123
   @Delete()
   async remove(@Param('id', ParseIntPipe) id: number, @Body('fileId') fileId?: number) {

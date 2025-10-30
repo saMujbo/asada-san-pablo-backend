@@ -78,19 +78,19 @@ import { TotalActualExpenseModule } from './total-actual-expense/total-actual-ex
     LegalSupplierModule,
     PhysicalSupplierModule,
     RequesAvailabilityWaterModule,
-    DropboxModule,
-    ProjectFileModule,
     RequestAssociatedModule,
-    RequestChangeNameMeterFileModule,
-    RequestAvailabilityWaterFileModule,
-    RequestAssociatedFileModule,
     ReportsModule,
     CommentModule,
     ReportLocationModule,
     ReportTypesModule,
     ReportStatesModule,
     DashboardModule,
-    TotalActualExpenseModule
+    TotalActualExpenseModule,
+    DropboxModule,
+    ProjectFileModule,
+    RequestChangeNameMeterFileModule,
+    RequestAvailabilityWaterFileModule,
+    RequestAssociatedFileModule
   ],
 })
 export class AppModule {}

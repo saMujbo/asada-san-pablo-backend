@@ -24,9 +24,14 @@ export class RequestAvailabilityWaterFileController {
     }
   
     // GET /projects/:id/files/temp-link?fileId=123
-    @Get('temp-link')
-    async tempLink(@Query('id', ParseIntPipe) fileId: number) {
+    @Get('temp-link/:id')
+    async tempLink(@Param('id') fileId: number) {
       return this.requestAvailabilityWaterFileService.tempLink(fileId);
+    }
+
+    @Get('folder-link/:id')
+    async getFolderLink(@Param('id') fileId: number) {
+      return this.requestAvailabilityWaterFileService.getFolderLink(fileId);  // Devuelve el link de la carpeta
     }
   
     // DELETE /projects/:id/files?fileId=123

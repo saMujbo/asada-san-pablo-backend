@@ -25,8 +25,8 @@ export class RequestChangeNameMeterFileService {
     return base;
   }
 
-  async ensureProjectFolder(projectId: number, subfolder?: string) {
-    const requestChangeNameMeter = await this.requestChangeNameMeterSv.findOne(projectId);
+  async ensureProjectFolder(reqChangeNameMeterId: number, subfolder?: string) {
+    const requestChangeNameMeter = await this.requestChangeNameMeterSv.findOne(reqChangeNameMeterId);
 
     const base = this.buildBasePath(requestChangeNameMeter);
     await this.dropbox.ensureFolder(base);
@@ -88,6 +88,12 @@ export class RequestChangeNameMeterFileService {
     if (!file) throw new BadRequestException('Archivo no existe');
     const link = await this.dropbox.getTempLink(file.Path);
     return { ...link, file };
+  }
+
+  async getFolderLink(reqChangeNameMeterId: number) {
+    const reqChangeNameMeter = await this.requestChangeNameMeterSv.findOne(reqChangeNameMeterId);
+
+    return this.dropbox.getFolderLink(reqChangeNameMeter.SpaceOfDocument || this.buildBasePath(reqChangeNameMeter));
   }
 
   async remove(RequestChangeNameMeterId: number) {

@@ -89,6 +89,13 @@ export class RequestAvailabilityWaterFileService {
     return { ...link, file };
   }
 
+  // async folderLink(fileId: number) {
+  //   const file = await this.reqFileFileRepo.findOne({ where: { Id: fileId }, relations: ['RequesAvailabilityWater'] });
+  //   if (!file) throw new BadRequestException('Archivo no existe');
+  //   const link = await this.dropbox.getFolderLink(file.Path);
+  //   return { link };
+  // }
+
   async remove(fileId: number) {
     const file = await this.reqFileFileRepo.findOne({ where: { Id: fileId } });
     if (!file) throw new BadRequestException('Archivo no existe');
@@ -96,5 +103,12 @@ export class RequestAvailabilityWaterFileService {
     await this.dropbox.delete(file.Path);
     await this.reqFileFileRepo.delete(fileId);
     return { ok: true };
+  }
+
+  
+  async getFolderLink(reqWaterId: number) {
+    const reqWater = await this.reqWaterSV.findOne(reqWaterId);
+
+    return this.dropbox.getFolderLink(reqWater.SpaceOfDocument || this.buildBasePath(reqWater));
   }
 }

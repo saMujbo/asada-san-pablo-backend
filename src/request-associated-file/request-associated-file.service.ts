@@ -91,6 +91,12 @@ export class RequestAssociatedFileService {
     return { ...link, file };
   }
 
+  async getFolderLink(reqWaterId: number) {
+    const requestAssociated = await this.requestAssociatedSV.findOne(reqWaterId);
+
+    return this.dropbox.getFolderLink(requestAssociated.SpaceOfDocument || this.buildBasePath(requestAssociated));
+  }
+
   async remove(fileId: number) {
     const file = await this.requestAssociatedFileRepo.findOne({ where: { Id: fileId } });
     if (!file) throw new BadRequestException('Archivo no existe');

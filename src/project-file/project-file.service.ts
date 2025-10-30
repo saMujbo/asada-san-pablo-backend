@@ -87,6 +87,12 @@ export class ProjectFileService {
     return { ...link, file };
   }
 
+  async getFolderLink(projectId: number) {
+    const project = await this.projectSV.findOne(projectId);
+
+    return this.dropbox.getFolderLink(project.SpaceOfDocument || this.buildBasePath(project));
+  }
+
   async remove(fileId: number) {
     const file = await this.projectFileRepo.findOne({ where: { Id: fileId } });
     if (!file) throw new BadRequestException('Archivo no existe');
