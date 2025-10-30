@@ -8,18 +8,10 @@
     @IsString()
     Justification?: string;
 
-    @IsOptional()
-    @IsBoolean()
-    IsActive?: boolean;
-
-        // FK requeridas
-        @ApiProperty()
-        @IsInt()
-        @IsOptional()
-        UserId: number;
-
+    // FK requeridas
     @ApiProperty()
     @IsInt()
-    @IsNotEmpty()
-    StateRequestId: number;
-    }
+    @IsOptional()
+    UserId: number;
+
+}
