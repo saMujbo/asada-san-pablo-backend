@@ -19,7 +19,7 @@ export class ServiceService {
   }
 
   async findAll() {
-    return this.serviceRepo.find();
+    return this.serviceRepo.find({where: {IsActive: true}});
   }
 
   async findOne(Id: number) {

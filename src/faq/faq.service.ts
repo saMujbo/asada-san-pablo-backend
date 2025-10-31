@@ -19,7 +19,7 @@ export class FaqService {
   }
 
   async findAll() {
-    return this.faqRepo.find();
+    return this.faqRepo.find({where: {IsActive: true}});
   }
 
   async findOne(Id: number) {
