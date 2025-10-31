@@ -43,15 +43,25 @@ export class ProjectService {
 
   async findAll() {
     return await this.projectRepo.find({where:{IsActive:true}, relations:[
-      'ProjectState', 
-      'User',
-      'ProjectFiles',
+      'ProjectState',
       'ProjectProjection', 
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product',
       'ProjectProjection.ProductDetails.Product.Category',
-      'ProjectProjection.ProductDetails.Product.UnitMeasure',
-      'TotalActualExpense'
+      'ProjectProjection.ProductDetails.Product.UnitMeasure', 
+      'TraceProject',
+      'TraceProject.ActualExpense',
+      'TraceProject.ActualExpense.ProductDetails',
+      'TraceProject.ActualExpense.ProductDetails.Product',
+      'TraceProject.ActualExpense.ProductDetails.Product.Category',
+      'TraceProject.ActualExpense.ProductDetails.Product.UnitMeasure',
+      'User',
+      'ProjectFiles',
+      'TotalActualExpense',
+      'TotalActualExpense.ProductDetails',
+      'TotalActualExpense.ProductDetails.Product',
+      'TotalActualExpense.ProductDetails.Product.Category',
+      'TotalActualExpense.ProductDetails.Product.UnitMeasure',
     ] });
   }
   
@@ -68,9 +78,18 @@ export class ProjectService {
       .leftJoinAndSelect('project.ProjectProjection', 'ProjectProjection')
       .leftJoinAndSelect('ProjectProjection.ProductDetails', 'ProductDetails')
       .leftJoinAndSelect('ProductDetails.Product', 'Product')
+      .leftJoinAndSelect('Product.Category', 'Category')
+      .leftJoinAndSelect('Product.UnitMeasure', 'UnitMeasure')
+      .leftJoinAndSelect('TraceProject.ActualExpense', 'ActualExpense')
+      .leftJoinAndSelect('ActualExpense.ProductDetails', 'ActualExpenseProductDetails')
+      .leftJoinAndSelect('ActualExpenseProductDetails.Product', 'ActualExpenseProduct')
+      .leftJoinAndSelect('ActualExpenseProduct.Category', 'ActualExpenseCategory')
+      .leftJoinAndSelect('ActualExpenseProduct.UnitMeasure', 'ActualExpenseUnitMeasure')
       .leftJoinAndSelect('project.TotalActualExpense', 'TotalActualExpense')
-      .leftJoinAndSelect('TotalActualExpense.ProductDetails', 'ProductDetail')
-      .leftJoinAndSelect('ProductDetail.Product', 'Products')
+      .leftJoinAndSelect('TotalActualExpense.ProductDetails', 'TotalActualExpenseProductDetails')
+      .leftJoinAndSelect('TotalActualExpenseProductDetails.Product', 'TotalActualExpenseProduct')
+      .leftJoinAndSelect('TotalActualExpenseProduct.Category', 'TotalActualExpenseCategory')
+      .leftJoinAndSelect('TotalActualExpenseProduct.UnitMeasure', 'TotalActualExpenseUnitMeasure')
       .skip(skip)
       .take(take);
 
