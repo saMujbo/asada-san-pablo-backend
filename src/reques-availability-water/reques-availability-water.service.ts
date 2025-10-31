@@ -59,7 +59,8 @@ export class RequesAvailabilityWaterService {
     return await this.requesAvailabilityWaterRepository.find({
       where:{IsActive:true},relations:[
         'StateRequest',
-        'User',]});
+        'User',
+        'RequestAvailabilityWaterFiles']});
   }
   async search({
   page = 1,
@@ -77,6 +78,7 @@ export class RequesAvailabilityWaterService {
     .createQueryBuilder('req')
     .leftJoinAndSelect('req.User', 'user')
     .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+    .leftJoinAndSelect('req.RequestAvailabilityWaterFiles', 'files')
     .orderBy('req.Date', 'DESC')
     .skip(skip)
     .take(take);
@@ -125,7 +127,8 @@ export class RequesAvailabilityWaterService {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({
       where:{Id,IsActive:true},relations:[
         'StateRequest',
-        'User',]});
+        'User',
+        'RequestAvailabilityWaterFiles']});
       if(!foundRequestAvailabilityWater)throw new NotFoundException(`Resquest with ${Id} not found`);
     return foundRequestAvailabilityWater;
   }
@@ -211,42 +214,43 @@ export class RequesAvailabilityWaterService {
   async findAllByUser(userId: number) {
   return this.requesAvailabilityWaterRepository.find({
     where: { IsActive: true, User: { Id: userId } },
-    relations: ['StateRequest'],
+    relations: ['StateRequest','RequestAvailabilityWaterFiles'],
     order: { Date: 'DESC' },
   });
   }
 
   // Listado paginado por usuario
-  async searchByUser(
-    userId: number,
-    { page = 1, limit = 10 }: { page?: number; limit?: number }
-  ) {
-    const pageNum = Math.max(1, Number(page) || 1);
-    const take = Math.min(100, Math.max(1, Number(limit) || 10));
-    const skip = (pageNum - 1) * take;
+async searchByUser(
+  userId: number,
+  { page = 1, limit = 10 }: { page?: number; limit?: number }
+) {
+  const pageNum = Math.max(1, Number(page) || 1);
+  const take = Math.min(100, Math.max(1, Number(limit) || 10));
+  const skip = (pageNum - 1) * take;
 
-    const qb = this.requesAvailabilityWaterRepository
-      .createQueryBuilder('req')
-      .leftJoinAndSelect('req.StateRequest', 'state')
-      .where('req.IsActive = :act', { act: true })
-      .andWhere('req.UserId = :uid', { uid: userId })
-      .orderBy('req.Date', 'DESC')
-      .skip(skip)
-      .take(take);
+  const qb = this.requesAvailabilityWaterRepository
+    .createQueryBuilder('req')
+    .leftJoinAndSelect('req.StateRequest', 'state')
+    .leftJoinAndSelect('req.RequestAvailabilityWaterFiles', 'files')  // ⬅️ AGREGAR ESTA LÍNEA
+    .where('req.IsActive = :act', { act: true })
+    .andWhere('req.UserId = :uid', { uid: userId })
+    .orderBy('req.Date', 'DESC')
+    .skip(skip)
+    .take(take);
 
-    const [data, total] = await qb.getManyAndCount();
+  const [data, total] = await qb.getManyAndCount();
 
-    return {
-      data,
-      meta: {
-        page: pageNum,
-        limit: take,
-        total,
-        pageCount: Math.max(1, Math.ceil(total / take)),
-        hasNextPage: pageNum * take < total,
-        hasPrevPage: pageNum > 1,
-      },
-    };
-  }
+  return {
+    data,
+    meta: {
+      page: pageNum,
+      limit: take,
+      total,
+      pageCount: Math.max(1, Math.ceil(total / take)),
+      hasNextPage: pageNum * take < total,
+      hasPrevPage: pageNum > 1,
+    },
+  };
+}
 
 }

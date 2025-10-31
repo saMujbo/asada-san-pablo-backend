@@ -26,6 +26,7 @@ export class RequestChangeNameMeterService {
     const pendingState = await this.requestChangeNameMeterRepo
       .createQueryBuilder('req')
       .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .leftJoinAndSelect('req.RequestChangeNameMeterFile', 'files')
       .where('stateRequest.Name = :stateName', { stateName: 'PENDIENTE' })
       .andWhere('req.IsActive = :isActive', { isActive: true })
       .getCount();
@@ -37,6 +38,7 @@ export class RequestChangeNameMeterService {
     const approvedState = await this.requestChangeNameMeterRepo
       .createQueryBuilder('req')
       .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .leftJoinAndSelect('req.RequestChangeNameMeterFile', 'files')
       .where('LOWER(stateRequest.Name) IN (:...states)', { states: ['aprobado', 'aprobada'] })
       .andWhere('req.IsActive = :isActive', { isActive: true })
       .getCount();
@@ -59,7 +61,9 @@ export class RequestChangeNameMeterService {
     return await this.requestChangeNameMeterRepo.find({
       where:{IsActive:true},relations:[
         'StateRequest',
-        'User',]});
+        'User',
+        'RequestChangeNameMeterFile'
+      ]});
   }
 async search({
   page = 1,
@@ -77,6 +81,7 @@ async search({
     .createQueryBuilder('req')
     .leftJoinAndSelect('req.User', 'user')
     .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+    .leftJoinAndSelect('req.RequestChangeNameMeterFile', 'files')
     .orderBy('req.Date', 'DESC')
     .skip(skip)
     .take(take);
@@ -124,7 +129,8 @@ async search({
     const foundRequestChangeNameMeter = await this.requestChangeNameMeterRepo.findOne({
       where:{Id,IsActive:true},relations:[
         'StateRequest',
-        'User',]});
+        'User',
+        'RequestChangeNameMeterFile']});
       if(!foundRequestChangeNameMeter)throw new NotFoundException(`Resquest with ${Id} not found`);
     return foundRequestChangeNameMeter;
   }
@@ -226,6 +232,7 @@ async search({
     const qb = this.requestChangeNameMeterRepo
       .createQueryBuilder('req')
       .leftJoinAndSelect('req.StateRequest', 'state')
+      .leftJoinAndSelect('req.RequestChangeNameMeterFile', 'files')
       .where('req.IsActive = :act', { act: true })
       .andWhere('req.UserId = :uid', { uid: userId })
       .orderBy('req.Date', 'DESC')

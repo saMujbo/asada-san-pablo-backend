@@ -106,6 +106,7 @@ async search({
     .createQueryBuilder('req')
     .leftJoinAndSelect('req.User', 'user')
     .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+    .leftJoinAndSelect('req.RequestAssociatedFile', 'files')
     .orderBy('req.Date', 'DESC')
     .skip(skip)
     .take(take);
@@ -152,7 +153,7 @@ async search({
   async findOne(Id: number) {
     const foundRequestAssociated = await this.requestAssociatedRepo.findOne({
       where:{Id,IsActive:true},relations:[
-        'StateRequest','User']});
+        'StateRequest','User','RequestAssociatedFile']});
     if(!foundRequestAssociated) throw new NotFoundException(`Resquest with ${Id} not found`)
     return foundRequestAssociated;
   }
@@ -231,6 +232,7 @@ async search({
     return this.requestAssociatedRepo
       .createQueryBuilder('req')
       .leftJoin('req.StateRequest', 'state')
+      .leftJoinAndSelect('req.RequestAssociatedFile', 'files')
       .where('req.IsActive = :act', { act: true })
       .andWhere('req.UserId = :uid', { uid: userId })
       .andWhere('UPPER(state.Name) = :p', { p: 'PENDIENTE' })
@@ -241,7 +243,7 @@ async search({
   async findAllByUser(userId: number) {
   return this.requestAssociatedRepo.find({
     where: { IsActive: true, User: { Id: userId } },
-    relations: ['StateRequest'],
+    relations: ['StateRequest','RequestAssociatedFile'],
     order: { Date: 'DESC' },
   });
   }
@@ -258,6 +260,7 @@ async search({
     const qb = this.requestAssociatedRepo
       .createQueryBuilder('req')
       .leftJoinAndSelect('req.StateRequest', 'state')
+      .leftJoinAndSelect('req.RequestAssociatedFile', 'files')
       .where('req.IsActive = :act', { act: true })
       .andWhere('req.UserId = :uid', { uid: userId })
       .orderBy('req.Date', 'DESC')
