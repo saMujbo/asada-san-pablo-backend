@@ -127,14 +127,25 @@ export class ProjectService {
     const foundProject = await this.projectRepo.findOne({
       where: { Id, IsActive: true },
       relations:[
-      'ProjectState', 
-      'User',
+      'ProjectState',
       'ProjectProjection', 
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product',
       'ProjectProjection.ProductDetails.Product.Category',
-      'ProjectProjection.ProductDetails.Product.UnitMeasure',
-      'ProjectProjection.ProductDetails.Product.Material'
+      'ProjectProjection.ProductDetails.Product.UnitMeasure', 
+      'TraceProject',
+      'TraceProject.ActualExpense',
+      'TraceProject.ActualExpense.ProductDetails',
+      'TraceProject.ActualExpense.ProductDetails.Product',
+      'TraceProject.ActualExpense.ProductDetails.Product.Category',
+      'TraceProject.ActualExpense.ProductDetails.Product.UnitMeasure',
+      'User',
+      'ProjectFiles',
+      'TotalActualExpense',
+      'TotalActualExpense.ProductDetails',
+      'TotalActualExpense.ProductDetails.Product',
+      'TotalActualExpense.ProductDetails.Product.Category',
+      'TotalActualExpense.ProductDetails.Product.UnitMeasure',
     ]
     });
     
