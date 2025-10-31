@@ -4,6 +4,7 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 import { Service } from './entities/service.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ServicePaginationDto } from './dto/pagination-service.dto';
 
 @Injectable()
 export class ServiceService {
@@ -20,6 +21,43 @@ export class ServiceService {
 
   async findAll() {
     return this.serviceRepo.find({where: {IsActive: true}});
+  }
+
+  async search({ page =1, limit = 10,title,state}:ServicePaginationDto){
+    const pageNum = Math.max(1, Number(page)||1);
+    const take = Math.min(100, Math.max(1,Number(limit)||10));
+    const skip = (pageNum -1)* take; 
+
+    const qb = this.serviceRepo.createQueryBuilder('service')
+    .skip(skip)
+    .take(take);
+
+        if (title?.trim()) {
+        qb.andWhere('LOWER(service.Title) LIKE :title', {
+          title: `%${title.trim().toLowerCase()}%`,
+        });
+      }
+
+      // se aplica solo si viene definido (true o false)
+      if (state) {
+        qb.andWhere('service.IsActive = :state', { state });
+      }
+
+          qb.orderBy('service.Title', 'ASC');
+
+      const [data, total] = await qb.getManyAndCount();
+
+      return {
+        data,
+        meta: {
+          total,
+          page: pageNum,
+          limit: take,
+          pageCount: Math.max(1, Math.ceil(total / take)),
+          hasNextPage: pageNum * take < total,
+          hasPrevPage: pageNum > 1,
+        },
+      };
   }
 
   async findOne(Id: number) {

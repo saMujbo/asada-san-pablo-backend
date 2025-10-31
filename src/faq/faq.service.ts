@@ -4,6 +4,8 @@ import { UpdateFAQDto } from './dto/update-faq.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FAQ } from './entities/faq.entity';
 import { Repository } from 'typeorm';
+import { MaterialPaginationDto } from 'src/material/dto/pagination-material.st';
+import { FAQPaginationDto } from './dto/pagination-faq.dto';
 
 @Injectable()
 export class FaqService {
@@ -21,6 +23,43 @@ export class FaqService {
   async findAll() {
     return this.faqRepo.find({where: {IsActive: true}});
   }
+
+  async search({ page =1, limit = 10, question, state}:FAQPaginationDto){
+      const pageNum = Math.max(1, Number(page)||1);
+      const take = Math.min(100, Math.max(1,Number(limit)||10));
+      const skip = (pageNum -1)* take;
+
+      const qb = this.faqRepo.createQueryBuilder('faq')
+      .skip(skip)
+      .take(take);
+  
+          if (question?.trim()) {
+          qb.andWhere('LOWER(faq.Question) LIKE :question', {
+            question: `%${question.trim().toLowerCase()}%`,
+          });
+        }
+  
+        // se aplica solo si viene definido (true o false)
+        if (state) {
+          qb.andWhere('faq.IsActive = :state', { state });
+        }
+
+            qb.orderBy('faq.Question', 'ASC');
+
+        const [data, total] = await qb.getManyAndCount();
+  
+        return {
+          data,
+          meta: {
+            total,
+            page: pageNum,
+            limit: take,
+            pageCount: Math.max(1, Math.ceil(total / take)),
+            hasNextPage: pageNum * take < total,
+            hasPrevPage: pageNum > 1,
+          },
+        };
+    }
 
   async findOne(Id: number) {
     const faqFound = await this.faqRepo.findOneBy({ Id });

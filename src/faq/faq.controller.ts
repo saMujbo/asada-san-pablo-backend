@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put } from '@nestjs/common';
 import { FaqService } from './faq.service';
 import { CreateFAQDto } from './dto/create-faq.dto';
 import { UpdateFAQDto } from './dto/update-faq.dto';
+import { FAQPaginationDto } from './dto/pagination-faq.dto';
 
 @Controller('faq')
 export class FaqController {
@@ -17,12 +18,17 @@ export class FaqController {
     return this.faqService.findAll();
   }
 
+  @Get('search')
+  search(@Query() pagination: FAQPaginationDto) {
+    return this.faqService.search(pagination);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.faqService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: number, @Body() updateFaqDto: UpdateFAQDto) {
     return this.faqService.update(id, updateFaqDto);
   }
