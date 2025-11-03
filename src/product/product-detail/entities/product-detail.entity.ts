@@ -1,6 +1,7 @@
 import { ActualExpense } from "src/actual-expense/entities/actual-expense.entity";
 import { Product } from "src/product/entities/product.entity";
 import { ProjectProjection } from "src/project-projection/entities/project-projection.entity";
+import { TotalActualExpense } from "src/total-actual-expense/entities/total-actual-expense.entity";
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('product_details')
@@ -29,4 +30,9 @@ export class ProductDetail {
     @ManyToOne(() => ActualExpense, (actualExpense) => actualExpense.ProductDetails)
     @JoinColumn({ name: "ActualExpenseId" })
     ActualExpense?: ActualExpense;
+
+    @Index()
+    @ManyToOne(() => TotalActualExpense, (totalAE) => totalAE.ProductDetails)
+    @JoinColumn({ name: "TotalActualExpenseId" })
+    TotalActualExpense?: TotalActualExpense;
 }

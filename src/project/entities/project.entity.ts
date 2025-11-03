@@ -4,6 +4,7 @@ import { ProjectProjection } from "src/project-projection/entities/project-proje
 import { User } from "src/users/entities/user.entity";
 import { TraceProject } from "src/trace-project/entities/trace-project.entity";
 import { ProjectFile } from "src/project-file/entities/project-file.entity";
+import { TotalActualExpense } from "src/total-actual-expense/entities/total-actual-expense.entity";
 
 @Entity()
 export class Project {
@@ -50,7 +51,7 @@ export class Project {
         cascade: ["insert", "update"],
     })
     @JoinColumn({name:"ProjectProjectionId"})
-    ProjectProjection:ProjectProjection;
+    ProjectProjection: ProjectProjection;
 
     @Index()
     @ManyToOne(() => User, (user) => user.Projects, { nullable: false }) // FK obligatoria
@@ -62,4 +63,10 @@ export class Project {
 
     @OneToMany(() => ProjectFile, (pf) => pf.Project)
     ProjectFiles: ProjectFile[];
+
+    @OneToOne(()=>TotalActualExpense,(totalAE)=>totalAE.Project,{
+        cascade: ["insert", "update"],
+    })
+    @JoinColumn({name:"TotalActualExpenseId"})
+    TotalActualExpense: TotalActualExpense;
 }

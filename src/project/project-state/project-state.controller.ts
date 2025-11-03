@@ -31,4 +31,10 @@ export class ProjectStateController {
   remove(@Param('id') id: number) {
     return this.projectStateService.remove(id);
   }
+
+  @Get('in-process/count')
+  async countInProcess() {
+    const totalProjectsInProcess = await this.projectStateService.countProjectsInProcess();
+    return { totalProjectsInProcess };
+  }
 }

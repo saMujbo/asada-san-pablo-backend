@@ -8,6 +8,7 @@ import { hasNonEmptyString, isValidDate } from 'src/utils/validation.utils';
 import { ProjectPaginationDto } from './dto/pagination-project.dto';
 import { ProjectStateService } from './project-state/project-state.service';
 import { UsersService } from 'src/users/users.service';
+import { TotalActualExpenseService } from 'src/total-actual-expense/total-actual-expense.service';
 
 @Injectable()
 export class ProjectService {
@@ -16,7 +17,9 @@ export class ProjectService {
     private readonly projectRepo: Repository<Project>,
     @Inject(forwardRef(() => ProjectStateService))
     private readonly projectStateSv: ProjectStateService,
-    private readonly userSv: UsersService
+    private readonly userSv: UsersService,
+    @Inject(forwardRef(() => TotalActualExpenseService))
+    private readonly totalAESv: TotalActualExpenseService,
   ){}
 
   async create(createProjectDto: CreateProjectDto) {
@@ -34,18 +37,32 @@ export class ProjectService {
     const project = this.projectRepo.create({ ProjectState: projectState, User: user, ...rest });
     await this.projectRepo.save(project);
 
+    await this.totalAESv.create({ProjectId: project.Id});
     return project;
   }
 
   async findAll() {
     return await this.projectRepo.find({where:{IsActive:true}, relations:[
-      'ProjectState', 
-      'User',
+      'ProjectState',
       'ProjectProjection', 
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product',
       'ProjectProjection.ProductDetails.Product.Category',
-      'ProjectProjection.ProductDetails.Product.UnitMeasure'] });
+      'ProjectProjection.ProductDetails.Product.UnitMeasure', 
+      'TraceProject',
+      'TraceProject.ActualExpense',
+      'TraceProject.ActualExpense.ProductDetails',
+      'TraceProject.ActualExpense.ProductDetails.Product',
+      'TraceProject.ActualExpense.ProductDetails.Product.Category',
+      'TraceProject.ActualExpense.ProductDetails.Product.UnitMeasure',
+      'User',
+      'ProjectFiles',
+      'TotalActualExpense',
+      'TotalActualExpense.ProductDetails',
+      'TotalActualExpense.ProductDetails.Product',
+      'TotalActualExpense.ProductDetails.Product.Category',
+      'TotalActualExpense.ProductDetails.Product.UnitMeasure',
+    ] });
   }
   
   async search({ page = 1, limit = 10, name, state, projectState}:ProjectPaginationDto){
@@ -61,6 +78,18 @@ export class ProjectService {
       .leftJoinAndSelect('project.ProjectProjection', 'ProjectProjection')
       .leftJoinAndSelect('ProjectProjection.ProductDetails', 'ProductDetails')
       .leftJoinAndSelect('ProductDetails.Product', 'Product')
+      .leftJoinAndSelect('Product.Category', 'Category')
+      .leftJoinAndSelect('Product.UnitMeasure', 'UnitMeasure')
+      .leftJoinAndSelect('TraceProject.ActualExpense', 'ActualExpense')
+      .leftJoinAndSelect('ActualExpense.ProductDetails', 'ActualExpenseProductDetails')
+      .leftJoinAndSelect('ActualExpenseProductDetails.Product', 'ActualExpenseProduct')
+      .leftJoinAndSelect('ActualExpenseProduct.Category', 'ActualExpenseCategory')
+      .leftJoinAndSelect('ActualExpenseProduct.UnitMeasure', 'ActualExpenseUnitMeasure')
+      .leftJoinAndSelect('project.TotalActualExpense', 'TotalActualExpense')
+      .leftJoinAndSelect('TotalActualExpense.ProductDetails', 'TotalActualExpenseProductDetails')
+      .leftJoinAndSelect('TotalActualExpenseProductDetails.Product', 'TotalActualExpenseProduct')
+      .leftJoinAndSelect('TotalActualExpenseProduct.Category', 'TotalActualExpenseCategory')
+      .leftJoinAndSelect('TotalActualExpenseProduct.UnitMeasure', 'TotalActualExpenseUnitMeasure')
       .skip(skip)
       .take(take);
 
@@ -98,14 +127,25 @@ export class ProjectService {
     const foundProject = await this.projectRepo.findOne({
       where: { Id, IsActive: true },
       relations:[
-      'ProjectState', 
-      'User',
+      'ProjectState',
       'ProjectProjection', 
       'ProjectProjection.ProductDetails', 
       'ProjectProjection.ProductDetails.Product',
       'ProjectProjection.ProductDetails.Product.Category',
-      'ProjectProjection.ProductDetails.Product.UnitMeasure',
-      'ProjectProjection.ProductDetails.Product.Material'
+      'ProjectProjection.ProductDetails.Product.UnitMeasure', 
+      'TraceProject',
+      'TraceProject.ActualExpense',
+      'TraceProject.ActualExpense.ProductDetails',
+      'TraceProject.ActualExpense.ProductDetails.Product',
+      'TraceProject.ActualExpense.ProductDetails.Product.Category',
+      'TraceProject.ActualExpense.ProductDetails.Product.UnitMeasure',
+      'User',
+      'ProjectFiles',
+      'TotalActualExpense',
+      'TotalActualExpense.ProductDetails',
+      'TotalActualExpense.ProductDetails.Product',
+      'TotalActualExpense.ProductDetails.Product.Category',
+      'TotalActualExpense.ProductDetails.Product.UnitMeasure',
     ]
     });
     
@@ -184,5 +224,14 @@ export class ProjectService {
       where: {TraceProject:{Id}, IsActive:true},
     });
     return hasActiveTraceProject;
+  }
+
+  async countByState(stateId: number): Promise<number> {
+    return this.projectRepo.count({
+      where: {
+        ProjectState: { Id: stateId }, // ajusta el nombre de la relación si difiere
+        IsActive: true,
+      },
+    });
   }
 }

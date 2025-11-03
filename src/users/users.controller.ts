@@ -39,8 +39,18 @@ export class UsersController {
   }
 
   @Get('/role-admin')
-  async getUsersByRole() {
+  async getAdmins() {
     return this.usersService.findUsersByRoleAdmin();
+  }
+
+  @Get('/role-abonado')
+  async getAbonados() {
+    return this.usersService.findUsersByRole();
+  }
+
+  @Get('/role-fontanero')
+  async getFontaneros() {
+    return this.usersService.findUsersByRoleFontanero();
   }
 
   //@UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -84,7 +94,16 @@ export class UsersController {
   async updateMyEmail( @GetUser('id') id: number, @Body() dto: UpdateEmailDto ){
     return await this.usersService.updateMyEmail(id, dto);
   }
-
   
 
+
+  @Get('abonados/search')
+  @ApiQuery({ 
+  name: 'q', 
+  required: false, 
+  description: 'Término de búsqueda (nombre, apellido, cédula o NIS)' 
+  })
+  async searchAbonados(@Query('q') searchTerm?: string) {
+  return this.usersService.searchAbonados(searchTerm);
+  }
 }

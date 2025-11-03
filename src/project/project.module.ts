@@ -6,11 +6,13 @@ import { Project } from './entities/project.entity';
 import { ProductModule } from 'src/product/product.module';
 import { ProjectStateModule } from './project-state/project-state.module';
 import { UsersModule } from 'src/users/users.module';
+import { TotalActualExpenseModule } from 'src/total-actual-expense/total-actual-expense.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Project]),
     forwardRef(() => ProjectStateModule),
+    forwardRef(() => TotalActualExpenseModule),
     ProductModule,
     UsersModule
   ],

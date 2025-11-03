@@ -281,19 +281,28 @@ export class UsersService {
     return { message: 'Email updated', email: user.Email };
   }
 
-//  async findUsersByRole() {
-//   const users = await this.userRepo.find({
-//     relations: ['Roles'],
-//     where: {
-//       Roles: {
-//         Rolname: 'ADMIN',
-//       },
-//     },
-//   });
+  async findUsersByRole() {
+    const users = await this.userRepo.find({
+      relations: ['Roles'],
+      where: {
+        Roles: {
+          Rolname: 'ABONADO',
+        },
+      },
+    });
 
-//   return users;
-// }
+    return users.length;
+  }
 
+  async findByIdCardRaw(idCardRaw: string) {
+    const normalized = (idCardRaw ?? '').replace(/[^0-9]/g, ''); // quita guiones/espacios
+    // Compara contra IDcard normalizado en la consulta
+    return this.userRepo.createQueryBuilder('u')
+      .leftJoinAndSelect('u.Roles', 'r')
+      .where("REPLACE(REPLACE(REPLACE(u.IDcard, '-', ''), ' ', ''), '.', '') = :ced", { ced: normalized })
+      .getOne();
+  }
+  
 async findUsersByRoleAdmin() {
   return await this.userRepo.find({
     relations: ['Roles'],
@@ -301,6 +310,67 @@ async findUsersByRoleAdmin() {
       Roles: { Rolname: 'ADMIN' },
     },
   });
+}
+
+async findUsersByRoleFontanero() {
+  return await this.userRepo.find({
+    relations: ['Roles'],
+    where: {
+      Roles: { Rolname: 'FONTANERO' },
+    },
+  });
+}
+
+async searchAbonados(searchTerm?: string) {
+  const qb = this.userRepo
+    .createQueryBuilder('user')
+    .leftJoinAndSelect('user.Roles', 'role')
+    .where('role.Rolname = :rolename', { rolename: 'ABONADO' })
+    .andWhere('user.IsActive = :isActive', { isActive: true });
+
+  // Si hay término de búsqueda, buscar por nombre completo o cédula
+  if (searchTerm && searchTerm.trim() !== '') {
+    const term = searchTerm.trim().toLowerCase();
+    const normalizedTerm = term.replace(/[^0-9]/g, '');
+
+    qb.andWhere(
+      `(
+        LOWER(user.Name) LIKE :term 
+        OR LOWER(user.Surname1) LIKE :term 
+        OR LOWER(user.Surname2) LIKE :term
+        OR LOWER(CONCAT(user.Name, ' ', user.Surname1, ' ', user.Surname2)) LIKE :term
+        OR REPLACE(REPLACE(REPLACE(user.IDcard, '-', ''), ' ', ''), '.', '') LIKE :normalizedTerm
+        OR user.Nis LIKE :term
+      )`,
+      { 
+        term: `%${term}%`,
+        normalizedTerm: `%${normalizedTerm}%`
+      }
+    );
+  }
+
+  // Ordenar por nombre
+  qb.orderBy('user.Name', 'ASC')
+    .addOrderBy('user.Surname1', 'ASC');
+
+  if (!searchTerm || searchTerm.trim() === '') {
+    qb.take(5);
+  }
+  const users = await qb.getMany();
+
+  return users.map(user => ({
+    Id: user.Id,
+    IDcard: user.IDcard,
+    Nis: user.Nis,
+    FullName: `${user.Name} ${user.Surname1} ${user.Surname2}`.trim(),
+    Name: user.Name,
+    Surname1: user.Surname1,
+    Surname2: user.Surname2,
+    Email: user.Email,
+    PhoneNumber: user.PhoneNumber,
+    Address: user.Address,
+    Birthdate: user.Birthdate,
+  }));
 }
 
 }

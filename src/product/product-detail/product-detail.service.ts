@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ProductService } from '../product.service';
 import { ProjectProjectionService } from 'src/project-projection/project-projection.service';
 import { ActualExpenseService } from 'src/actual-expense/actual-expense.service';
+import { CreateProductDetailTotalAEDto } from './dto/create-product-detail_TotalAE.dto';
+import { TotalActualExpenseService } from 'src/total-actual-expense/total-actual-expense.service';
 
 @Injectable()
 export class ProductDetailService {
@@ -16,6 +18,7 @@ export class ProductDetailService {
     private readonly productSv: ProductService,
     private readonly actualExpenseSv: ActualExpenseService,
     private readonly projectProjectionSv: ProjectProjectionService,
+    private readonly TotalAESv: TotalActualExpenseService,
   ) {}
 
   async create(createProductDetailDto: CreateProductDetailDto) {
@@ -37,7 +40,11 @@ export class ProductDetailService {
         Product: product,
         ActualExpense: actualExpense,
       });
-      return await this.productDetailRepo.save(newProductDetail);
+      const pruductDetailSave = await this.productDetailRepo.save(newProductDetail);
+
+      await this.TotalAESv.update(actualExpense.TraceProject.Project.Id, actualExpense.Id);
+
+      return pruductDetailSave;
     } else {
       const projectProjection = await this.projectProjectionSv.findOne(ProjectProjectionId);
 
@@ -50,8 +57,16 @@ export class ProductDetailService {
     }
   }
 
+  async createTotalAE(createProductDetailDto: CreateProductDetailTotalAEDto) {
+    const { ProductId, Quantity, TotalActExpenseId } = createProductDetailDto;
+
+    const product = await this.productSv.findOne(ProductId);
+    
+    
+  }
+
   async findAll() {
-    return await this.productDetailRepo.find({ relations: ['Product', 'ProjectProjection'] });
+    return await this.productDetailRepo.find({ relations: ['Product', 'ProjectProjection', 'ActualExpense', 'TotalActualExpense'] });
   }
 
   async findOne(id: number) {

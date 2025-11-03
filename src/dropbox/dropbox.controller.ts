@@ -57,6 +57,16 @@ export class DropboxController {
     return this.dropboxService.getTempLink(path);
   }
 
+  @Get('temp-folder-links')
+  async getTempLinksForFolder(@Query('path') path: string) {
+    return this.dropboxService.getTempLinksForFolder(path);
+  }
+
+  @Get('folder-link')
+  async getFolderLink(@Query('path') path: string) {
+    return this.dropboxService.getFolderLink(path);  // Devuelve el link de la carpeta
+  }
+
   /** Ej: POST /files/ensure-folder  body: { path: "Solicitudes/2025/Exp_001" } */
   @Post('ensure-folder')
   async ensureFolder(@Body('path') path: string) {

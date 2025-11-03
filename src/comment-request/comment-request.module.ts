@@ -9,6 +9,7 @@ import { RequestsupervisionMeterModule } from 'src/requestsupervision-meter/requ
 import { RequestChangeMeterModule } from 'src/request-change-meter/request-change-meter.module';
 import { RequestChangeNameMeter } from 'src/request-change-name-meter/entities/request-change-name-meter.entity';
 import { RequestChangeNameMeterModule } from 'src/request-change-name-meter/request-change-name-meter.module';
+import { RequestAssociatedModule } from 'src/request-associated/request-associated.module';
 
 @Module({
   imports:[
@@ -16,7 +17,8 @@ import { RequestChangeNameMeterModule } from 'src/request-change-name-meter/requ
     forwardRef(() => RequesAvailabilityWaterModule),
     forwardRef(()=> RequestsupervisionMeterModule),
     forwardRef(()=> RequestChangeMeterModule),
-    forwardRef(()=>RequestChangeNameMeterModule)
+    forwardRef(()=>RequestChangeNameMeterModule),
+    forwardRef(()=>RequestAssociatedModule)
   ],
   controllers: [CommentRequestController],
   providers: [CommentRequestService],

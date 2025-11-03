@@ -25,6 +25,19 @@ import { RequesAvailabilityWaterModule } from './reques-availability-water/reque
 import { MulterModule } from '@nestjs/platform-express';
 import { DropboxModule } from './dropbox/dropbox.module';
 import { ProjectFileModule } from './project-file/project-file.module';
+import { RequestAssociatedModule } from './request-associated/request-associated.module';
+import { RequestChangeNameMeterFileModule } from './request-change-name-meter-file/request-change-name-meter-file.module';
+import { RequestAvailabilityWaterFileModule } from './request-availability-water-file/request-availability-water-file.module';
+import { RequestAssociatedFileModule } from './request-associated-file/request-associated-file.module';
+import { ReportsModule } from './reports/reports.module';
+import { CommentModule } from './comment/comment.module';
+import { ReportLocationModule } from './report-location/report-location.module';
+import { ReportTypesModule } from './report-types/report-types.module';
+import { ReportStatesModule } from './report-states/report-states.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { TotalActualExpenseModule } from './total-actual-expense/total-actual-expense.module';
+import { ServiceModule } from './service/service.module';
+import { FaqModule } from './faq/faq.module';
 
 @Module({
   imports: [
@@ -67,8 +80,21 @@ import { ProjectFileModule } from './project-file/project-file.module';
     LegalSupplierModule,
     PhysicalSupplierModule,
     RequesAvailabilityWaterModule,
+    RequestAssociatedModule,
+    ReportsModule,
+    CommentModule,
+    ReportLocationModule,
+    ReportTypesModule,
+    ReportStatesModule,
+    DashboardModule,
+    TotalActualExpenseModule,
     DropboxModule,
-    ProjectFileModule
+    ProjectFileModule,
+    RequestChangeNameMeterFileModule,
+    RequestAvailabilityWaterFileModule,
+    RequestAssociatedFileModule,
+    ServiceModule,
+    FaqModule
   ],
 })
 export class AppModule {}

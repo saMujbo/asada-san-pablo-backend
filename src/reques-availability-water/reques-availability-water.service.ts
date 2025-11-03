@@ -8,7 +8,7 @@ import { UsersService } from 'src/users/users.service';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { RequestAvailabilityWaterPagination } from './dto/pagination-request-availabaility.dto';
 
-
+type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
 export class RequesAvailabilityWaterService {
   constructor(
@@ -19,16 +19,36 @@ export class RequesAvailabilityWaterService {
     @Inject(forwardRef(()=> UsersService))
     private readonly userSerive:UsersService
   ) {}
+
+  // Método público para contar las solicitudes pendientes de disponibilidad de agua
+  async countPendingRequests(): Promise<number> {
+    const pendingState = await this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('stateRequest.Name = :stateName', { stateName: 'PENDIENTE' })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return pendingState;
+  }
+
+  // Método público para contar las solicitudes pendientes de disponibilidad de agua
+  async countApprovedRequests(): Promise<number> {
+    const approvedState = await this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+      .where('LOWER(stateRequest.Name) IN (:...states)', { states: ['aprobado', 'aprobada'] })
+      .andWhere('req.IsActive = :isActive', { isActive: true })
+      .getCount();
+
+    return approvedState;
+  }
+  
   async create(createRequesAvailabilityWaterDto: CreateRequestAvailabilityWaterDto) {
     const Usersv = await this.userSerive.findOne(createRequesAvailabilityWaterDto.UserId);
     const StateRequestSv = await this.stateRequestSv.findDefaultState();
     const newRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.create({
       Justification: createRequesAvailabilityWaterDto.Justification,
-      IdCardFiles: createRequesAvailabilityWaterDto.IdCardFiles,
-      PlanoPrintFiles: createRequesAvailabilityWaterDto.PlanoPrintFiles,
-      LiteralCertificateFile: createRequesAvailabilityWaterDto.LiteralCertificateFile,
-      RequestLetterFile: createRequesAvailabilityWaterDto.RequestLetterFile,
-      ConstructionPermitFile: createRequesAvailabilityWaterDto.ConstructionPermitFile,
       User: Usersv,
       StateRequest: StateRequestSv
     })
@@ -39,9 +59,17 @@ export class RequesAvailabilityWaterService {
     return await this.requesAvailabilityWaterRepository.find({
       where:{IsActive:true},relations:[
         'StateRequest',
-        'User',]});
+        'User',
+        'RequestAvailabilityWaterFiles']});
   }
-async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestAvailabilityWaterPagination) {
+  async search({
+  page = 1,
+  limit = 10,
+  q,
+  StateRequestId,
+  State,     // si lo sigues usando en el endpoint general
+  userId,    // <-- viene solo desde /me/search (inyectado)
+}: RequestAvailabilityWaterPagination & { userId?: number; q?: string }) {
   const pageNum = Math.max(1, Number(page) || 1);
   const take = Math.min(100, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * take;
@@ -50,37 +78,44 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestA
     .createQueryBuilder('req')
     .leftJoinAndSelect('req.User', 'user')
     .leftJoinAndSelect('req.StateRequest', 'stateRequest')
+    .leftJoinAndSelect('req.RequestAvailabilityWaterFiles', 'files')
+    .orderBy('req.Date', 'DESC')
     .skip(skip)
     .take(take);
 
-  // IsActive (opcional)
+  // isActive: si viene State en el search general, conviértelo;
+  // si viene userId (me/search) y no se especificó nada, por defecto solo activos.
+  let isActiveFilter: boolean | undefined = undefined;
   if (State !== undefined && State !== null && State !== '') {
-    // Si tu DTO manda string "true"/"false":
-    const isActive =
-      typeof State === 'string'
-        ? State.toLowerCase() === 'true'
-        : !!State;
-
-    qb.andWhere('req.IsActive = :State', { State}); // <-- nombre del parámetro correcto
+    isActiveFilter = typeof State === 'string' ? State.toLowerCase() === 'true' : !!State;
+  } else if (typeof userId === 'number') {
+    isActiveFilter = true; // default para "mis solicitudes"
+  }
+  if (typeof isActiveFilter === 'boolean') {
+    qb.andWhere('req.IsActive = :isActive', { isActive: isActiveFilter });
   }
 
-  // Filtro por nombre del encargado
-  if (UserName) {
-    qb.andWhere('LOWER(user.Name) LIKE LOWER(:UserName)', { UserName: `%${UserName}%` });
-  }
-
-  // Filtro por nombre del estado (PENDIENTE, TERMINADO, etc.)
   if (typeof StateRequestId === 'number') {
     qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
   }
 
-  const [data, total] = await qb.getManyAndCount();
+  if (typeof userId === 'number') {
+    qb.andWhere('req.UserId = :uid', { uid: userId });
+  }
 
+  if (q && q.trim() !== '') {
+    qb.andWhere('(LOWER(req.Justification) LIKE :q OR LOWER(user.Name) LIKE :q)', {
+      q: `%${q.toLowerCase()}%`,
+    });
+  }
+
+  const [data, total] = await qb.getManyAndCount();
   return {
     data,
     meta: {
       page: pageNum,
       limit: take,
+      total,
       pageCount: Math.max(1, Math.ceil(total / take)),
       hasNextPage: pageNum * take < total,
       hasPrevPage: pageNum > 1,
@@ -92,7 +127,8 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestA
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({
       where:{Id,IsActive:true},relations:[
         'StateRequest',
-        'User',]});
+        'User',
+        'RequestAvailabilityWaterFiles']});
       if(!foundRequestAvailabilityWater)throw new NotFoundException(`Resquest with ${Id} not found`);
     return foundRequestAvailabilityWater;
   }
@@ -100,33 +136,18 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestA
   async update(Id: number, updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto) {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({ where: { Id } });
     if(!foundRequestAvailabilityWater) throw new NotFoundException(`RequesAvailabilityWater with ${Id} not found`)
-    
-      
-      const foundUser = await this.userSerive.findOne(updateRequesAvailabilityWaterDto.UserId)
-      if(!foundUser){throw new NotFoundException(`user with Id ${Id} not found`)}
-        if(updateRequesAvailabilityWaterDto.UserId != undefined && updateRequesAvailabilityWaterDto.UserId !=null)
-          foundRequestAvailabilityWater.User = foundUser;
 
       const foundState = await this.stateRequestSv.findOne(updateRequesAvailabilityWaterDto.StateRequestId)
         if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
           if(updateRequesAvailabilityWaterDto.StateRequestId != undefined && updateRequesAvailabilityWaterDto.StateRequestId != null)
             foundRequestAvailabilityWater.StateRequest = foundState
 
-      if(updateRequesAvailabilityWaterDto.Justification !=undefined && updateRequesAvailabilityWaterDto.Justification != '' && updateRequesAvailabilityWaterDto.Justification != null)
-        foundRequestAvailabilityWater.Justification = updateRequesAvailabilityWaterDto.Justification;
-      if(updateRequesAvailabilityWaterDto.IdCardFiles !=undefined && updateRequesAvailabilityWaterDto.IdCardFiles != null)
-        foundRequestAvailabilityWater.IdCardFiles = updateRequesAvailabilityWaterDto.IdCardFiles;
-      if(updateRequesAvailabilityWaterDto.PlanoPrintFiles != undefined && updateRequesAvailabilityWaterDto.PlanoPrintFiles != null)
-        foundRequestAvailabilityWater.PlanoPrintFiles = updateRequesAvailabilityWaterDto.PlanoPrintFiles;
-      if(updateRequesAvailabilityWaterDto.LiteralCertificateFile != undefined && updateRequesAvailabilityWaterDto.LiteralCertificateFile != null)
-        foundRequestAvailabilityWater.LiteralCertificateFile = updateRequesAvailabilityWaterDto.LiteralCertificateFile;
-      if(updateRequesAvailabilityWaterDto.RequestLetterFile != undefined && updateRequesAvailabilityWaterDto.RequestLetterFile != null)
-        foundRequestAvailabilityWater.RequestLetterFile = updateRequesAvailabilityWaterDto.RequestLetterFile;
-      if(updateRequesAvailabilityWaterDto.ConstructionPermitFile != undefined && updateRequesAvailabilityWaterDto.ConstructionPermitFile != null)
-        foundRequestAvailabilityWater.ConstructionPermitFile = updateRequesAvailabilityWaterDto.ConstructionPermitFile;
-
     return await this.requesAvailabilityWaterRepository.save(foundRequestAvailabilityWater)
   }
+
+  async updateRequest(reqWater: RequesAvailabilityWater) {
+    return await this.requesAvailabilityWaterRepository.save(reqWater);
+  } 
 
   async remove(Id: number) {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({ where: { Id } })
@@ -144,4 +165,92 @@ async search({ page = 1, limit = 10, UserName, StateRequestId, State }: RequestA
     })
     return hasActiveRequestState;
   }
+
+  async getMonthlyCounts(months = 12) {
+    const now = new Date();
+    const from = new Date(now);
+    from.setMonth(from.getMonth() - (months - 1), 1);
+    from.setHours(0, 0, 0, 0);
+
+    const rows = await this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .select('YEAR(req.Date)', 'year')   
+      .addSelect('MONTH(req.Date)', 'month') 
+      .addSelect('COUNT(*)', 'count')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.Date >= :from', { from })
+      .groupBy('YEAR(req.Date)')
+      .addGroupBy('MONTH(req.Date)')
+      .orderBy('YEAR(req.Date)', 'ASC')
+      .addOrderBy('MONTH(req.Date)', 'ASC')
+      .getRawMany<MonthlyPoint>();
+
+    return rows.map(r => ({
+      year: Number(r.year),
+      month: Number(r.month),
+      count: Number(r.count),
+    }));
+  }
+
+  async countAllByUser(userId: number): Promise<number> {
+    return this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .getCount();
+  }
+
+  async countPendingByUser(userId: number): Promise<number> {
+    return this.requesAvailabilityWaterRepository
+      .createQueryBuilder('req')
+      .leftJoin('req.StateRequest', 'state')
+      .where('req.IsActive = :act', { act: true })
+      .andWhere('req.UserId = :uid', { uid: userId })
+      .andWhere('UPPER(state.Name) = :p', { p: 'PENDIENTE' })
+      .getCount();
+  }
+
+  // Listado simple por usuario (sin paginar)
+  async findAllByUser(userId: number) {
+  return this.requesAvailabilityWaterRepository.find({
+    where: { IsActive: true, User: { Id: userId } },
+    relations: ['StateRequest','RequestAvailabilityWaterFiles'],
+    order: { Date: 'DESC' },
+  });
+  }
+
+  // Listado paginado por usuario
+async searchByUser(
+  userId: number,
+  { page = 1, limit = 10 }: { page?: number; limit?: number }
+) {
+  const pageNum = Math.max(1, Number(page) || 1);
+  const take = Math.min(100, Math.max(1, Number(limit) || 10));
+  const skip = (pageNum - 1) * take;
+
+  const qb = this.requesAvailabilityWaterRepository
+    .createQueryBuilder('req')
+    .leftJoinAndSelect('req.StateRequest', 'state')
+    .leftJoinAndSelect('req.RequestAvailabilityWaterFiles', 'files')  // ⬅️ AGREGAR ESTA LÍNEA
+    .where('req.IsActive = :act', { act: true })
+    .andWhere('req.UserId = :uid', { uid: userId })
+    .orderBy('req.Date', 'DESC')
+    .skip(skip)
+    .take(take);
+
+  const [data, total] = await qb.getManyAndCount();
+
+  return {
+    data,
+    meta: {
+      page: pageNum,
+      limit: take,
+      total,
+      pageCount: Math.max(1, Math.ceil(total / take)),
+      hasNextPage: pageNum * take < total,
+      hasPrevPage: pageNum > 1,
+    },
+  };
+}
+
 }

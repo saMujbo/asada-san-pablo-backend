@@ -7,6 +7,7 @@ const SCOPES = [
     'files.metadata.read',
     'files.content.read',
     'files.content.write',
+    'sharing.write'
 ];
 
 @Controller('auth/dropbox')

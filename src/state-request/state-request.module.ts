@@ -7,6 +7,8 @@ import { StateRequest } from './entities/state-request.entity';
 import { RequestsupervisionMeterModule } from 'src/requestsupervision-meter/requestsupervision-meter.module';
 import { RequestChangeMeterModule } from 'src/request-change-meter/request-change-meter.module';
 import { RequestChangeNameMeterModule } from 'src/request-change-name-meter/request-change-name-meter.module';
+import { RequestAssociated } from 'src/request-associated/entities/request-associated.entity';
+import { RequestAssociatedModule } from 'src/request-associated/request-associated.module';
 
 
 @Module({
@@ -15,7 +17,8 @@ import { RequestChangeNameMeterModule } from 'src/request-change-name-meter/requ
     forwardRef(() => RequesAvailabilityWaterModule),
     forwardRef(() => RequestsupervisionMeterModule),
     forwardRef(() => RequestChangeMeterModule),
-    forwardRef(()=>RequestChangeNameMeterModule)
+    forwardRef(()=>RequestChangeNameMeterModule),
+    forwardRef(()=>RequestAssociatedModule)
 ],
   controllers: [StateRequestController],
   providers: [StateRequestService],

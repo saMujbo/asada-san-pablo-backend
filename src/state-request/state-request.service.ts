@@ -11,6 +11,7 @@ import { RequestsupervisionMeterService } from 'src/requestsupervision-meter/req
 import { RequestChangeMeter } from 'src/request-change-meter/entities/request-change-meter.entity';
 import { RequestChangeMeterService } from 'src/request-change-meter/request-change-meter.service';
 import { RequestChangeNameMeterService } from 'src/request-change-name-meter/request-change-name-meter.service';
+import { RequestAssociatedService } from 'src/request-associated/request-associated.service';
 
 @Injectable()
 export class StateRequestService {
@@ -24,13 +25,45 @@ export class StateRequestService {
     @Inject(forwardRef(()=>RequestChangeMeterService))
     private readonly requesChangeMeterSv : RequestChangeMeterService,
     @Inject(forwardRef(()=>RequestChangeNameMeterService))
-    private readonly requestChangeNameMeterSv : RequestChangeNameMeterService
-
-    
+    private readonly requestChangeNameMeterSv : RequestChangeNameMeterService,
+    @Inject(forwardRef(()=>RequestAssociatedService))
+    private readonly requestAssociateService: RequestAssociatedService
   ){}
+
+  async countAllPendingRequests(): Promise<number> {
+    const waterRequests = await this.RequesAvailabilityWaterSv.countPendingRequests();
+    const supervisionRequests = await this.requesSupervisionMeterSv.countPendingRequests();
+    const changeMeterRequests = await this.requesChangeMeterSv.countPendingRequests();
+    const changeNameMeterRequests = await this.requestChangeNameMeterSv.countPendingRequests();
+    const associatedRequests = await this.requestAssociateService.countPendingRequests();
+
+    return (
+      waterRequests +
+      supervisionRequests +
+      changeMeterRequests +
+      changeNameMeterRequests +
+      associatedRequests
+    );
+  }
+
+  async countAllApprovedRequests(): Promise<number> {
+    const waterRequests = await this.RequesAvailabilityWaterSv.countApprovedRequests();
+    const supervisionRequests = await this.requesSupervisionMeterSv.countApprovedRequests();
+    const changeMeterRequests = await this.requesChangeMeterSv.countApprovedRequests();
+    const changeNameMeterRequests = await this.requestChangeNameMeterSv.countApprovedRequests();
+    const associatedRequests = await this.requestAssociateService.countApprovedRequests();
+
+    return (
+      waterRequests +
+      supervisionRequests +
+      changeMeterRequests +
+      changeNameMeterRequests +
+      associatedRequests
+    );
+  }
+
   async create(createStateRequestDto: CreateStateRequestDto) {
     const newRequestState = await this.stateRequesRepo.create(createStateRequestDto)
-
     return await this.stateRequesRepo.save(newRequestState);
   }
 
@@ -61,11 +94,13 @@ export class StateRequestService {
     const hasSateSupervision = await this.requesSupervisionMeterSv.isOnRequestState(Id);
     const hasStateChangeMeter = await this.requesChangeMeterSv.isOnRequestState(Id);
     const hasStateChangeNameMeter = await this.requestChangeNameMeterSv.isOnRequestChangeNameMeter(Id);
+    const hasStateAssociate = await this.requestAssociateService.isOnRequestState(Id)
 
     if( hasStateChangeMeter || 
       hasSateSupervision || 
       hasState || 
       hasStateChangeNameMeter ||
+      hasStateAssociate ||
       updateStateRequestDto.IsActive===false){
     throw new NotFoundException(
         `No se puede desactivar este state ${Id} porque está asociado a al menos a una request.`
@@ -86,7 +121,8 @@ export class StateRequestService {
     const hasRequest = await this.RequesAvailabilityWaterSv.isOnRequestState(Id) || 
     this.requesChangeMeterSv.isOnRequestState(Id)||
     this.requesSupervisionMeterSv.isOnRequestState(Id) ||
-    this.requestChangeNameMeterSv.isOnRequestChangeNameMeter(Id)
+    this.requestChangeNameMeterSv.isOnRequestChangeNameMeter(Id) ||
+    this.RequesAvailabilityWaterSv.isOnRequestState(Id)
 
     if(hasRequest){
       throw new BadGatewayException(
