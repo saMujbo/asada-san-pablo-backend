@@ -1,6 +1,4 @@
 import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateCommentSupervisionMeterDto } from './dto/create-comment-supervision-meter.dto';
-import { UpdateCommentSupervisionMeterDto } from './dto/update-comment-supervision-meter.dto';
 import { CommentSupervisionMeter } from './entities/comment-supervision-meter.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
