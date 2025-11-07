@@ -1,34 +1,61 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { CommentAssociatedService } from './comment-associated.service';
+// comment-availability-water.controller.ts
+import {Controller,Get,Post,Body,Param,UseInterceptors,UploadedFiles,ParseFilePipe,FileTypeValidator,MaxFileSizeValidator,ParseIntPipe,} from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes } from '@nestjs/swagger';
 import { CreateCommentAssociatedDto } from './dto/create-comment-associated.dto';
-import { UpdateCommentAssociatedDto } from './dto/update-comment-associated.dto';
+import { CommentAssociatedService } from './comment-associated.service';
 
-@Controller('comment-associated')
+@Controller('comment-Request-Associated')
 export class CommentAssociatedController {
-  constructor(private readonly commentAssociatedService: CommentAssociatedService) {}
+  constructor(
+    private readonly commentService: CommentAssociatedService
+  ) {}
 
-  @Post()
-  create(@Body() createCommentAssociatedDto: CreateCommentAssociatedDto) {
-    return this.commentAssociatedService.create(createCommentAssociatedDto);
+  @Post('admin/:requestId')
+  async createAdminComment(
+    @Param('requestId') requestId: number,
+    @Body() dto: CreateCommentAssociatedDto,
+  ) {
+    return this.commentService.createAdminCommentAssociated(
+      requestId,
+      dto.Subject,
+      dto.Comment
+    );
   }
 
-  @Get()
-  findAll() {
-    return this.commentAssociatedService.findAll();
+  @Get('by-request/:requestId')
+  async findByRequest(@Param('requestId') requestId: number) {
+    return this.commentService.findByRequestAssociatedId(requestId);
+  }
+  @Get('All')
+  async findAll(){
+    return this.commentService.getAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.commentAssociatedService.findOne(+id);
-  }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCommentAssociatedDto: UpdateCommentAssociatedDto) {
-    return this.commentAssociatedService.update(+id, updateCommentAssociatedDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.commentAssociatedService.remove(+id);
+  @Post('reply/:requestId')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FilesInterceptor('files', 10))
+  async replyWithFiles(
+    @Param('requestId') requestId: number,
+    @Body() dto: CreateCommentAssociatedDto,
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
+          new FileTypeValidator({ 
+            fileType: /(jpg|jpeg|png|pdf|doc|docx)$/ 
+          }),
+        ],
+      }),
+    )
+    files: Express.Multer.File[],
+  ) {
+    return this.commentService.replyWithFiles(
+      requestId,
+      dto.Subject,
+      dto.Comment,
+      files
+    );
   }
 }

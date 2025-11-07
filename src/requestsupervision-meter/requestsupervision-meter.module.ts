@@ -5,11 +5,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RequestSupervisionMeter } from './entities/requestsupervision-meter.entity';
 import { StateRequestModule } from 'src/state-request/state-request.module';
 import { UsersModule } from 'src/users/users.module';
+import { CommentSupervisionMeterModule } from 'src/CommentRequest/comment-supervision-meter/comment-supervision-meter.module';
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([RequestSupervisionMeter]),
     forwardRef(() => StateRequestModule),
+    forwardRef(() => CommentSupervisionMeterModule),
     forwardRef(()=>UsersModule)
   ],
   controllers: [RequestsupervisionMeterController],

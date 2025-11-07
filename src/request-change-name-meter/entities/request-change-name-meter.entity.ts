@@ -1,4 +1,5 @@
 
+import { CommentChangeNameMeter } from "src/CommentRequest/comment-change-name-meter/entities/comment-change-name-meter.entity";
 import { ProjectFile } from "src/project-file/entities/project-file.entity";
 import { RequestChangeNameMeterFile } from "src/request-change-name-meter-file/entities/request-change-name-meter-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
@@ -39,5 +40,8 @@ export class RequestChangeNameMeter {
 
     @OneToMany(() => RequestChangeNameMeterFile, (rm) => rm.RequestChangeNameMeter)
     RequestChangeNameMeterFile: RequestChangeNameMeterFile[];
+
+    @OneToMany(()=>CommentChangeNameMeter,(commentChangeNameMeter)=>commentChangeNameMeter.requestChangeNameMeter)
+    commentChangeNameMeter: CommentChangeNameMeter;
 
 }

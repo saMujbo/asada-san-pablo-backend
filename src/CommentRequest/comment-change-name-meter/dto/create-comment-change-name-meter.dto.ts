@@ -1,8 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsString, MaxLength } from "class-validator";
 
-
-export class CreateCommentAssociatedDto {
+export class CreateCommentChangeNameMeterDto {
         @ApiProperty({ example: 'Documento faltante' })
         @IsNotEmpty()
         @IsString()
