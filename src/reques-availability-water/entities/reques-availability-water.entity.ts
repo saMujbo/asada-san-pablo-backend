@@ -1,5 +1,5 @@
     import { combineLatest } from "rxjs";
-import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+import { CommentAvailabilityWater } from "src/CommentRequest/comment-availability-water/entities/comment-availability-water.entity";
 import { RequestAvailabilityWaterFile } from "src/request-availability-water-file/entities/request-availability-water-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
@@ -38,8 +38,8 @@ import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, Primary
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 
-    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.requestAvailability)
-    commentRquest?: CommentRequest[];
+    @OneToMany(()=>CommentAvailabilityWater,(CommentAvailabilityWater)=>CommentAvailabilityWater.requestAvailability)
+    commentAvailabilityWater?:CommentAvailabilityWater[];
 
     @OneToMany(() => RequestAvailabilityWaterFile, (reqf) => reqf.RequesAvailabilityWater)
     RequestAvailabilityWaterFiles: RequestAvailabilityWaterFile[];

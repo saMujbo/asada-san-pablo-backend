@@ -1,4 +1,4 @@
-import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+
 import { RequestAssociatedFile } from "src/request-associated-file/entities/request-associated-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
@@ -50,8 +50,7 @@ export class RequestAssociated {
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 
-    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestAssociate)
-    commentRquest?: CommentRequest[];
+
 
     @OneToMany(() => RequestAssociatedFile, (ra) => ra.RequestAssociated)
     RequestAssociatedFile: RequestAssociatedFile[];

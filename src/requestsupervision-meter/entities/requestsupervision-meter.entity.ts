@@ -1,4 +1,4 @@
-import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
 import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
@@ -40,6 +40,5 @@ export class RequestSupervisionMeter {
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 
-    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestSupervisionMeter)
-    commentRquest?: CommentRequest[];
+
 }

@@ -5,14 +5,17 @@ import { RequestAvailabilityWaterFile } from './entities/request-availability-wa
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RequesAvailabilityWaterModule } from 'src/reques-availability-water/reques-availability-water.module';
 import { DropboxModule } from 'src/dropbox/dropbox.module';
+import { CommentAvailabilityWaterModule } from 'src/CommentRequest/comment-availability-water/comment-availability-water.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([RequestAvailabilityWaterFile]),
+    CommentAvailabilityWaterModule,
     RequesAvailabilityWaterModule,
     DropboxModule
   ],
   controllers: [RequestAvailabilityWaterFileController],
   providers: [RequestAvailabilityWaterFileService],
+  exports: [RequestAvailabilityWaterFileService]
 })
 export class RequestAvailabilityWaterFileModule {}

@@ -1,4 +1,4 @@
-import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+
 import { ProjectFile } from "src/project-file/entities/project-file.entity";
 import { RequestChangeNameMeterFile } from "src/request-change-name-meter-file/entities/request-change-name-meter-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
@@ -36,9 +36,6 @@ export class RequestChangeNameMeter {
     @ManyToOne(()=> StateRequest,(stateRequest) => stateRequest.RequestChangeNameMeter)
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
-
-    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestChangeNameMeter)
-    commentRquest?: CommentRequest[];
 
     @OneToMany(() => RequestChangeNameMeterFile, (rm) => rm.RequestChangeNameMeter)
     RequestChangeNameMeterFile: RequestChangeNameMeterFile[];

@@ -38,6 +38,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { TotalActualExpenseModule } from './total-actual-expense/total-actual-expense.module';
 import { ServiceModule } from './service/service.module';
 import { FaqModule } from './faq/faq.module';
+import { CommentAvailabilityWaterModule } from './CommentRequest/comment-availability-water/comment-availability-water.module';
+
 
 @Module({
   imports: [
@@ -94,7 +96,8 @@ import { FaqModule } from './faq/faq.module';
     RequestAvailabilityWaterFileModule,
     RequestAssociatedFileModule,
     ServiceModule,
-    FaqModule
+    FaqModule,
+    CommentAvailabilityWaterModule,
   ],
 })
 export class AppModule {}
