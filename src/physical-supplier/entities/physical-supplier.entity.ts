@@ -1,35 +1,24 @@
 import { Product } from 'src/product/entities/product.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Index } from 'typeorm';
+import { Supplier } from 'src/supplier/entities/supplier.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Index, JoinColumn, OneToOne } from 'typeorm';
 
 @Entity('physical_supplier')
 export class PhysicalSupplier {
   @PrimaryGeneratedColumn()
   Id: number;
 
-  @Index({ unique: true })
-  @Column({ type: 'varchar', length: 40 })
-  IDcard: string;
-
-  @Column({ type: 'varchar', length: 120 })
-  Name: string;
+  @OneToOne(() => Supplier, (supplier) => supplier.PhysicalProvider, {
+    cascade: ['insert'],
+    eager: true,
+  })
+  @JoinColumn({ name: 'supplierId' })
+  Supplier: Supplier;
 
   @Column()
   Surname1: string;
 
   @Column()
   Surname2: string;
-
-  @Column({ type: 'varchar', length: 160, nullable: true })
-  Email: string;
-
-  @Column({ type: 'varchar', length: 30, nullable: true })
-  PhoneNumber: string;
-
-  @Column({ type: 'varchar', length: 160, nullable: true })
-  Location: string;
-
-  @Column({ type: 'boolean', default: true })
-  IsActive: boolean;
 
   // 1 -> N products
   @OneToMany(() => Product, (p) => p.PhysicalSupplier, { cascade: false })

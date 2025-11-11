@@ -42,6 +42,7 @@ import { CommentAvailabilityWaterModule } from './CommentRequest/comment-availab
 import { CommentChangeNameMeterModule } from './CommentRequest/comment-change-name-meter/comment-change-name-meter.module';
 import { CommentChangeMeterModule } from './CommentRequest/comment-change-meter/comment-change-meter.module';
 import { CommentSupervisionMeterModule } from './CommentRequest/comment-supervision-meter/comment-supervision-meter.module';
+import { SupplierModule } from './supplier/supplier.module';
 
 
 
@@ -107,6 +108,7 @@ import { CommentSupervisionMeterModule } from './CommentRequest/comment-supervis
     CommentChangeNameMeterModule,
     CommentChangeMeterModule,
     CommentSupervisionMeterModule,
+    SupplierModule,
   ],
 })
 export class AppModule {}

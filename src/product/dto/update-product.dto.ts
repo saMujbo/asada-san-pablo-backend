@@ -33,12 +33,10 @@ export class UpdateProductDto {
     UnitMeasureId?: number;
 
     @ApiProperty()
-    @IsOptional() @IsInt() @Min(1)
-    LegalSupplierId?: number;
-
-    @ApiProperty()
-    @IsOptional() @IsInt() @Min(1)
-    PhysicalSupplierId?: number;
+    @IsOptional()
+    @IsInt({ each: true })
+    @Min(1, { each: true })
+    SuppliersIds?: number[];
 
     @ApiProperty()
     @IsBoolean()
