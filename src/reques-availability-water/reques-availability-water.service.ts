@@ -137,10 +137,15 @@ export class RequesAvailabilityWaterService {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({ where: { Id } });
     if(!foundRequestAvailabilityWater) throw new NotFoundException(`RequesAvailabilityWater with ${Id} not found`)
 
+    if(updateRequesAvailabilityWaterDto.StateRequestId != undefined && updateRequesAvailabilityWaterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequesAvailabilityWaterDto.StateRequestId)
-        if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
-          if(updateRequesAvailabilityWaterDto.StateRequestId != undefined && updateRequesAvailabilityWaterDto.StateRequestId != null)
-            foundRequestAvailabilityWater.StateRequest = foundState
+      if(!foundState){throw new NotFoundException(`state with Id ${updateRequesAvailabilityWaterDto.StateRequestId} not found`)}
+      foundRequestAvailabilityWater.StateRequest = foundState
+    }
+
+    if (updateRequesAvailabilityWaterDto.CanComment !== undefined && updateRequesAvailabilityWaterDto.CanComment !== null) {
+      foundRequestAvailabilityWater.CanComment = updateRequesAvailabilityWaterDto.CanComment;
+    }
 
     return await this.requesAvailabilityWaterRepository.save(foundRequestAvailabilityWater)
   }

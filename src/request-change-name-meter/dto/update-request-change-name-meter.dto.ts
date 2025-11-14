@@ -6,4 +6,8 @@ export class UpdateRequestChangeNameMeterDto{
         @IsOptional()
         @IsInt()
         StateRequestId: number;
+
+        @IsOptional()
+        @IsBoolean()
+        CanComment?: boolean;
 }

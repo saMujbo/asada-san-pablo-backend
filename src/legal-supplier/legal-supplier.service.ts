@@ -3,28 +3,60 @@ import { CreateLegalSupplierDto } from './dto/create-legal-supplier.dto';
 import { UpdateLegalSupplierDto } from './dto/update-legal-supplier.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LegalSupplier } from './entities/legal-supplier.entity';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { ProductService } from 'src/product/product.service';
 import { LegalSupplierPaginationDto } from './dto/pagination-legal-supplier.dto';
+import { Supplier, ProviderType } from 'src/supplier/entities/supplier.entity';
 
 @Injectable()
 export class LegalSupplierService {
   constructor(
       @InjectRepository(LegalSupplier)
       private readonly legalSupplierRepo: Repository<LegalSupplier>,
+      @InjectRepository(Supplier)
+      private readonly supplierRepo: Repository<Supplier>,
       @Inject(forwardRef(() => ProductService))
       private readonly productSv: ProductService,
+      private readonly dataSource: DataSource,
     ){}
 
   async create(createLegalSupplierDto: CreateLegalSupplierDto) {
-    const legalsupplier = this.legalSupplierRepo.create(createLegalSupplierDto);
-    return await this.legalSupplierRepo.save(legalsupplier);
+    const { LegalID, CompanyName, Email, PhoneNumber, Location, WebSite } = createLegalSupplierDto;
+
+    return this.dataSource.transaction(async (manager) => {
+      // Crear la entidad Supplier base
+      const supplier = manager.create(Supplier, {
+        IDcard: LegalID,
+        Name: CompanyName,
+        Email,
+        PhoneNumber,
+        Location,
+        IsActive: true,
+        Type: ProviderType.LEGAL
+      });
+
+      await manager.save(supplier);
+
+      // Crear la entidad LegalSupplier específica
+      const legalSupplier = manager.create(LegalSupplier, {
+        Supplier: supplier,
+        WebSite
+      });
+
+      await manager.save(legalSupplier);
+
+      // Retornar el LegalSupplier con la relación Supplier cargada
+      return await manager.findOne(LegalSupplier, {
+        where: { Id: legalSupplier.Id },
+        relations: ['Supplier']
+      });
+    });
   }
 
   async findAll() {
     return await this.legalSupplierRepo.find( {
-      where: {IsActive: true},
-      relations: ['Products', 'AgentSupppliers']
+      where: {Supplier: {IsActive: true}},
+      relations: ['Products', 'AgentSupppliers', 'Supplier']
     });
   }
 
@@ -34,21 +66,22 @@ export class LegalSupplierService {
     const skip = (pageNum -1)* take; 
 
     const qb = this.legalSupplierRepo.createQueryBuilder('legal_supplier')
+    .leftJoinAndSelect('legal_supplier.Supplier', 'supplier')
     .skip(skip)
     .take(take);
 
-        if (name?.trim()) {
-        qb.andWhere('LOWER(legal_supplier.CompanyName) LIKE :name', {
+      if (name?.trim()) {
+        qb.andWhere('LOWER(supplier.Name) LIKE :name', {
           name: `%${name.trim().toLowerCase()}%`,
         });
       }
 
       // se aplica solo si viene definido (true o false)
       if (state) {
-        qb.andWhere('legal_supplier.IsActive = :state', { state });
+        qb.andWhere('supplier.IsActive = :state', { state });
       }
 
-          qb.orderBy('legal_supplier.CompanyName', 'ASC');
+      qb.orderBy('supplier.Name', 'ASC');
 
       const [data, total] = await qb.getManyAndCount();
 
@@ -67,22 +100,25 @@ export class LegalSupplierService {
 
   async findOne(Id: number) {
     const legalsupplier = await this.legalSupplierRepo.findOne({
-      where: {Id, IsActive: true},
-      relations: ['Products', 'AgentSupppliers']
+      where: {Id, Supplier: {IsActive: true}},
+      relations: ['Products', 'AgentSupppliers', 'Supplier']
     });
 
-    if(!legalsupplier) throw new NotFoundException(`Product with Id ${Id} not found`);
+    if(!legalsupplier) throw new NotFoundException(`Legal Supplier with Id ${Id} not found`);
     return legalsupplier;
   }
 
   async update(Id: number, updateLegalSupplierDto: UpdateLegalSupplierDto) {
-    const foundSupplier = await this.legalSupplierRepo.findOne({ where: { Id } });
+    const foundSupplier = await this.legalSupplierRepo.findOne({ 
+      where: { Id },
+      relations: ['Supplier']
+    });
 
     if (!foundSupplier) {
       throw new NotFoundException(`Supplier with Id ${Id} not found`);
     }
   
-    const hasProducts = await this.productSv.isOnLegalSupplier(Id);
+    const hasProducts = await this.productSv.isOnSupplier(foundSupplier.Supplier.Id);
       if (hasProducts && updateLegalSupplierDto.IsActive === false) {
       throw new BadRequestException(
         `No se puede desactivar el proveedor ${Id} porque está asociado a al menos un producto.`
@@ -91,35 +127,42 @@ export class LegalSupplierService {
   
     if (updateLegalSupplierDto.CompanyName !== undefined && updateLegalSupplierDto.CompanyName != null 
       && updateLegalSupplierDto.CompanyName!=='') 
-        foundSupplier.CompanyName = updateLegalSupplierDto.CompanyName;
+        foundSupplier.Supplier.Name = updateLegalSupplierDto.CompanyName;
     if (updateLegalSupplierDto.Email !== undefined && updateLegalSupplierDto.Email != null 
       && updateLegalSupplierDto.Email!=='') 
-        foundSupplier.Email = updateLegalSupplierDto.Email;
+        foundSupplier.Supplier.Email = updateLegalSupplierDto.Email;
     if (updateLegalSupplierDto.PhoneNumber !== undefined && updateLegalSupplierDto.PhoneNumber != null 
       && updateLegalSupplierDto.PhoneNumber!=='') 
-        foundSupplier.PhoneNumber = updateLegalSupplierDto.PhoneNumber;
+        foundSupplier.Supplier.PhoneNumber = updateLegalSupplierDto.PhoneNumber;
     if (updateLegalSupplierDto.Location !== undefined && updateLegalSupplierDto.Location != null 
       && updateLegalSupplierDto.Location!=='') 
-        foundSupplier.Location = updateLegalSupplierDto.Location;  
+        foundSupplier.Supplier.Location = updateLegalSupplierDto.Location;  
     if (updateLegalSupplierDto.WebSite !== undefined && updateLegalSupplierDto.WebSite != null 
       &&updateLegalSupplierDto.WebSite!=='') 
         foundSupplier.WebSite = updateLegalSupplierDto.WebSite;  
     if (updateLegalSupplierDto.IsActive !== undefined && updateLegalSupplierDto.IsActive != null) 
-        foundSupplier.IsActive = updateLegalSupplierDto.IsActive;
+        foundSupplier.Supplier.IsActive = updateLegalSupplierDto.IsActive;
 
     return await this.legalSupplierRepo.save(foundSupplier);
   }
 
   async remove(Id: number) {
-    const supplierFound = await this.findOne(Id)
+    const supplierFound = await this.legalSupplierRepo.findOne({
+      where: { Id },
+      relations: ['Supplier']
+    });
 
-    const hasProducts = await this.productSv.isOnLegalSupplier(Id);
+    if (!supplierFound) {
+      throw new NotFoundException(`Legal Supplier with Id ${Id} not found`);
+    }
+
+    const hasProducts = await this.productSv.isOnSupplier(supplierFound.Supplier.Id);
     if (hasProducts) {
       throw new BadRequestException(
         `No se puede desactivar el proveedor ${Id} porque está asociado a al menos un producto.`
       );
     }
-    supplierFound.IsActive = false;
+    supplierFound.Supplier.IsActive = false;
     return await this.legalSupplierRepo.save(supplierFound);
   }
 }

@@ -189,6 +189,9 @@ export class ProjectService {
     if (updateProjectDto.IsActive !== undefined && updateProjectDto.IsActive != null) 
       updateProject.IsActive = updateProjectDto.IsActive;
 
+    if (updateProjectDto.CanComment !== undefined && updateProjectDto.CanComment !== null) 
+      updateProject.CanComment = updateProjectDto.CanComment;
+
     if (updateProjectDto.ProjectStateId !== undefined)
       updateProject.ProjectState = await this.projectStateSv.findOne(updateProjectDto.ProjectStateId);
     

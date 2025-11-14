@@ -6,13 +6,15 @@ import { RequestChangeNameMeter } from './entities/request-change-name-meter.ent
 import { UsersModule } from 'src/users/users.module';
 import { StateRequestModule } from 'src/state-request/state-request.module';
 import { RequestChangeNameMeterFileModule } from 'src/request-change-name-meter-file/request-change-name-meter-file.module';
+import { CommentChangeNameMeterModule } from 'src/CommentRequest/comment-change-name-meter/comment-change-name-meter.module';
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([RequestChangeNameMeter]),
         forwardRef(()=> UsersModule),
         forwardRef(() => StateRequestModule),
-        forwardRef(()=>RequestChangeNameMeterFileModule)
+        forwardRef(()=>RequestChangeNameMeterFileModule),
+        forwardRef(()=>CommentChangeNameMeterModule)
   ],
   controllers: [RequestChangeNameMeterController],
   providers: [RequestChangeNameMeterService],

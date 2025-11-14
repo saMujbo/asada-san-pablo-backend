@@ -11,24 +11,4 @@ export class MailServiceController {
   create(@Body() createMailServiceDto: CreateMailServiceDto) {
     return this.mailServiceService.sendForgotpasswordEmail(createMailServiceDto);
   }
-
-  @Get()
-  findAll() {
-    return this.mailServiceService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.mailServiceService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMailServiceDto: UpdateMailServiceDto) {
-    return this.mailServiceService.update(+id, updateMailServiceDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.mailServiceService.remove(+id);
-  }
 }

@@ -137,12 +137,15 @@ async search({
     const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({where:{Id, IsActive:true}}) 
     if(!foundRequestSupervision) throw new NotFoundException(`Request with ${Id} not found`)
   
-
-    //satate
+    if(updateRequestsupervisionMeterDto.StateRequestId != undefined && updateRequestsupervisionMeterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestsupervisionMeterDto.StateRequestId)
-    if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
-    if(updateRequestsupervisionMeterDto.StateRequestId != undefined && updateRequestsupervisionMeterDto.StateRequestId != null)
-        foundRequestSupervision.StateRequest = foundState
+      if(!foundState){throw new NotFoundException(`state with Id ${updateRequestsupervisionMeterDto.StateRequestId} not found`)}
+      foundRequestSupervision.StateRequest = foundState
+    }
+
+    if (updateRequestsupervisionMeterDto.CanComment !== undefined && updateRequestsupervisionMeterDto.CanComment !== null) {
+      foundRequestSupervision.CanComment = updateRequestsupervisionMeterDto.CanComment;
+    }
 
     return await this.requestSupervisionMeterRepo.save(foundRequestSupervision)
 }

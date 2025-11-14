@@ -9,6 +9,7 @@ IsNotEmpty,
 Matches,
 MinLength,
 Length,
+IsArray,
 } from 'class-validator';
 import { toDateOnly } from 'src/utils/ToDateOnly';
 
@@ -35,11 +36,12 @@ export class CreateUserDto {
     Surname2: string;
     @IsOptional() @IsString() @Length(1, 255)
     ProfilePhoto?: string;
+
+    
     @ApiProperty()
     @IsOptional()
-    @IsString()
-    Nis?: string;
-
+    @IsArray()
+    Nis?: number[];
     @ApiProperty()
     @IsEmail()
     @IsNotEmpty()

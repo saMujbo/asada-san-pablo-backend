@@ -125,7 +125,7 @@ export class UsersService {
       ? await this.rolesService.findAllByIDs(roleIds)
       : [await this.rolesService.findDefaultRole()];
 
-    if(updateUserDto.Nis !== undefined && updateUserDto.Nis != null && updateUserDto.Nis !== '') user.Nis = updateUserDto.Nis;
+    if(updateUserDto.Nis !== undefined && updateUserDto.Nis != null) user.Nis = updateUserDto.Nis;
     if(updateUserDto.Email !== undefined && updateUserDto.Email != null && updateUserDto.Email !== '') user.Email = updateUserDto.Email;
     if(updateUserDto.PhoneNumber !== undefined && updateUserDto.PhoneNumber != null && updateUserDto.PhoneNumber !== '') user.PhoneNumber = updateUserDto.PhoneNumber;
     if(updateUserDto.Address !== undefined && updateUserDto.Address != null && updateUserDto.Address !== '') user.Address = updateUserDto.Address;
@@ -333,6 +333,11 @@ async searchAbonados(searchTerm?: string) {
     const term = searchTerm.trim().toLowerCase();
     const normalizedTerm = term.replace(/[^0-9]/g, '');
 
+    // Si el término es numérico, intentar buscar por NIS
+    const nisSearch = /^\d+$/.test(term) 
+      ? `OR JSON_SEARCH(user.Nis, 'one', :nisTerm) IS NOT NULL` 
+      : '';
+
     qb.andWhere(
       `(
         LOWER(user.Name) LIKE :term 
@@ -340,11 +345,12 @@ async searchAbonados(searchTerm?: string) {
         OR LOWER(user.Surname2) LIKE :term
         OR LOWER(CONCAT(user.Name, ' ', user.Surname1, ' ', user.Surname2)) LIKE :term
         OR REPLACE(REPLACE(REPLACE(user.IDcard, '-', ''), ' ', ''), '.', '') LIKE :normalizedTerm
-        OR user.Nis LIKE :term
+        ${nisSearch}
       )`,
       { 
         term: `%${term}%`,
-        normalizedTerm: `%${normalizedTerm}%`
+        normalizedTerm: `%${normalizedTerm}%`,
+        nisTerm: term
       }
     );
   }

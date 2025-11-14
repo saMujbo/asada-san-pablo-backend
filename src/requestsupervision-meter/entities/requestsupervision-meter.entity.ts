@@ -1,4 +1,5 @@
-import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+
+import { CommentSupervisionMeter } from "src/CommentRequest/comment-supervision-meter/entities/comment-supervision-meter.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
 import { BeforeInsert, Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
@@ -29,6 +30,9 @@ export class RequestSupervisionMeter {
 
     @Column({default: true})
     IsActive: boolean;
+
+    @Column({default: false})
+    CanComment: boolean;
     
     //Relations
     
@@ -40,6 +44,6 @@ export class RequestSupervisionMeter {
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 
-    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestSupervisionMeter)
-    commentRquest?: CommentRequest[];
+    @OneToMany(()=>CommentSupervisionMeter,(commentSupervisionMeter)=>commentSupervisionMeter.requestsupervisionMeter)
+    commentSupervisionMeter: CommentSupervisionMeter;
 }

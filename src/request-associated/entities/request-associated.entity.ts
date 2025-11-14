@@ -1,4 +1,5 @@
-import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+
+import { CommentAssociated } from "src/CommentRequest/comment-associated/entities/comment-associated.entity";
 import { RequestAssociatedFile } from "src/request-associated-file/entities/request-associated-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
 import { User } from "src/users/entities/user.entity";
@@ -42,6 +43,9 @@ export class RequestAssociated {
     @Column({default: true})
     IsActive: boolean;
 
+    @Column({default: false})
+    CanComment: boolean;
+
     @ManyToOne(()=> User,(user)=> user.RequestAssociated)
     @JoinColumn({ name: 'UserId' } )
     User: User;
@@ -50,8 +54,8 @@ export class RequestAssociated {
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 
-    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestAssociate)
-    commentRquest?: CommentRequest[];
+    @ManyToOne(()=>CommentAssociated,(commentAssociated)=>commentAssociated)
+    commentAssociated: CommentAssociated;
 
     @OneToMany(() => RequestAssociatedFile, (ra) => ra.RequestAssociated)
     RequestAssociatedFile: RequestAssociatedFile[];

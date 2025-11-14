@@ -139,12 +139,17 @@ async search({
     const foundRequestChangeMeter = await this.requestChangeMeterRepo.findOne({ where: { Id } });
     if(!foundRequestChangeMeter) throw new NotFoundException(`Request with ${Id} not found`);
       
-      //State search
-        const foundState = await this.stateRequestSv.findOne(updateRequestChangeMeterDto.StateRequestId)
-        if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
-        if(updateRequestChangeMeterDto.StateRequestId != undefined && updateRequestChangeMeterDto.StateRequestId != null)
-        foundRequestChangeMeter.StateRequest = foundState;
-        await this.requestChangeMeterRepo.save(foundRequestChangeMeter);
+    if(updateRequestChangeMeterDto.StateRequestId != undefined && updateRequestChangeMeterDto.StateRequestId != null) {
+      const foundState = await this.stateRequestSv.findOne(updateRequestChangeMeterDto.StateRequestId)
+      if(!foundState){throw new NotFoundException(`state with Id ${updateRequestChangeMeterDto.StateRequestId} not found`)}
+      foundRequestChangeMeter.StateRequest = foundState;
+    }
+
+    if (updateRequestChangeMeterDto.CanComment !== undefined && updateRequestChangeMeterDto.CanComment !== null) {
+      foundRequestChangeMeter.CanComment = updateRequestChangeMeterDto.CanComment;
+    }
+
+    await this.requestChangeMeterRepo.save(foundRequestChangeMeter);
     return foundRequestChangeMeter;
   }
 

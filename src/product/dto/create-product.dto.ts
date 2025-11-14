@@ -27,12 +27,8 @@ export class CreateProductDto {
     UnitMeasureId: number;
 
     @ApiProperty()
-    @IsInt() @Min(1)
-    @IsOptional()
-    LegalSupplierId: number;
-
-    @ApiProperty()
-    @IsInt() @Min(1)
-    @IsOptional()
-    PhysicalSupplierId: number;
+    @IsNotEmpty()
+    @IsInt({ each: true })
+    @Min(1, { each: true })
+    SuppliersIds: number[];
 }

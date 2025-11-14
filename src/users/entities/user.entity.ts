@@ -1,3 +1,8 @@
+import { CommentAssociated } from "src/CommentRequest/comment-associated/entities/comment-associated.entity";
+import { CommentAvailabilityWater } from "src/CommentRequest/comment-availability-water/entities/comment-availability-water.entity";
+import { CommentChangeMeter } from "src/CommentRequest/comment-change-meter/entities/comment-change-meter.entity";
+import { CommentChangeNameMeter } from "src/CommentRequest/comment-change-name-meter/entities/comment-change-name-meter.entity";
+import { CommentSupervisionMeter } from "src/CommentRequest/comment-supervision-meter/entities/comment-supervision-meter.entity";
 import { Project } from "src/project/entities/project.entity";
 import { Report } from "src/reports/entities/report.entity";
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
@@ -28,8 +33,8 @@ export class User {
     @Column({ type: 'varchar', length: 255, nullable: true })
     ProfilePhoto: string | null;
 
-    @Column({ nullable: true })
-    Nis: string;
+    @Column({ type: 'json', nullable: true })
+    Nis: number[];
 
     @Column({unique:true})
     Email:string;
@@ -71,6 +76,21 @@ export class User {
 
     @OneToMany(()=>RequestAssociated,(RequestAssociated)=>RequestAssociated.User)
     RequestAssociated?:RequestAssociated[];
+    
+    @OneToMany(()=>CommentAssociated,(commentAssociated)=>commentAssociated.User)
+    CommentsAssociated?:CommentAssociated[];
+
+    @OneToMany(()=>CommentAvailabilityWater,(comment)=>comment.User)
+    CommentsAvailabilityWater?:CommentAvailabilityWater[];
+
+    @OneToMany(()=>CommentChangeMeter,(comment)=>comment.User)
+    CommentsChangeMeter?:CommentChangeMeter[];
+
+    @OneToMany(()=>CommentChangeNameMeter,(comment)=>comment.User)
+    CommentsChangeNameMeter?:CommentChangeNameMeter[];
+
+    @OneToMany(()=>CommentSupervisionMeter,(comment)=>comment.User)
+    CommentsSupervisionMeter?:CommentSupervisionMeter[];
 
     @OneToMany(()=>Report,(report)=>report.User)
     Reports?:Report[];

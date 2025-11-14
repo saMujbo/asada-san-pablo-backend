@@ -1,4 +1,5 @@
-import { CommentRequest } from "src/comment-request/entities/comment-request.entity";
+
+import { CommentChangeNameMeter } from "src/CommentRequest/comment-change-name-meter/entities/comment-change-name-meter.entity";
 import { ProjectFile } from "src/project-file/entities/project-file.entity";
 import { RequestChangeNameMeterFile } from "src/request-change-name-meter-file/entities/request-change-name-meter-file.entity";
 import { StateRequest } from "src/state-request/entities/state-request.entity";
@@ -29,6 +30,9 @@ export class RequestChangeNameMeter {
     @Column({default:true})
     IsActive: boolean
 
+    @Column({default: false})
+    CanComment: boolean;
+
     @ManyToOne(()=> User,(user)=> user.RequestChangeNameMeter)
     @JoinColumn({ name: 'UserId' } )
     User: User;
@@ -37,10 +41,10 @@ export class RequestChangeNameMeter {
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 
-    @OneToMany(()=>CommentRequest,(commentRequest)=>commentRequest.RequestChangeNameMeter)
-    commentRquest?: CommentRequest[];
-
     @OneToMany(() => RequestChangeNameMeterFile, (rm) => rm.RequestChangeNameMeter)
     RequestChangeNameMeterFile: RequestChangeNameMeterFile[];
+
+    @OneToMany(()=>CommentChangeNameMeter,(commentChangeNameMeter)=>commentChangeNameMeter.requestChangeNameMeter)
+    commentChangeNameMeter: CommentChangeNameMeter;
 
 }

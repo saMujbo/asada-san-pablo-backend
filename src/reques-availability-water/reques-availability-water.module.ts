@@ -5,11 +5,14 @@ import { RequesAvailabilityWater } from './entities/reques-availability-water.en
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/users/users.module';
 import { StateRequestModule } from 'src/state-request/state-request.module';
+import { CommentAvailabilityWater } from 'src/CommentRequest/comment-availability-water/entities/comment-availability-water.entity';
+
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([RequesAvailabilityWater]),
     forwardRef(()=> UsersModule),
+    forwardRef(() => CommentAvailabilityWater),
     forwardRef(() => StateRequestModule)
 ],
   controllers: [RequesAvailabilityWaterController],

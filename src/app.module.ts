@@ -38,6 +38,15 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { TotalActualExpenseModule } from './total-actual-expense/total-actual-expense.module';
 import { ServiceModule } from './service/service.module';
 import { FaqModule } from './faq/faq.module';
+import { CommentAvailabilityWaterModule } from './CommentRequest/comment-availability-water/comment-availability-water.module';
+import { CommentChangeNameMeterModule } from './CommentRequest/comment-change-name-meter/comment-change-name-meter.module';
+import { CommentChangeMeterModule } from './CommentRequest/comment-change-meter/comment-change-meter.module';
+import { CommentSupervisionMeterModule } from './CommentRequest/comment-supervision-meter/comment-supervision-meter.module';
+import { SupplierModule } from './supplier/supplier.module';
+
+
+
+
 
 @Module({
   imports: [
@@ -94,7 +103,12 @@ import { FaqModule } from './faq/faq.module';
     RequestAvailabilityWaterFileModule,
     RequestAssociatedFileModule,
     ServiceModule,
-    FaqModule
+    FaqModule,
+    CommentAvailabilityWaterModule,
+    CommentChangeNameMeterModule,
+    CommentChangeMeterModule,
+    CommentSupervisionMeterModule,
+    SupplierModule,
   ],
 })
 export class AppModule {}

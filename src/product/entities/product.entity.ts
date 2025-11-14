@@ -13,6 +13,7 @@ import {
 import { ProductDetail } from "../product-detail/entities/product-detail.entity";
 import { LegalSupplier } from "src/legal-supplier/entities/legal-supplier.entity";
 import { PhysicalSupplier } from "src/physical-supplier/entities/physical-supplier.entity";
+import { ProductSupplier } from "./product-supplier.entity";
 @Entity()
 export class Product {
     @PrimaryGeneratedColumn()
@@ -67,4 +68,9 @@ export class Product {
     @ManyToOne(() => LegalSupplier, (s) => s.Products, { nullable: true })
     @JoinColumn({ name: 'LegalSupplierId' })
     LegalSupplier?: LegalSupplier;
+
+    @OneToMany(() => ProductSupplier, (ps) => ps.Product, {
+        cascade: ['insert', 'update'],
+    })
+    ProductSuppliers: ProductSupplier[];
 }

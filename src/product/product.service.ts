@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, forwardRef, Inject, Injectable, NotFoundException} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { In, Repository } from 'typeorm';
+import { In, Repository, DataSource } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { MaterialService } from 'src/material/material.service';
 import { UnitMeasureService } from 'src/unit_measure/unit_measure.service';
@@ -11,6 +11,8 @@ import { ProductPaginationDto } from './dto/productPaginationDto';
 import { changeState } from 'src/utils/changeState';
 import { LegalSupplierService } from 'src/legal-supplier/legal-supplier.service';
 import { PhysicalSupplierService } from 'src/physical-supplier/physical-supplier.service';
+import { ProductSupplier } from './entities/product-supplier.entity';
+import { SupplierService } from 'src/supplier/supplier.service';
 
 @Injectable()
 export class ProductService {
@@ -23,62 +25,87 @@ export class ProductService {
     private readonly materialService: MaterialService,
     @Inject(forwardRef(() => UnitMeasureService))
     private readonly unitmeasureService: UnitMeasureService,
+    @InjectRepository(ProductSupplier)
+    private readonly productSupplierRepo: Repository<ProductSupplier>,
+    @Inject(forwardRef(() => SupplierService))
+    private readonly supplierService: SupplierService,
     @Inject(forwardRef(() => LegalSupplierService))
-    private readonly legalSupplierSv: LegalSupplierService,
+    private readonly legalSupplierService: LegalSupplierService,
     @Inject(forwardRef(() => PhysicalSupplierService))
-    private readonly physicalSupplierSv: PhysicalSupplierService,
+    private readonly physicalSupplierService: PhysicalSupplierService,
+    private readonly dataSource: DataSource,
   ){}
   
   async create(createProductDto: CreateProductDto) {
     const {
       CategoryId, 
       MaterialId, 
-      UnitMeasureId, 
-      LegalSupplierId, 
-      PhysicalSupplierId,
-      ...rest
+      UnitMeasureId,
+      SuppliersIds,
+      ...productData
     } = createProductDto;
 
-    if ((LegalSupplierId == null) && (PhysicalSupplierId == null)) {
-      // En Nest es mejor BadRequestException
-      throw new BadRequestException('Faltan argumentos para agregar un producto!');
+    // Validación de proveedores requeridos
+    if (!SuppliersIds || SuppliersIds.length === 0) {
+      throw new BadRequestException('Faltan proveedores para agregar un producto!');
     }
 
-    const [category, material, unit] = await Promise.all([
-      this.categoryService.findOne(CategoryId),
-      this.materialService.findOne(MaterialId),
-      this.unitmeasureService.findOne(UnitMeasureId),
-    ]);
+    return this.dataSource.transaction(async (manager) => {
+      // Validar que existan las entidades relacionadas
+      const [category, material, unitMeasure] = await Promise.all([
+        this.categoryService.findOne(CategoryId),
+        this.materialService.findOne(MaterialId),
+        this.unitmeasureService.findOne(UnitMeasureId),
+      ]);
 
-    if(LegalSupplierId != null){
-      const legalSupplier = await this.legalSupplierSv.findOne(LegalSupplierId);
+      // Validar que existan los proveedores
+      const suppliers = await this.supplierService.findAllByIds(SuppliersIds);
 
-      const newProduct = await this.productRepo.create({
+      // Crear el producto
+      const product = manager.create(Product, {
+        ...productData,
         Category: category,
         Material: material,
-        UnitMeasure: unit,
-        LegalSupplier: legalSupplier,
-        ...rest
+        UnitMeasure: unitMeasure,
       });
-      return await this.productRepo.save(newProduct);
-    }
-    else{
-      const physicalSupplier = await this.physicalSupplierSv.findOne(PhysicalSupplierId);
 
-      const newProduct = await this.productRepo.create({
-        Category: category,
-        Material: material,
-        UnitMeasure: unit,
-        PhysicalSupplier: physicalSupplier,
-        ...rest
+      await manager.save(product);
+
+      // Crear las relaciones Product-Supplier
+      const productSuppliers = suppliers.map(supplier =>
+        manager.create(ProductSupplier, {
+          Product: product,
+          Supplier: supplier,
+        })
+      );
+
+      await manager.save(productSuppliers);
+
+      // Retornar el producto con sus relaciones
+      return await manager.findOne(Product, {
+        where: { Id: product.Id },
+        relations: [
+          'Category', 
+          'Material', 
+          'UnitMeasure', 
+          'ProductSuppliers', 
+          'ProductSuppliers.Supplier'
+        ],
       });
-      return await this.productRepo.save(newProduct);
-    }
-    
+    });
   }
 
   async findAll() {
-    return this.productRepo.find({ relations: ['Category', 'Material', 'UnitMeasure', 'PhysicalSupplier', 'LegalSupplier'], where: { IsActive: true } });
+    return this.productRepo.find({ 
+      relations: [
+        'Category', 
+        'Material', 
+        'UnitMeasure', 
+        'ProductSuppliers',
+        'ProductSuppliers.Supplier'
+      ], 
+      where: { IsActive: true } 
+    });
   }
 
   // products.service.ts
@@ -101,8 +128,8 @@ export class ProductService {
       .leftJoinAndSelect('product.Category', 'category')
       .leftJoinAndSelect('product.Material', 'material')
       .leftJoinAndSelect('product.UnitMeasure', 'unit')
-      .leftJoinAndSelect('product.PhysicalSupplier', 'physical_supplier')
-      .leftJoinAndSelect('product.LegalSupplier', 'legal_supplier')
+      .leftJoinAndSelect('product.ProductSuppliers', 'product_suppliers')
+      .leftJoinAndSelect('product_suppliers.Supplier', 'supplier')
       .skip(skip)
       .take(take);
 
@@ -161,7 +188,13 @@ export class ProductService {
   async findOne(Id: number) {
     const foundProduct = await this.productRepo.findOne({
       where: { Id },
-      relations: ['Category', 'Material', 'UnitMeasure', 'PhysicalSupplier', 'LegalSupplier'],
+      relations: [
+        'Category', 
+        'Material', 
+        'UnitMeasure', 
+        'ProductSuppliers',
+        'ProductSuppliers.Supplier'
+      ],
     });
 
     if(!foundProduct) throw new ConflictException(`Product with Id ${Id} not found`);
@@ -181,28 +214,63 @@ export class ProductService {
   }
   
   async update(Id: number, updateProductDto: UpdateProductDto) {
-    const updateProduct = await this.productRepo.findOne({ where: {Id} });
-    if(!updateProduct) throw new NotFoundException(`Product with Id ${Id} not found`);
+    return this.dataSource.transaction(async (manager) => {
+      // Buscar el producto existente
+      const updateProduct = await manager.findOne(Product, { where: { Id } });
+      if (!updateProduct) throw new NotFoundException(`Product with Id ${Id} not found`);
 
-    if (updateProductDto.Name !== undefined) updateProduct.Name = updateProductDto.Name;
-    if (updateProductDto.Type !== undefined) updateProduct.Type = updateProductDto.Type;
-    if (updateProductDto.Observation !== undefined) updateProduct.Observation = updateProductDto.Observation;
-    if (updateProductDto.IsActive !== undefined && updateProductDto.IsActive != null) 
+      // Actualizar campos básicos
+      if (updateProductDto.Name !== undefined) updateProduct.Name = updateProductDto.Name;
+      if (updateProductDto.Type !== undefined) updateProduct.Type = updateProductDto.Type;
+      if (updateProductDto.Observation !== undefined) updateProduct.Observation = updateProductDto.Observation;
+      if (updateProductDto.IsActive !== undefined && updateProductDto.IsActive != null) 
         updateProduct.IsActive = updateProductDto.IsActive;
-    // relaciones (si vienen)
-    if (updateProductDto.CategoryId !== undefined)
-      updateProduct.Category = await this.categoryService.findOne(updateProductDto.CategoryId);
-    if (updateProductDto.MaterialId !== undefined)
-      updateProduct.Material = await this.materialService.findOne(updateProductDto.MaterialId);
-    if (updateProductDto.UnitMeasureId !== undefined)
-      updateProduct.UnitMeasure = await this.unitmeasureService.findOne(updateProductDto.UnitMeasureId);
 
-    if (updateProductDto.LegalSupplierId !== undefined)
-      updateProduct.LegalSupplier = await this.legalSupplierSv.findOne(updateProductDto.LegalSupplierId);
-    if (updateProductDto.PhysicalSupplierId !== undefined)
-      updateProduct.PhysicalSupplier = await this.physicalSupplierSv.findOne(updateProductDto.PhysicalSupplierId);
-    
-    return await this.productRepo.save(updateProduct);
+      // Actualizar relaciones simples
+      if (updateProductDto.CategoryId !== undefined)
+        updateProduct.Category = await this.categoryService.findOne(updateProductDto.CategoryId);
+      if (updateProductDto.MaterialId !== undefined)
+        updateProduct.Material = await this.materialService.findOne(updateProductDto.MaterialId);
+      if (updateProductDto.UnitMeasureId !== undefined)
+        updateProduct.UnitMeasure = await this.unitmeasureService.findOne(updateProductDto.UnitMeasureId);
+
+      // Guardar cambios básicos del producto
+      await manager.save(updateProduct);
+
+      // Actualizar relación muchos a muchos con Suppliers si se proporciona
+      if (updateProductDto.SuppliersIds !== undefined) {
+        // Validar que existan los proveedores
+        const suppliers = await this.supplierService.findAllByIds(updateProductDto.SuppliersIds);
+
+        // Eliminar relaciones existentes
+        await manager.delete(ProductSupplier, { Product: { Id: updateProduct.Id } });
+
+        // Crear nuevas relaciones si hay proveedores
+        if (updateProductDto.SuppliersIds.length > 0) {
+          const newProductSuppliers = suppliers.map(supplier =>
+            manager.create(ProductSupplier, {
+              Product: updateProduct,
+              Supplier: supplier,
+            })
+          );
+          await manager.save(newProductSuppliers);
+        }
+      }
+
+      // Retornar el producto actualizado con sus relaciones
+      // return await manager.findOne(Product, {
+      //   where: { Id: updateProduct.Id },
+      //   relations: [
+      //     'Category', 
+      //     'Material', 
+      //     'UnitMeasure', 
+      //     'ProductSuppliers', 
+      //     'ProductSuppliers.Supplier'
+      //   ],
+      // });
+
+      return await updateProduct;
+    });
   }
 
   async remove(Id: number) {
@@ -226,19 +294,20 @@ export class ProductService {
     return hasActiveProducts;
   }
 
-  async isOnLegalSupplier(Id: number) {
-    const hasActiveProducts = await this.productRepo.exist({
-      where: { LegalSupplier: { Id } },
-    });
-    return hasActiveProducts;
-  }
+  // Métodos comentados - ya no se usan las relaciones directas con LegalSupplier y PhysicalSupplier
+  // async isOnLegalSupplier(Id: number) {
+  //   const hasActiveProducts = await this.productRepo.exist({
+  //     where: { LegalSupplier: { Id } },
+  //   });
+  //   return hasActiveProducts;
+  // }
 
-  async isOnPhysicalSupplier(Id: number) {
-    const hasActiveProducts = await this.productRepo.exist({
-      where: { PhysicalSupplier: { Id } },
-    });
-    return hasActiveProducts;
-  }
+  // async isOnPhysicalSupplier(Id: number) {
+  //   const hasActiveProducts = await this.productRepo.exist({
+  //     where: { PhysicalSupplier: { Id } },
+  //   });
+  //   return hasActiveProducts;
+  // }
   
   async isOnMaterial(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
@@ -250,6 +319,14 @@ export class ProductService {
   async isOnUnit(Id: number) {
     const hasActiveProducts = await this.productRepo.exist({
       where: { UnitMeasure: { Id } },
+    });
+    return hasActiveProducts;
+  }
+
+  // Nuevo método para verificar si un Supplier está siendo usado
+  async isOnSupplier(Id: number) {
+    const hasActiveProducts = await this.productSupplierRepo.exist({
+      where: { Supplier: { Id } },
     });
     return hasActiveProducts;
   }

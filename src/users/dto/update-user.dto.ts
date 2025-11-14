@@ -6,8 +6,8 @@ import { toDateOnly } from 'src/utils/ToDateOnly';
 export class UpdateUserDto{
         @ApiProperty()
         @IsOptional()
-        @IsString()
-        Nis?: string;
+        @IsArray()
+        Nis?: number[];
 
         @ApiProperty()
         @IsEmail()
