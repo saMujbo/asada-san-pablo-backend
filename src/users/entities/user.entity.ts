@@ -1,4 +1,8 @@
 import { CommentAssociated } from "src/CommentRequest/comment-associated/entities/comment-associated.entity";
+import { CommentAvailabilityWater } from "src/CommentRequest/comment-availability-water/entities/comment-availability-water.entity";
+import { CommentChangeMeter } from "src/CommentRequest/comment-change-meter/entities/comment-change-meter.entity";
+import { CommentChangeNameMeter } from "src/CommentRequest/comment-change-name-meter/entities/comment-change-name-meter.entity";
+import { CommentSupervisionMeter } from "src/CommentRequest/comment-supervision-meter/entities/comment-supervision-meter.entity";
 import { Project } from "src/project/entities/project.entity";
 import { Report } from "src/reports/entities/report.entity";
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
@@ -76,9 +80,18 @@ export class User {
     @OneToMany(()=>CommentAssociated,(commentAssociated)=>commentAssociated.User)
     CommentsAssociated?:CommentAssociated[];
 
+    @OneToMany(()=>CommentAvailabilityWater,(comment)=>comment.User)
+    CommentsAvailabilityWater?:CommentAvailabilityWater[];
+
+    @OneToMany(()=>CommentChangeMeter,(comment)=>comment.User)
+    CommentsChangeMeter?:CommentChangeMeter[];
+
+    @OneToMany(()=>CommentChangeNameMeter,(comment)=>comment.User)
+    CommentsChangeNameMeter?:CommentChangeNameMeter[];
+
+    @OneToMany(()=>CommentSupervisionMeter,(comment)=>comment.User)
+    CommentsSupervisionMeter?:CommentSupervisionMeter[];
+
     @OneToMany(()=>Report,(report)=>report.User)
     Reports?:Report[];
-
-    @ManyToMany(() => CommentAssociated, (commentAssociated) => commentAssociated.User)
-    CommentAssociated?: CommentAssociated[];
 }

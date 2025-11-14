@@ -34,7 +34,8 @@ export class CommentAvailabilityWaterController {
     return this.commentService.createAdminComment(
       requestId,
       dto.Subject,
-      dto.Comment
+      dto.Comment,
+      dto.UserId
     );
   }
 
@@ -71,6 +72,7 @@ export class CommentAvailabilityWaterController {
       requestId,
       dto.Subject,
       dto.Comment,
+      dto.UserId,
       files
     );
   }

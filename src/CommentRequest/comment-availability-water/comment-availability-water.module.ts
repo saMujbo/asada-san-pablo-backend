@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommentAvailabilityWater } from './entities/comment-availability-water.entity';
 import { RequestAvailabilityWaterFileModule } from 'src/request-availability-water-file/request-availability-water-file.module';
 import { RequesAvailabilityWaterModule } from 'src/reques-availability-water/reques-availability-water.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
     imports:[
       TypeOrmModule.forFeature([CommentAvailabilityWater]),
-    forwardRef(() => RequesAvailabilityWaterModule),
-    forwardRef(() => RequestAvailabilityWaterFileModule),
+      forwardRef(() => RequesAvailabilityWaterModule),
+      forwardRef(() => RequestAvailabilityWaterFileModule),
+      forwardRef(() => UsersModule),
   ],
   controllers: [CommentAvailabilityWaterController],
   providers: [CommentAvailabilityWaterService],

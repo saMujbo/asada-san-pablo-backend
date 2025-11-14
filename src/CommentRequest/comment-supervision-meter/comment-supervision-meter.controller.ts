@@ -17,7 +17,8 @@ export class CommentSupervisionMeterController {
     return this.commentService.createAdminComment(
       requestId,
       dto.Subject,
-      dto.Comment
+      dto.Comment,
+      dto.UserId
     );
   }
 

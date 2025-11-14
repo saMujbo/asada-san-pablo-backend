@@ -12,6 +12,7 @@ import { CommentAvailabilityWater } from './entities/comment-availability-water.
 import { RequesAvailabilityWaterService } from 'src/reques-availability-water/reques-availability-water.service';
 import { RequestAvailabilityWaterFileService } from 'src/request-availability-water-file/request-availability-water-file.service';
 import { RequestAvailabilityWaterFile } from 'src/request-availability-water-file/entities/request-availability-water-file.entity';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class CommentAvailabilityWaterService {
@@ -22,29 +23,31 @@ export class CommentAvailabilityWaterService {
     @Inject(forwardRef(() => RequesAvailabilityWaterService))
     private readonly requestService: RequesAvailabilityWaterService,
     
+    @Inject(forwardRef(() => UsersService))
+    private readonly userSv: UsersService,
+    
     @Inject(forwardRef(() => RequestAvailabilityWaterFileService))
     private readonly fileService: RequestAvailabilityWaterFileService,
   ) {}
 
   /**
    * 1. ADMIN: Crear comentario SIN archivos
-   * Solo necesita: requestId, Subject, Comment
+   * Solo necesita: requestId, Subject, Comment, userId
    */
   async createAdminComment(
     requestId: number,
     subject: string,
-    comment: string
+    comment: string,
+    userId: number,
   ) {
     const request = await this.requestService.findOne(requestId);
-    
-    if (!request) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
+    const user = await this.userSv.findOne(userId);
 
     const newComment = this.commentRepo.create({
       Subject: subject,
       Comment: comment,
-      requestAvailability: request
+      requestAvailability: request,
+      User: user,
     });
 
     return await this.commentRepo.save(newComment);
@@ -62,7 +65,7 @@ export class CommentAvailabilityWaterService {
 
     return await this.commentRepo.find({
       where: { requestAvailability: { Id: requestId } },
-      relations: ['requestAvailability'],
+      relations: ['requestAvailability', 'User'],
       order: { createdAt: 'ASC' },
     });
   }
@@ -81,6 +84,7 @@ export class CommentAvailabilityWaterService {
     requestId: number,
     subject: string,
     comment: string,
+    userId: number,
     files: Express.Multer.File[]
   ) {
     if (!files || files.length === 0) {
@@ -88,16 +92,14 @@ export class CommentAvailabilityWaterService {
     }
 
     const request = await this.requestService.findOne(requestId);
-    
-    if (!request) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
+    const user = await this.userSv.findOne(userId);
 
     // Crear comentario de respuesta
     const replyComment = this.commentRepo.create({
       Subject: subject,
       Comment: comment,
       requestAvailability: request,
+      User: user,
     });
 
     const savedComment = await this.commentRepo.save(replyComment);
