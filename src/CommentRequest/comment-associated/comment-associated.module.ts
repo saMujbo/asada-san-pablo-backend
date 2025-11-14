@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommentAssociated } from './entities/comment-associated.entity';
 import { RequestAssociatedModule } from 'src/request-associated/request-associated.module';
 import { RequestAssociatedFileModule } from 'src/request-associated-file/request-associated-file.module';
+import { UsersModule } from 'src/users/users.module';
 
 
 @Module({
@@ -12,6 +13,7 @@ import { RequestAssociatedFileModule } from 'src/request-associated-file/request
         TypeOrmModule.forFeature([CommentAssociated]),
       forwardRef(() => RequestAssociatedModule),
       forwardRef(() => RequestAssociatedFileModule),
+      forwardRef(() => UsersModule),
     ],
   controllers: [CommentAssociatedController],
   providers: [CommentAssociatedService],

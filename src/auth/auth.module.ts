@@ -9,10 +9,8 @@ import { RolesGuard } from './guards/roles.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RolesModule } from 'src/roles/roles.module';
 import { UsersModule } from 'src/users/users.module';
-import { MailerService } from '@nestjs-modules/mailer';
-import { MailServiceModule } from 'src/mail-service/mail-service.module';
-import { CacheModule } from '@nestjs/cache-manager';
 import { DropboxAuthController } from './dropbox-auth.controller';
+import { MailServiceModule } from 'src/mail-service/mail-service.module';
 
 @Module({
   imports:[

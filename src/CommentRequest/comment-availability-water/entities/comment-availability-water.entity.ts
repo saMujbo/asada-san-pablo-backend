@@ -22,8 +22,4 @@ export class CommentAvailabilityWater {
     )
     @JoinColumn({ name: 'RequestAvailabilityWaterId' })
     requestAvailability: RequesAvailabilityWater;
-
-    @ManyToMany(() => User, (user) => user.CommentAvailabilityWater)
-    @JoinTable({ name: 'comment_availability_water_users' })
-    Users: User[];
 }

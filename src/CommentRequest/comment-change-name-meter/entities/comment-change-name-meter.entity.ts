@@ -4,26 +4,22 @@ import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGe
 
 @Entity()
 export class CommentChangeNameMeter {
-        @PrimaryGeneratedColumn()
-        Id: number;
-    
-        @Column()
-        Subject: string;
-    
-        @Column()
-        Comment: string;
-    
-        @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-        createdAt: Date;
-    
-        @ManyToOne(
-            () => RequestChangeNameMeter,
-            (requestChangeNameMeter) => requestChangeNameMeter.commentChangeNameMeter
-        )
-        @JoinColumn({ name: 'RequestChangeNameMeterId' })
-        requestChangeNameMeter: RequestChangeNameMeter;
+    @PrimaryGeneratedColumn()
+    Id: number;
 
-        @ManyToMany(() => User, (user) => user.CommentChangeNameMeter)
-        @JoinTable({ name: 'comment_change_name_meter_users' })
-        Users: User[];
+    @Column()
+    Subject: string;
+
+    @Column()
+    Comment: string;
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    createdAt: Date;
+
+    @ManyToOne(
+        () => RequestChangeNameMeter,
+        (requestChangeNameMeter) => requestChangeNameMeter.commentChangeNameMeter
+    )
+    @JoinColumn({ name: 'RequestChangeNameMeterId' })
+    requestChangeNameMeter: RequestChangeNameMeter;
 }

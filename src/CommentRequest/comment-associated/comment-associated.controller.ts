@@ -19,7 +19,8 @@ export class CommentAssociatedController {
     return this.commentService.createAdminCommentAssociated(
       requestId,
       dto.Subject,
-      dto.Comment
+      dto.Comment,
+      dto.UserId
     );
   }
 
@@ -55,6 +56,7 @@ export class CommentAssociatedController {
       requestId,
       dto.Subject,
       dto.Comment,
+      dto.UserId,
       files
     );
   }

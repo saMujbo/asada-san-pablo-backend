@@ -1,6 +1,6 @@
 import { RequestAssociated } from "src/request-associated/entities/request-associated.entity";
 import { User } from "src/users/entities/user.entity";
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class CommentAssociated {
@@ -20,7 +20,7 @@ export class CommentAssociated {
         @JoinColumn({name:'RequestAssociatedId'})
         requestAssociated: RequestAssociated;
 
-        @ManyToMany(() => User, (user) => user.CommentAssociated)
-        @JoinTable({ name: 'comment_associated_users' })
-        Users: User[];
+        @ManyToOne(()=>User,(user)=>user.CommentsAssociated)
+        @JoinColumn({name:'UserId'})
+        User: User;
 }

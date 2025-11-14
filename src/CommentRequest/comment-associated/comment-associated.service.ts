@@ -1,4 +1,3 @@
-// comment-availability-water.service.ts
 import { 
   forwardRef, 
   Inject, 
@@ -9,11 +8,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CommentAssociated } from './entities/comment-associated.entity';
-import { RequestAssociated } from 'src/request-associated/entities/request-associated.entity';
 import { RequestAssociatedService } from 'src/request-associated/request-associated.service';
 import { RequestAssociatedFileService } from 'src/request-associated-file/request-associated-file.service';
 import { RequestAssociatedFile } from 'src/request-associated-file/entities/request-associated-file.entity';
-
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class CommentAssociatedService {
@@ -23,6 +21,9 @@ export class CommentAssociatedService {
     
     @Inject(forwardRef(() => RequestAssociatedService))
     private readonly requestService: RequestAssociatedService,
+    
+    @Inject(forwardRef(() => UsersService))
+    private readonly userSv: UsersService,
     
     @Inject(forwardRef(() => RequestAssociatedFileService))
     private readonly fileService: RequestAssociatedFileService,
@@ -35,18 +36,18 @@ export class CommentAssociatedService {
   async createAdminCommentAssociated(
     requestId: number,
     subject: string,
-    comment: string
+    comment: string,
+    userId: number,
   ) {
     const request = await this.requestService.findOne(requestId);
     
-    if (!request) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
+    const user =  await this.userSv.findOne(userId);
 
     const newComment = this.commentAssociatedrep.create({
       Subject: subject,
       Comment: comment,
       requestAssociated: request,
+      User: user,
     });
 
     return await this.commentAssociatedrep.save(newComment);
@@ -64,7 +65,7 @@ export class CommentAssociatedService {
 
     return await this.commentAssociatedrep.find({
       where: { requestAssociated: { Id: requestId } },
-      relations: ['requestAssociated'],
+      relations: ['requestAssociated', 'User'],
       order: { createdAt: 'ASC' },
     });
   }
@@ -83,6 +84,7 @@ export class CommentAssociatedService {
     requestId: number,
     subject: string,
     comment: string,
+    userId: number,
     files: Express.Multer.File[]
   ) {
     if (!files || files.length === 0) {
@@ -90,16 +92,14 @@ export class CommentAssociatedService {
     }
 
     const request = await this.requestService.findOne(requestId);
-    
-    if (!request) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
+    const user = await this.userSv.findOne(userId);
 
     // Crear comentario de respuesta
     const replyComment = this.commentAssociatedrep.create({
       Subject: subject,
       Comment: comment,
       requestAssociated: request,
+      User: user,
     });
 
     const savedComment = await this.commentAssociatedrep.save(replyComment);

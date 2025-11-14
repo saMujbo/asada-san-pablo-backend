@@ -44,8 +44,7 @@ export class CommentAvailabilityWaterService {
     const newComment = this.commentRepo.create({
       Subject: subject,
       Comment: comment,
-      requestAvailability: request,
-      hasFileUpdate: false,
+      requestAvailability: request
     });
 
     return await this.commentRepo.save(newComment);
@@ -99,7 +98,6 @@ export class CommentAvailabilityWaterService {
       Subject: subject,
       Comment: comment,
       requestAvailability: request,
-      hasFileUpdate: true,
     });
 
     const savedComment = await this.commentRepo.save(replyComment);
