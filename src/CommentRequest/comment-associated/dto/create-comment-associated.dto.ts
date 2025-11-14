@@ -3,11 +3,6 @@ import { IsInt, IsNotEmpty, IsString, MaxLength, Min } from "class-validator";
 
 
 export class CreateCommentAssociatedDto {
-        @ApiProperty()
-        @IsInt() @Min(1)
-        @IsNotEmpty()
-        RequestId: number;
-
         @ApiProperty({ example: 'Documento faltante' })
         @IsNotEmpty()
         @IsString()
