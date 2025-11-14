@@ -39,8 +39,8 @@
     
     @ApiProperty()
     @IsOptional()
-    @IsString()
-    Nis?: string;
+    @IsArray()
+    Nis?: number[];
 
     @ApiProperty()
     @IsEmail()

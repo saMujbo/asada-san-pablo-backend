@@ -1,6 +1,6 @@
 import { PartialType } from "@nestjs/mapped-types";
 import { LoginAuthDto } from "./login-auth.dto";
-import { IsDate, IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import { IsArray, IsDate, IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 
@@ -27,7 +27,7 @@ function toDateOnly(input: unknown): string {
     return `${yyyy}-${mm}-${dd}`;
 }
 
-export class RegisterAuth extends PartialType(LoginAuthDto){ 
+export class RegisterAuth{ 
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
@@ -50,8 +50,8 @@ export class RegisterAuth extends PartialType(LoginAuthDto){
     
     @ApiProperty()
     @IsOptional()
-    @IsString()
-    Nis?: string;
+    @IsArray()
+    Nis?: number[];
     
     @ApiProperty()
     @IsEmail()

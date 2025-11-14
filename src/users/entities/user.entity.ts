@@ -30,7 +30,7 @@ export class User {
     ProfilePhoto: string | null;
 
     @Column({ nullable: true })
-    Nis: string;
+    Nis: number[];
 
     @Column({unique:true})
     Email:string;

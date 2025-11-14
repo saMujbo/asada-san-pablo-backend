@@ -9,6 +9,7 @@ import {
   Matches,
   MinLength,
   Length,
+  IsArray,
 } from 'class-validator';
 import { Role } from 'src/roles/entities/role.entity';
 import { toDateOnly } from 'src/utils/ToDateOnly';
@@ -36,8 +37,8 @@ export class CreateUserDto {
   
   @ApiProperty()
   @IsOptional()
-  @IsString()
-  Nis?: string;
+  @IsArray()
+  Nis?: number[];
 
   @ApiProperty()
   @IsEmail()
