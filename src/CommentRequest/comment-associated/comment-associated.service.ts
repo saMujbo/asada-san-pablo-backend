@@ -47,7 +47,6 @@ export class CommentAssociatedService {
       Subject: subject,
       Comment: comment,
       requestAssociated: request,
-      hasFileUpdate: false,
     });
 
     return await this.commentAssociatedrep.save(newComment);
@@ -101,7 +100,6 @@ export class CommentAssociatedService {
       Subject: subject,
       Comment: comment,
       requestAssociated: request,
-      hasFileUpdate: false,
     });
 
     const savedComment = await this.commentAssociatedrep.save(replyComment);

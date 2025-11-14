@@ -43,6 +43,9 @@ export class RequestAssociated {
     @Column({default: true})
     IsActive: boolean;
 
+    @Column({default: false})
+    CanComment: boolean;
+
     @ManyToOne(()=> User,(user)=> user.RequestAssociated)
     @JoinColumn({ name: 'UserId' } )
     User: User;

@@ -1,5 +1,6 @@
 import { RequestAssociated } from "src/request-associated/entities/request-associated.entity";
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/users/entities/user.entity";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class CommentAssociated {
@@ -12,13 +13,14 @@ export class CommentAssociated {
         @Column()
         Comment: string;
         
-        @Column({ default: false })
-        hasFileUpdate: boolean;
-        
         @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
         createdAt: Date;
 
         @ManyToOne(()=>RequestAssociated,(requestAssociated)=>requestAssociated.commentAssociated)
         @JoinColumn({name:'RequestAssociatedId'})
         requestAssociated: RequestAssociated;
+
+        @ManyToMany(() => User, (user) => user.CommentAssociated)
+        @JoinTable({ name: 'comment_associated_users' })
+        Users: User[];
 }

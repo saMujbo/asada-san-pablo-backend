@@ -1,5 +1,6 @@
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/users/entities/user.entity";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class CommentAvailabilityWater {
@@ -12,9 +13,6 @@ export class CommentAvailabilityWater {
     @Column()
     Comment: string;
 
-    @Column({ default: false })
-    hasFileUpdate: boolean;
-
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
 
@@ -24,4 +22,8 @@ export class CommentAvailabilityWater {
     )
     @JoinColumn({ name: 'RequestAvailabilityWaterId' })
     requestAvailability: RequesAvailabilityWater;
+
+    @ManyToMany(() => User, (user) => user.CommentAvailabilityWater)
+    @JoinTable({ name: 'comment_availability_water_users' })
+    Users: User[];
 }

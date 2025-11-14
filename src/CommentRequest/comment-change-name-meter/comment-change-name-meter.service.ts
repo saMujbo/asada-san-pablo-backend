@@ -42,7 +42,6 @@ export class CommentChangeNameMeterService {
       Subject: subject,
       Comment: comment,
       requestChangeNameMeter: request,
-      hasFileUpdate: false,
     });
 
     return await this.commentChangeNameMeterRepo.save(newComment);
@@ -96,7 +95,6 @@ export class CommentChangeNameMeterService {
       Subject: subject,
       Comment: comment,
       requestChangeNameMeter: request,
-      hasFileUpdate: true,
     });
 
     const savedComment = await this.commentChangeNameMeterRepo.save(replyComment);

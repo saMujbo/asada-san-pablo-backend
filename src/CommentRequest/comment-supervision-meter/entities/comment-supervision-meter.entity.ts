@@ -1,5 +1,6 @@
 import { RequestSupervisionMeter } from "src/requestsupervision-meter/entities/requestsupervision-meter.entity";
-import { PrimaryGeneratedColumn, Column, Entity, ManyToOne, JoinColumn } from "typeorm";
+import { User } from "src/users/entities/user.entity";
+import { PrimaryGeneratedColumn, Column, Entity, ManyToOne, ManyToMany, JoinColumn, JoinTable } from "typeorm";
 
 @Entity()
 export class CommentSupervisionMeter {            
@@ -18,4 +19,8 @@ export class CommentSupervisionMeter {
         @ManyToOne(()=>RequestSupervisionMeter,(RSP)=>RSP)
         @JoinColumn({ name: 'RequestSupervisionMeterId' })
         requestsupervisionMeter: RequestSupervisionMeter;
+
+        @ManyToMany(() => User, (user) => user.CommentSupervisionMeter)
+        @JoinTable({ name: 'comment_supervision_meter_users' })
+        Users: User[];
 }

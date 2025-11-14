@@ -1,5 +1,6 @@
 import { RequestChangeNameMeter } from "src/request-change-name-meter/entities/request-change-name-meter.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/users/entities/user.entity";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class CommentChangeNameMeter {
@@ -12,9 +13,6 @@ export class CommentChangeNameMeter {
         @Column()
         Comment: string;
     
-        @Column({ default: false })
-        hasFileUpdate: boolean;
-    
         @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
         createdAt: Date;
     
@@ -24,4 +22,8 @@ export class CommentChangeNameMeter {
         )
         @JoinColumn({ name: 'RequestChangeNameMeterId' })
         requestChangeNameMeter: RequestChangeNameMeter;
+
+        @ManyToMany(() => User, (user) => user.CommentChangeNameMeter)
+        @JoinTable({ name: 'comment_change_name_meter_users' })
+        Users: User[];
 }

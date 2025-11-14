@@ -29,6 +29,9 @@ import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, Primary
     @Column({default: true})
     IsActive: boolean;
 
+    @Column({default: false})
+    CanComment: boolean;
+
     //Relations
     @ManyToOne(()=> User,(user)=> user.RequesAvailabilityWater)
     @JoinColumn({ name: 'UserId' } )

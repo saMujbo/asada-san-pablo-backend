@@ -1,5 +1,6 @@
 import { RequestChangeMeter } from "src/request-change-meter/entities/request-change-meter.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/users/entities/user.entity";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class CommentChangeMeter {
@@ -18,4 +19,8 @@ export class CommentChangeMeter {
             @ManyToOne(()=>RequestChangeMeter,(requestChangeMeter)=>requestChangeMeter.commentChangeMeter)
             @JoinColumn({ name: 'RequestChangeMeterId' })
             requestChangeMeter: RequestChangeMeter;
+
+            @ManyToMany(() => User, (user) => user.CommentChangeMeter)
+            @JoinTable({ name: 'comment_change_meter_users' })
+            Users: User[];
 }

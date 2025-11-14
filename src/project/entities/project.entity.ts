@@ -26,6 +26,9 @@ export class Project {
     @Column({ type: 'text', nullable: true })
     SpaceOfDocument: string | null;
 
+    @Column({default: false})
+    CanComment: boolean;
+
     @Column({ type: 'text' })
     Objective: string;
 
