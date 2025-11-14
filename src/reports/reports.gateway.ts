@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 @WebSocketGateway({
   namespace: '/reports',
   cors: {
-    origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+    origin: process.env.FRONTEND_ORIGIN || 'https://redsanpbalo-frontend-abonados.vercel.app',
     credentials: true,
   },
 })
