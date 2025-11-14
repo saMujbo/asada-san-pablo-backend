@@ -33,7 +33,7 @@ export class User {
     @Column({ type: 'varchar', length: 255, nullable: true })
     ProfilePhoto: string | null;
 
-    @Column({ nullable: true })
+    @Column({ type: 'json', nullable: true })
     Nis: number[];
 
     @Column({unique:true})
