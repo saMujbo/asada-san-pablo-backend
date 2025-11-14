@@ -29,6 +29,9 @@ export class RequestChangeMeter {
     @Column({default:true})
     IsActive:boolean;
 
+    @Column({default: false})
+    CanComment: boolean;
+
     @ManyToOne(()=> User,(user)=> user.RequestChangeMeter)
     @JoinColumn({ name: 'UserId' } )
     User: User;

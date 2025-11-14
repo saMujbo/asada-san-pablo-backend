@@ -139,12 +139,17 @@ async search({
     const foundRequestChangeNameMeter = await this.requestChangeNameMeterRepo.findOne({where:{Id}});
     if(!foundRequestChangeNameMeter)  throw new NotFoundException(`Request with ${Id} not found`)
 
+    if(updateRequestChangeNameMeterDto.StateRequestId != undefined && updateRequestChangeNameMeterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestChangeNameMeterDto.StateRequestId)
-      if(!foundState){throw new NotFoundException(`state with Id ${Id} not found`)}
-      if(updateRequestChangeNameMeterDto.StateRequestId != undefined && updateRequestChangeNameMeterDto.StateRequestId != null)
-            foundRequestChangeNameMeter.StateRequest = foundState
+      if(!foundState){throw new NotFoundException(`state with Id ${updateRequestChangeNameMeterDto.StateRequestId} not found`)}
+      foundRequestChangeNameMeter.StateRequest = foundState
+    }
 
-      return await this.requestChangeNameMeterRepo.save(foundRequestChangeNameMeter);
+    if (updateRequestChangeNameMeterDto.CanComment !== undefined && updateRequestChangeNameMeterDto.CanComment !== null) {
+      foundRequestChangeNameMeter.CanComment = updateRequestChangeNameMeterDto.CanComment;
+    }
+
+    return await this.requestChangeNameMeterRepo.save(foundRequestChangeNameMeter);
   }
 
   async remove(Id: number) {

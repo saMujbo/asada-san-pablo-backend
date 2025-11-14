@@ -8,4 +8,9 @@
         @IsOptional()
         @IsInt()
         StateRequestId?: number; // opcional: si no se envía, se usa el estado por defecto
+
+        @ApiProperty()
+        @IsOptional()
+        @IsBoolean()
+        CanComment?: boolean;
         }

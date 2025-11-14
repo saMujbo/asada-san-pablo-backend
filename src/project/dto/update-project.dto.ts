@@ -64,4 +64,9 @@ export class UpdateProjectDto {
     @IsBoolean()
     @IsOptional()
     IsActive?: boolean;
+
+    @ApiPropertyOptional()
+    @IsBoolean()
+    @IsOptional()
+    CanComment?: boolean;
 }

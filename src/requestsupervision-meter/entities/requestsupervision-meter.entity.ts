@@ -30,6 +30,9 @@ export class RequestSupervisionMeter {
 
     @Column({default: true})
     IsActive: boolean;
+
+    @Column({default: false})
+    CanComment: boolean;
     
     //Relations
     

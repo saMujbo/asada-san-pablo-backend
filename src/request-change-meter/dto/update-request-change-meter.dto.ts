@@ -1,7 +1,7 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CreateRequestChangeMeterDto } from './create-request-change-meter.dto';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString, IsInt, IsOptional } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsString, IsInt, IsOptional } from 'class-validator';
 
 export class UpdateRequestChangeMeterDto{
         @ApiProperty()
@@ -9,6 +9,11 @@ export class UpdateRequestChangeMeterDto{
         @IsInt()
         @IsOptional()
         StateRequestId: number;
+
+        @ApiProperty()
+        @IsOptional()
+        @IsBoolean()
+        CanComment?: boolean;
 }
 
 
