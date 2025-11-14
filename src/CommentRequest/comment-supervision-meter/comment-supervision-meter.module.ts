@@ -4,11 +4,13 @@ import { CommentSupervisionMeterController } from './comment-supervision-meter.c
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommentSupervisionMeter } from './entities/comment-supervision-meter.entity';
 import { RequestsupervisionMeterModule } from 'src/requestsupervision-meter/requestsupervision-meter.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports:[
   TypeOrmModule.forFeature([CommentSupervisionMeter]),
   forwardRef(() => RequestsupervisionMeterModule),
+  forwardRef(() => UsersModule),
   ],
   controllers: [CommentSupervisionMeterController],
   providers: [CommentSupervisionMeterService],

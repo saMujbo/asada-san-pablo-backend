@@ -19,4 +19,8 @@ export class CommentSupervisionMeter {
         @ManyToOne(()=>RequestSupervisionMeter,(RSP)=>RSP)
         @JoinColumn({ name: 'RequestSupervisionMeterId' })
         requestsupervisionMeter: RequestSupervisionMeter;
+
+        @ManyToOne(() => User, (user) => user.CommentsSupervisionMeter)
+        @JoinColumn({ name: 'UserId' })
+        User: User;
 }

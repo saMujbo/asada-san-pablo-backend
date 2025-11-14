@@ -22,4 +22,8 @@ export class CommentChangeNameMeter {
     )
     @JoinColumn({ name: 'RequestChangeNameMeterId' })
     requestChangeNameMeter: RequestChangeNameMeter;
+
+    @ManyToOne(() => User, (user) => user.CommentsChangeNameMeter)
+    @JoinColumn({ name: 'UserId' })
+    User: User;
 }

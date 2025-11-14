@@ -16,7 +16,8 @@ export class CommentChangeMeterController {
     return this.commentService.createAdminComment(
       requestId,
       dto.Subject,
-      dto.Comment
+      dto.Comment,
+      dto.UserId
     );
   }
 

@@ -22,4 +22,8 @@ export class CommentAvailabilityWater {
     )
     @JoinColumn({ name: 'RequestAvailabilityWaterId' })
     requestAvailability: RequesAvailabilityWater;
+
+    @ManyToOne(() => User, (user) => user.CommentsAvailabilityWater)
+    @JoinColumn({ name: 'UserId' })
+    User: User;
 }

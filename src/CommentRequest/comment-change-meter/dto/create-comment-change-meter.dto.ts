@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, MaxLength } from "class-validator";
+import { Type } from "class-transformer";
+import { IsInt, IsNotEmpty, IsString, MaxLength, Min } from "class-validator";
 
 export class CreateCommentChangeMeterDto {       
         @ApiProperty({ example: 'Documento faltante' })
@@ -13,4 +14,10 @@ export class CreateCommentChangeMeterDto {
         @IsString()
         @MaxLength(2000)
         Comment: string;
+
+        @ApiProperty()
+        @Type(() => Number)
+        @IsInt() @Min(1)
+        @IsNotEmpty()
+        UserId: number;
 }

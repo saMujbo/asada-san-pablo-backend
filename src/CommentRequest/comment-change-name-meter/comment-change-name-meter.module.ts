@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommentChangeNameMeter } from './entities/comment-change-name-meter.entity';
 import { RequestChangeNameMeterFileModule } from 'src/request-change-name-meter-file/request-change-name-meter-file.module';
 import { RequestChangeNameMeterModule } from 'src/request-change-name-meter/request-change-name-meter.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([CommentChangeNameMeter]),
-          forwardRef(() => RequestChangeNameMeterModule),
-          forwardRef(() => RequestChangeNameMeterFileModule)
+      forwardRef(() => RequestChangeNameMeterModule),
+      forwardRef(() => RequestChangeNameMeterFileModule),
+      forwardRef(() => UsersModule)
   ],
   controllers: [CommentChangeNameMeterController],
   providers: [CommentChangeNameMeterService],

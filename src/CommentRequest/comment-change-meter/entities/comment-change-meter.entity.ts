@@ -19,4 +19,8 @@ export class CommentChangeMeter {
     @ManyToOne(()=>RequestChangeMeter,(requestChangeMeter)=>requestChangeMeter.commentChangeMeter)
     @JoinColumn({ name: 'RequestChangeMeterId' })
     requestChangeMeter: RequestChangeMeter;
+
+    @ManyToOne(() => User, (user) => user.CommentsChangeMeter)
+    @JoinColumn({ name: 'UserId' })
+    User: User;
 }

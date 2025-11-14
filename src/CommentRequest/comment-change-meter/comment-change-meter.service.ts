@@ -6,6 +6,7 @@ import { RequestChangeMeter } from 'src/request-change-meter/entities/request-ch
 import { RequestChangeMeterService } from 'src/request-change-meter/request-change-meter.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class CommentChangeMeterService {
@@ -16,29 +17,31 @@ export class CommentChangeMeterService {
     @Inject(forwardRef(() => RequestChangeMeterService))
     private readonly requestService: RequestChangeMeterService,
     
+    @Inject(forwardRef(() => UsersService))
+    private readonly userSv: UsersService,
+    
     // @Inject(forwardRef(() => RequestAvailabilityWaterFileService))
     // private readonly fileService: RequestAvailabilityWaterFileService,
   ) {}
 
   /**
    * 1. ADMIN: Crear comentario SIN archivos
-   * Solo necesita: requestId, Subject, Comment
+   * Solo necesita: requestId, Subject, Comment, userId
    */
   async createAdminComment(
     requestId: number,
     subject: string,
-    comment: string
+    comment: string,
+    userId: number,
   ) {
     const request = await this.requestService.findOne(requestId);
-    
-    if (!request) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
+    const user = await this.userSv.findOne(userId);
 
     const newComment = this.commentRepo.create({
       Subject: subject,
       Comment: comment,
       requestChangeMeter: request,
+      User: user,
     });
 
     return await this.commentRepo.save(newComment);
@@ -56,7 +59,7 @@ export class CommentChangeMeterService {
 
     return await this.commentRepo.find({
       where: { requestChangeMeter: { Id: requestId } },
-      relations: ['requestChangeName'],
+      relations: ['requestChangeMeter', 'User'],
       order: { createdAt: 'ASC' },
     });
   }
