@@ -4,5 +4,5 @@ import { IsBoolean, IsString } from "class-validator";
 export class CreateUnitMeasureDto {
     @ApiProperty()
     @IsString() 
-    Name:string;
+    Name:string; // falta definir validaciones de tamaño y demás
 }

@@ -21,7 +21,7 @@ export class MaterialService {
     const newMaterial = await this.materialRepo.create(createMaterialDto)
 
     return await this.materialRepo.save(newMaterial)
-  }
+  } // faltan validaciones
 
   async findAll() {
     return await this.materialRepo.find({ where: { IsActive: true } });

@@ -5,5 +5,5 @@ import { IsString } from "class-validator";
 export class CreateMaterialDto {
         @ApiProperty()
         @IsString()
-        Name:string;
+        Name:string; // falta definir validaciones 
 }

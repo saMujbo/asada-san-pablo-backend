@@ -8,7 +8,7 @@ export class Comment {
     Id: number;
 
     @Column()
-    Message: string;
+    Message: string; // falta definir tipos de datos 
 
     @Column({
     name: 'created_at',

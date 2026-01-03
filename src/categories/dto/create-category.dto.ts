@@ -5,10 +5,10 @@ export class CreateCategoryDto {
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    Name: string;
+    Name: string; // faltan validaciones
 
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    Description: string;
+    Description: string; // faltan validaciones 
 }

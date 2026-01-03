@@ -20,7 +20,7 @@ export class UnitMeasureService {
   async create(createUnitMeasureDto: CreateUnitMeasureDto) {
     const newUnit = await this.unitRepo.create(createUnitMeasureDto);
     return await this.unitRepo.save(newUnit);
-  }
+  } // falta definir validacion de repetidos y errores 
 
   async findAll() {
     return await this.unitRepo.find({ where: { IsActive: true } });

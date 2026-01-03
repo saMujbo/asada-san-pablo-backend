@@ -9,7 +9,7 @@ export class Material {
     Id: number;
 
     @Column()
-    Name: string;
+    Name: string; // falta definir que tipo de dato es 
 
     @Column({ default: true })
     IsActive: boolean;

@@ -8,11 +8,11 @@ export class Category {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column({ unique: true })
+    @Column({ unique: true }) // faltan definir tipos de dato
     Name: string;
 
     @Column()
-    Description: string;
+    Description: string; // faltan definir tipos de dato
 
     @Column({ default: true })
     IsActive: boolean;

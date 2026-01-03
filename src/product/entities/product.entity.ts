@@ -26,7 +26,7 @@ export class Product {
     Type: string;
 
     @Column()
-    Observation: string;
+    Observation: string;//faltan agregar tipos de datos 
 
     @Column({ default: true })
     IsActive: boolean;
