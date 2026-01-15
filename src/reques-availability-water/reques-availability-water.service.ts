@@ -40,7 +40,6 @@ export class RequesAvailabilityWaterService {
       .where('LOWER(stateRequest.Name) IN (:...states)', { states: ['aprobado', 'aprobada'] })
       .andWhere('req.IsActive = :isActive', { isActive: true })
       .getCount();
-
     return approvedState;
   }
   
@@ -137,16 +136,16 @@ export class RequesAvailabilityWaterService {
     const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({ where: { Id } });
     if(!foundRequestAvailabilityWater) throw new NotFoundException(`RequesAvailabilityWater with ${Id} not found`)
 
-    if(updateRequesAvailabilityWaterDto.StateRequestId != undefined && updateRequesAvailabilityWaterDto.StateRequestId != null) {
+    if(updateRequesAvailabilityWaterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequesAvailabilityWaterDto.StateRequestId)
       if(!foundState){throw new NotFoundException(`state with Id ${updateRequesAvailabilityWaterDto.StateRequestId} not found`)}
       foundRequestAvailabilityWater.StateRequest = foundState
     }
 
-    if (updateRequesAvailabilityWaterDto.CanComment !== undefined && updateRequesAvailabilityWaterDto.CanComment !== null) {
-      foundRequestAvailabilityWater.CanComment = updateRequesAvailabilityWaterDto.CanComment;
-    }
-
+    const patch: Partial<typeof foundRequestAvailabilityWater>={};
+    if (updateRequesAvailabilityWaterDto.CanComment !== undefined) patch.CanComment = updateRequesAvailabilityWaterDto.CanComment;
+        this.requesAvailabilityWaterRepository.merge(foundRequestAvailabilityWater, patch);  
+    
     return await this.requesAvailabilityWaterRepository.save(foundRequestAvailabilityWater)
   }
 

@@ -6,7 +6,6 @@ import { RequestAssociated } from './entities/request-associated.entity';
 import { Repository } from 'typeorm';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
-import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestAssociatedPagination } from './dto/pagination-request-associated.dtp';
 
 type MonthlyPoint = { year: string; month: string; count: string };
@@ -18,7 +17,7 @@ export class RequestAssociatedService {
     @Inject(forwardRef(()=> StateRequestService))
     private readonly stateRequestSv: StateRequestService,
     @Inject(forwardRef(()=> UsersService))
-    private readonly userSerive:UsersService
+    private readonly userSv:UsersService
     
   ){}
 
@@ -45,38 +44,13 @@ export class RequestAssociatedService {
   }
 
   async create(createRequestAssociatedDto: CreateRequestAssociatedDto) {
-  if (!createRequestAssociatedDto.IDcard) {
-    throw new BadRequestException('Debe ingresar una cédula válida.');
-  }
-
-  const user = await this.userSerive.findByIdCardRaw(createRequestAssociatedDto.IDcard); // método que vimos antes
-
-  if (!user) {
-    throw new BadRequestException('No se encontró ningún usuario con esa cédula.');
-  }
-
-  const isAbonado = user.Roles?.some(
-    (r) => r.Rolname?.toUpperCase() === 'ABONADO'
-  );
-  if (!isAbonado) {
-    throw new BadRequestException('El usuario no tiene rol ABONADO.');
-  }
-
-  const state =  await this.stateRequestSv.findDefaultState();
-
-  if (!state) {
-    throw new BadRequestException('No se encontró un estado válido para la solicitud.');
-  }
-
+  const UserSv = await this.userSv.findOne(createRequestAssociatedDto.UserId);
+  const StateRequestSv = await this.stateRequestSv.findDefaultState();
   const request = this.requestAssociatedRepo.create({
-    IDcard:createRequestAssociatedDto.IDcard,
-    Name: createRequestAssociatedDto.Name,
-    Justificattion:createRequestAssociatedDto.Justification,
-    Surname1: createRequestAssociatedDto.Surname1,
-    Surname2: createRequestAssociatedDto.Surname2,
+    Justification:createRequestAssociatedDto.Justification,
     NIS:createRequestAssociatedDto.NIS,
-    User: user,
-    StateRequest: state,
+    User: UserSv,
+    StateRequest: StateRequestSv,
   });
 
   return await this.requestAssociatedRepo.save(request);
@@ -86,7 +60,8 @@ export class RequestAssociatedService {
     return await this.requestAssociatedRepo.find({
       where:{IsActive:true},relations:[
         'User',
-        'StateRequest'
+        'StateRequest',
+        'RequestAssociatedFile',
       ]
     })
   }
@@ -111,8 +86,7 @@ async search({
     .skip(skip)
     .take(take);
 
-  // isActive: si viene State en el search general, conviértelo;
-  // si viene userId (me/search) y no se especificó nada, por defecto solo activos.
+
   let isActiveFilter: boolean | undefined = undefined;
   if (State !== undefined && State !== null && State !== '') {
     isActiveFilter = typeof State === 'string' ? State.toLowerCase() === 'true' : !!State;
@@ -162,20 +136,17 @@ async search({
     const foundRequestAssociated = await this.requestAssociatedRepo.findOne({where:{Id}})
     if(!foundRequestAssociated){throw new NotFoundException(`Request with ${Id} not found`) }
 
-    if (updateRequestAssociatedDto.StateRequestId !== undefined && updateRequestAssociatedDto.StateRequestId !== null) {
+    if (updateRequestAssociatedDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestAssociatedDto.StateRequestId);
-      if (!foundState) {
-        throw new NotFoundException(`state with Id ${updateRequestAssociatedDto.StateRequestId} not found`);
-      }
+      if (!foundState) {throw new NotFoundException(`state with Id ${updateRequestAssociatedDto.StateRequestId} not found`);}
       foundRequestAssociated.StateRequest = foundState;
     }
 
-    if (updateRequestAssociatedDto.CanComment !== undefined && updateRequestAssociatedDto.CanComment !== null) {
-      foundRequestAssociated.CanComment = updateRequestAssociatedDto.CanComment;
-    }
-
-    await this.requestAssociatedRepo.save(foundRequestAssociated);
-    return foundRequestAssociated;
+    const patch: Partial<typeof foundRequestAssociated> = {}
+    if (updateRequestAssociatedDto.CanComment !== undefined) patch.CanComment = updateRequestAssociatedDto.CanComment
+        this.requestAssociatedRepo.merge(foundRequestAssociated, patch);
+    
+    return await this.requestAssociatedRepo.save(foundRequestAssociated);
   }
 
   async remove(Id: number) {

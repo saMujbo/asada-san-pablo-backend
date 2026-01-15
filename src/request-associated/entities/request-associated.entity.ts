@@ -10,9 +10,9 @@ export class RequestAssociated {
     @PrimaryGeneratedColumn()
     Id:number;
 
-    @Column({ unique: true })
-    IDcard: string;
-    
+    // @Column({ unique: true })
+    // IDcard: string;
+
     @Column({ type: 'date', nullable: false })
     Date: Date;
     
@@ -22,17 +22,9 @@ export class RequestAssociated {
           this.Date = new Date(); // TypeORM + MySQL 'date' guarda solo YYYY-MM-DD
         }
     }
-    @Column()
-    Name: string;
 
     @Column()
-    Justificattion:string;
-
-    @Column()
-    Surname1: string;
-
-    @Column()
-    Surname2: string;
+    Justification:string;
 
     @Column()
     NIS:number;

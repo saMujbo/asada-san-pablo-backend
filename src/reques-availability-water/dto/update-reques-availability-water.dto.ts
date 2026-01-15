@@ -1,5 +1,5 @@
     import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {IsBoolean, IsInt,IsOptional} from 'class-validator';
 
     export class UpdateRequestAvailabilityWaterDto {
     @ApiProperty()
@@ -12,3 +12,4 @@ import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString } from 'cla
     @IsBoolean()
     CanComment?: boolean;
     }
+
