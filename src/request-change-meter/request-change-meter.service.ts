@@ -4,14 +4,11 @@ import { UpdateRequestChangeMeterDto } from './dto/update-request-change-meter.d
 import { InjectRepository } from '@nestjs/typeorm';
 import { RequestChangeMeter } from './entities/request-change-meter.entity';
 import { Repository } from 'typeorm';
-import { create } from 'domain';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
-import { number } from 'yargs';
 import { CreateRequestChangeMeterDto } from './dto/create-request-change-meter.dto';
-import { StateRequest } from 'src/state-request/entities/state-request.entity';
-import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestChangeMeterPagination } from './dto/pagination-request-change-meter.dto';
+import { request } from 'http';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -139,18 +136,17 @@ async search({
     const foundRequestChangeMeter = await this.requestChangeMeterRepo.findOne({ where: { Id } });
     if(!foundRequestChangeMeter) throw new NotFoundException(`Request with ${Id} not found`);
       
-    if(updateRequestChangeMeterDto.StateRequestId != undefined && updateRequestChangeMeterDto.StateRequestId != null) {
+    if(updateRequestChangeMeterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestChangeMeterDto.StateRequestId)
       if(!foundState){throw new NotFoundException(`state with Id ${updateRequestChangeMeterDto.StateRequestId} not found`)}
       foundRequestChangeMeter.StateRequest = foundState;
     }
 
-    if (updateRequestChangeMeterDto.CanComment !== undefined && updateRequestChangeMeterDto.CanComment !== null) {
-      foundRequestChangeMeter.CanComment = updateRequestChangeMeterDto.CanComment;
-    }
-
-    await this.requestChangeMeterRepo.save(foundRequestChangeMeter);
-    return foundRequestChangeMeter;
+    const patch: Partial<typeof foundRequestChangeMeter> ={};
+    if (updateRequestChangeMeterDto.CanComment !== undefined) patch.CanComment =updateRequestChangeMeterDto.CanComment 
+      this.requestChangeMeterRepo.merge(foundRequestChangeMeter, patch);
+  
+      return await this.requestChangeMeterRepo.save(foundRequestChangeMeter);
   }
 
   async remove(Id: number) {

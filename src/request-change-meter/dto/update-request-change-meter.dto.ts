@@ -1,7 +1,6 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { CreateRequestChangeMeterDto } from './create-request-change-meter.dto';
+import { ApiProperty} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNotEmpty, IsString, IsInt, IsOptional } from 'class-validator';
+import { IsBoolean,IsInt, IsOptional } from 'class-validator';
 
 export class UpdateRequestChangeMeterDto{
         @ApiProperty()

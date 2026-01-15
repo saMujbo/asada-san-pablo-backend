@@ -1,11 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsNotEmpty, IsString, Matches, IsOptional, IsBoolean, IsInt, IsPositive } from "class-validator";
+import { TrimAndNullify } from "src/utils/validation.utils";
 
     export class CreateRequestChangeMeterDto {
     @ApiProperty()
     @IsNotEmpty()
     @IsString()
+    @TrimAndNullify()
     Location: string;
 
     @ApiProperty()
@@ -16,6 +18,7 @@ import { IsNotEmpty, IsString, Matches, IsOptional, IsBoolean, IsInt, IsPositive
     @ApiProperty()
     @IsNotEmpty()
     @IsString()
+    @TrimAndNullify()
     Justification: string;
 
     // Relaciones (FK)

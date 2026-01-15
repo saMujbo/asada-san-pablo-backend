@@ -137,18 +137,16 @@ async search({
     const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({where:{Id, IsActive:true}}) 
     if(!foundRequestSupervision) throw new NotFoundException(`Request with ${Id} not found`)
   
-    if(updateRequestsupervisionMeterDto.StateRequestId != undefined && updateRequestsupervisionMeterDto.StateRequestId != null) {
+    if(updateRequestsupervisionMeterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestsupervisionMeterDto.StateRequestId)
       if(!foundState){throw new NotFoundException(`state with Id ${updateRequestsupervisionMeterDto.StateRequestId} not found`)}
       foundRequestSupervision.StateRequest = foundState
     }
-
-    if (updateRequestsupervisionMeterDto.CanComment !== undefined && updateRequestsupervisionMeterDto.CanComment !== null) {
-      foundRequestSupervision.CanComment = updateRequestsupervisionMeterDto.CanComment;
+    const patch: Partial<typeof foundRequestSupervision>= {};
+    if (updateRequestsupervisionMeterDto.CanComment !== undefined) patch.CanComment = updateRequestsupervisionMeterDto.CanComment
+        this.requestSupervisionMeterRepo.merge(foundRequestSupervision, patch);
+          return await this.requestSupervisionMeterRepo.save(foundRequestSupervision)
     }
-
-    return await this.requestSupervisionMeterRepo.save(foundRequestSupervision)
-}
 
   async remove(Id: number) {
     const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({ where: { Id } })
