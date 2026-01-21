@@ -16,7 +16,9 @@ export class CommentSupervisionMeter {
         @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
         createdAt: Date;
 
-        @ManyToOne(()=>RequestSupervisionMeter,(RSP)=>RSP)
+        @ManyToOne(()=>RequestSupervisionMeter,
+        (requestSupervisionMeter)=>requestSupervisionMeter.commentSupervisionMeter)
+
         @JoinColumn({ name: 'RequestSupervisionMeterId' })
         requestsupervisionMeter: RequestSupervisionMeter;
 

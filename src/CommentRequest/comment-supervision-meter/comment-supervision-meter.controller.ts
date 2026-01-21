@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body,Param, ParseIntPipe,} from '@nestjs/common';
 import { CommentSupervisionMeterService } from './comment-supervision-meter.service';
 import { CreateCommentSupervisionMeterDto } from './dto/create-comment-supervision-meter.dto';
-import { UpdateCommentSupervisionMeterDto } from './dto/update-comment-supervision-meter.dto';
+
 
 @Controller('comment-supervision-meter')
 export class CommentSupervisionMeterController {
@@ -11,7 +11,7 @@ export class CommentSupervisionMeterController {
 
   @Post('admin/:requestId')
   async createAdminComment(
-    @Param('requestId') requestId: number,
+    @Param('requestId', ParseIntPipe) requestId: number,
     @Body() dto: CreateCommentSupervisionMeterDto,
   ) {
     return this.commentService.createAdminComment(
@@ -23,7 +23,7 @@ export class CommentSupervisionMeterController {
   }
 
   @Get('by-request/:requestId')
-  async findByRequest(@Param('requestId') requestId: number) {
+  async findByRequest(@Param('requestId',ParseIntPipe) requestId: number) {
     return this.commentService.findByRequestId(requestId);
   }
   @Get('All')
