@@ -1,5 +1,5 @@
 
-import { ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsDateString,IsEmail,IsInt,IsNotEmpty,IsOptional, IsString, Length, Matches} from 'class-validator';
+import { ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsDateString,IsEmail,IsInt,IsNotEmpty,IsOptional, IsString, Length, Matches, MaxLength} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { toDateOnly } from 'src/utils/ToDateOnly';
@@ -29,6 +29,7 @@ export class UpdateUserDto{
 
         @ApiProperty()
         @IsString()
+        @MaxLength(255)
         @IsOptional()
         Address: string;
         
