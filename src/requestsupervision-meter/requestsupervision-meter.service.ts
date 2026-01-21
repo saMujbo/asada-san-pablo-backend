@@ -6,7 +6,6 @@ import { RequestSupervisionMeter } from './entities/requestsupervision-meter.ent
 import { Repository } from 'typeorm';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
-import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestSupervisionPagination } from './dto/pagination-requesSupervisiom-meter.tdo';
 
 type MonthlyPoint = { year: string; month: string; count: string };
@@ -124,14 +123,22 @@ async search({
   };
 }
 
-  async findOne(Id: number) {
-    const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({
-      where:{IsActive:true},relations:[
-        'StateRequest',
-        'User',]});
-      if(!foundRequestSupervision)throw new NotFoundException(`Request with ${Id} not foun`)
-    return foundRequestSupervision;
+async findOne(Id: number) {
+  const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({
+    where: { 
+      Id: Id,           
+      IsActive: true   
+    },
+    relations: [
+      'StateRequest',
+      'User',
+    ]
+  });
+  if (!foundRequestSupervision) {
+    throw new NotFoundException(`Request with ID ${Id} not found`);
   }
+  return foundRequestSupervision;
+}
 
   async update(Id: number, updateRequestsupervisionMeterDto: UpdateRequestsupervisionMeterDto) {
     const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({where:{Id, IsActive:true}}) 

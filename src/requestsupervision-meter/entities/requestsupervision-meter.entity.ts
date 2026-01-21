@@ -44,6 +44,7 @@ export class RequestSupervisionMeter {
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 
-    @OneToMany(()=>CommentSupervisionMeter,(commentSupervisionMeter)=>commentSupervisionMeter.requestsupervisionMeter)
-    commentSupervisionMeter: CommentSupervisionMeter;
+    @OneToMany(()=>CommentSupervisionMeter,(commentSupervisionMeter)=>commentSupervisionMeter.requestsupervisionMeter,
+    {cascade:true})
+    commentSupervisionMeter: CommentSupervisionMeter[];
 }
