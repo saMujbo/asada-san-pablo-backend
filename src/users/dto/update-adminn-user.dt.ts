@@ -12,6 +12,7 @@
     ArrayMinSize,
     IsInt,
     IsBoolean,
+    MaxLength,
     } from 'class-validator';
     import { Role } from 'src/roles/entities/role.entity';
     import { toDateOnly } from 'src/utils/ToDateOnly';
@@ -62,6 +63,7 @@
 
     @ApiProperty()
     @IsString()
+    @MaxLength(255)
     Address: string;
     
     @ApiPropertyOptional({ type: [Number], description: 'IDs de roles' })
