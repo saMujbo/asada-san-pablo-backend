@@ -7,14 +7,12 @@ import { ForgotPassword } from 'src/auth/dto/forgotPassword-auth.dto';
 import { RolesService } from 'src/roles/roles.service';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { string } from 'yargs';
 import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { UpdateEmailDto } from './dto/updateEmail-user';
-import { use } from 'passport';
 import { changeState } from 'src/utils/changeState';
 import { UpdateMeDto } from './dto/updateMeDto';
 import { PaginationDto } from './dto/pagination.dto';
-import { AdminCreateUserDto } from './dto/admin-user.dto';
+import { In } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -113,27 +111,55 @@ export class UsersService {
   }
 
 
-  async update(Id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.userRepo.findOne({ where:{ Id } });
+async update(Id: number, dto: UpdateUserDto) {
+  const user = await this.userRepo.findOne({
+    where: { Id },
+    relations: ['Roles'],
+  });
 
-    if (!user) {throw new ConflictException(`User with Id ${Id} not found`);}
+  if (!user) {
+    throw new NotFoundException(`User with Id ${Id} not found`);
+  }
 
-    const { roleIds, ...rest } = updateUserDto;
+  const {
+    Email,
+    PhoneNumber,
+    Address,
+    Birthdate,
+    IsActive,
+    Nis,
+    roleIds,
+  } = dto;
 
-    // 2) Roles a asignar
-    const roles = roleIds?.length
-      ? await this.rolesService.findAllByIDs(roleIds)
-      : [await this.rolesService.findDefaultRole()];
+  // Campos simples
+  if (Email !== undefined) user.Email = Email;
+  if (PhoneNumber !== undefined) user.PhoneNumber = PhoneNumber;
+  if (Address !== undefined) user.Address = Address;
+  if (Birthdate !== undefined) user.Birthdate = Birthdate as any;
+  if (IsActive !== undefined) user.IsActive = IsActive;
+  if (Nis !== undefined) user.Nis = Nis as any;
 
-    if(updateUserDto.Nis !== undefined && updateUserDto.Nis != null) user.Nis = updateUserDto.Nis;
-    if(updateUserDto.Email !== undefined && updateUserDto.Email != null && updateUserDto.Email !== '') user.Email = updateUserDto.Email;
-    if(updateUserDto.PhoneNumber !== undefined && updateUserDto.PhoneNumber != null && updateUserDto.PhoneNumber !== '') user.PhoneNumber = updateUserDto.PhoneNumber;
-    if(updateUserDto.Address !== undefined && updateUserDto.Address != null && updateUserDto.Address !== '') user.Address = updateUserDto.Address;
-    if(updateUserDto.Birthdate !== undefined) user.Birthdate = updateUserDto.Birthdate as any;
-    if(updateUserDto.IsActive !== undefined && updateUserDto.IsActive != null) user.IsActive = updateUserDto.IsActive;
+  // Roles (solo si vienen)
+  if (roleIds !== undefined) {
+    const roles = await Promise.all(
+      roleIds.map(async (id) => {
+        const role = await this.rolesService.findOne(id);
+        if (!role) {
+          throw new NotFoundException(`Role with Id ${id} not found`);
+        }
+        return role;
+      }),
+    );
     user.Roles = roles;
-    
-    return await this.userRepo.save(user);
+  }
+
+  const saved = await this.userRepo.save(user);
+
+  // devolver con relaciones
+  return await this.userRepo.findOne({
+    where: { Id: saved.Id },
+    relations: ['Roles'],
+  });
 }
 
   async remove(Id: number) {

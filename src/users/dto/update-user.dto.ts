@@ -1,57 +1,76 @@
+import {
+        ArrayMinSize,
+        ArrayUnique,
+        IsArray,
+        IsBoolean,
+        IsEmail,
+        IsInt,
+        IsNotEmpty,
+        IsOptional,
+        IsString,
+        Matches,
+        MaxLength,
+        } from 'class-validator';
+        import {ApiPropertyOptional } from '@nestjs/swagger';
+        import { Transform, Type } from 'class-transformer';
+        import { toDateOnly } from 'src/utils/ToDateOnly';
+        import { TrimAndNullify } from 'src/utils/validation.utils';
 
-import { ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsDateString,IsEmail,IsInt,IsNotEmpty,IsOptional, IsString, Length, Matches, MaxLength} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { toDateOnly } from 'src/utils/ToDateOnly';
-export class UpdateUserDto{
-        @ApiProperty()
+        export class UpdateUserDto {
+        @ApiPropertyOptional()
         @IsOptional()
         @IsArray()
         Nis?: number[];
 
-        @ApiProperty()
+        @ApiPropertyOptional()
+        @IsOptional()
         @IsEmail()
-        @IsOptional()
-        Email: string;
+        @TrimAndNullify()
+        @IsNotEmpty()
+        Email?: string;
 
-        @ApiProperty()
+        @ApiPropertyOptional()
+        @IsOptional()
         @IsString()
-        @IsOptional()
-        PhoneNumber: string;
+        @TrimAndNullify()
+        @IsNotEmpty()
+        PhoneNumber?: string;
 
-        @ApiProperty()
+        @ApiPropertyOptional()
+        @IsOptional()
         @Transform(({ value }) => toDateOnly(value))
         @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-                message: 'Birthdate debe ser YYYY-MM-DD',
+        message: 'Birthdate debe ser YYYY-MM-DD',
         })
-        @IsOptional()
-        Birthdate: string;
+        @TrimAndNullify()
+        @IsNotEmpty()
+        Birthdate?: string;
 
-        @ApiProperty()
+        @ApiPropertyOptional()
+        @IsOptional()
         @IsString()
         @MaxLength(255)
+        @TrimAndNullify()
+        @IsNotEmpty()
+        Address?: string;
+
+        @ApiPropertyOptional()
         @IsOptional()
-        Address: string;
-        
-        @ApiProperty()
         @IsBoolean()
-        @IsOptional()
         IsActive?: boolean;
 
         @ApiPropertyOptional({ type: [Number], description: 'IDs de roles' })
         @IsOptional()
+        @Transform(({ value }) => {
+        if (typeof value === 'string') {
+        return value.split(',').map((v) => Number(v.trim())).filter((v) => !Number.isNaN(v));
+        }
+        return value;
+        })
         @IsArray()
         @ArrayUnique()
         @ArrayMinSize(1)
-        @Transform(({ value }) => {
-                // Permite recibir "1,2,3" o [1,2,3]
-                if (typeof value === 'string') {
-                return value.split(',').map(v => Number(v.trim())).filter(v => !Number.isNaN(v));
-                }
-                return value;
-        })
         @Type(() => Number)
         @IsInt({ each: true })
         roleIds?: number[];
 }
-
