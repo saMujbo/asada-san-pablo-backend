@@ -3,7 +3,6 @@
     import {
     IsString,
     IsEmail,
-    IsDateString,
     IsOptional,
     IsNotEmpty,
     Matches,
@@ -14,27 +13,31 @@
     IsBoolean,
     MaxLength,
     } from 'class-validator';
-    import { Role } from 'src/roles/entities/role.entity';
     import { toDateOnly } from 'src/utils/ToDateOnly';
+import { TrimAndNullify } from 'src/utils/validation.utils';
 
     export class AdminCreateUserDto {
     @ApiProperty()
     @IsString()
+    @TrimAndNullify()
     @IsNotEmpty()
     IDcard: string;
 
     @ApiProperty()
     @IsString()
+    @TrimAndNullify()
     @IsNotEmpty()
     Name: string;
 
     @ApiProperty()
     @IsString()
+    @TrimAndNullify()
     @IsNotEmpty()
     Surname1: string;
 
     @ApiProperty()
     @IsString()
+    @TrimAndNullify()
     @IsNotEmpty()
     Surname2: string;
     
@@ -45,11 +48,13 @@
 
     @ApiProperty()
     @IsEmail()
+    @TrimAndNullify()
     @IsNotEmpty()
     Email: string;
 
     @ApiProperty()
     @IsString()
+    @TrimAndNullify()
     @IsNotEmpty()
     PhoneNumber: string;
 
@@ -63,6 +68,8 @@
 
     @ApiProperty()
     @IsString()
+    @TrimAndNullify()
+    @IsNotEmpty()
     @MaxLength(255)
     Address: string;
     
