@@ -152,7 +152,7 @@ async search({
   async remove(Id: number) {
     const foundRequestAssociated = await this.requestAssociatedRepo.findOne({ where: { Id } })
     if (!foundRequestAssociated) {
-      throw new NotFoundException(`Requestwith Id ${Id} not found`);
+      throw new NotFoundException(`Request with Id ${Id} not found`);
     }
     foundRequestAssociated.IsActive = false;
     

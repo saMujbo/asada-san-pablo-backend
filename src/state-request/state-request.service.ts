@@ -122,7 +122,7 @@ export class StateRequestService {
     this.requesChangeMeterSv.isOnRequestState(Id)||
     this.requesSupervisionMeterSv.isOnRequestState(Id) ||
     this.requestChangeNameMeterSv.isOnRequestChangeNameMeter(Id) ||
-    this.RequesAvailabilityWaterSv.isOnRequestState(Id)
+    this.requestAssociateService.isOnRequestState(Id)
 
     if(hasRequest){
       throw new BadGatewayException(
