@@ -1,8 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsString } from "class-validator";
+import { IsNotEmpty, IsString } from "class-validator";
+import { TrimAndNullify } from "src/utils/validation.utils";
 
 export class CreateUnitMeasureDto {
     @ApiProperty()
-    @IsString() 
-    Name:string; // falta definir validaciones de tamaño y demás
+    @TrimAndNullify()
+    @IsNotEmpty()
+    @IsString()
+    Name:string;
 }

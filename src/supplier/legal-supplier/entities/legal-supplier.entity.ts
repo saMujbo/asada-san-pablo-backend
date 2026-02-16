@@ -1,4 +1,4 @@
-import { AgentSupplier } from 'src/agent_supplier/entities/agent_supplier.entity';
+import { AgentSupplier } from 'src/supplier/legal-supplier/agent_supplier/entities/agent_supplier.entity';
 import { Product } from 'src/product/entities/product.entity';
 import { Supplier } from 'src/supplier/entities/supplier.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Index, OneToOne, JoinColumn } from 'typeorm';
@@ -15,7 +15,7 @@ export class LegalSupplier {
     @JoinColumn({ name: 'supplierId' })
     Supplier: Supplier;
 
-    @Column({ type: 'varchar', length: 160, nullable: true })
+    @Column({ type: 'varchar', length: 255, nullable: true })
     WebSite?: string;
 
     // 1 -> N products

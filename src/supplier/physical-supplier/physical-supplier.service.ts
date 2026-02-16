@@ -7,6 +7,7 @@ import { Repository, DataSource } from 'typeorm';
 import { ProductService } from 'src/product/product.service';
 import { PhysicalSupplierPaginationDto } from './dto/pagination-physical-supplier.dto';
 import { Supplier, ProviderType } from 'src/supplier/entities/supplier.entity';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 @Injectable()
 export class PhysicalSupplierService {
@@ -130,27 +131,23 @@ export class PhysicalSupplierService {
       );
     }
     
-    if (updatePhysicalSupplierDto.Name !== undefined && updatePhysicalSupplierDto.Name != null 
-      && updatePhysicalSupplierDto.Name!=='') 
-        foundSupplier.Supplier.Name = updatePhysicalSupplierDto.Name;
-    if (updatePhysicalSupplierDto.Surname1 !== undefined && updatePhysicalSupplierDto.Surname1 != null 
-      && updatePhysicalSupplierDto.Surname1!=='') 
-        foundSupplier.Surname1 = updatePhysicalSupplierDto.Surname1;
-    if (updatePhysicalSupplierDto.Surname2 !== undefined && updatePhysicalSupplierDto.Surname2 != null 
-      && updatePhysicalSupplierDto.Surname2!=='') 
-        foundSupplier.Surname2 = updatePhysicalSupplierDto.Surname2;
-    if (updatePhysicalSupplierDto.Email !== undefined && updatePhysicalSupplierDto.Email != null 
-      && updatePhysicalSupplierDto.Email!=='') 
-        foundSupplier.Supplier.Email = updatePhysicalSupplierDto.Email;
-    if (updatePhysicalSupplierDto.PhoneNumber !== undefined && updatePhysicalSupplierDto.PhoneNumber != null 
-      && updatePhysicalSupplierDto.PhoneNumber!=='') 
-        foundSupplier.Supplier.PhoneNumber = updatePhysicalSupplierDto.PhoneNumber;
-    if (updatePhysicalSupplierDto.Location !== undefined && updatePhysicalSupplierDto.Location != null 
-      && updatePhysicalSupplierDto.Location!=='') 
-        foundSupplier.Supplier.Location = updatePhysicalSupplierDto.Location;
-    if (updatePhysicalSupplierDto.IsActive !== undefined && updatePhysicalSupplierDto.IsActive != null) 
-        foundSupplier.Supplier.IsActive = updatePhysicalSupplierDto.IsActive;
-  
+    const { 
+      Name, Email, PhoneNumber, Location, IsActive, IDcard,
+      Surname1, Surname2
+    } = updatePhysicalSupplierDto;
+
+    // Aplicar updates de Supplier
+    applyDefinedFields(foundSupplier.Supplier, {
+      Name, Email, PhoneNumber, Location, IsActive, IDcard
+    });
+
+    await this.supplierRepo.save(foundSupplier.Supplier);
+
+    // Aplicar updates de PhysicalSupplier
+    applyDefinedFields(foundSupplier, {
+      Surname1, Surname2
+    });
+
     return await this.physicalSupplierRepo.save(foundSupplier);
   }
 

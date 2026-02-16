@@ -7,6 +7,7 @@ import { Category } from './entities/category.entity';
 import { CategoriesPaginationDto } from './dto/categoriesPaginationDto';
 import { changeState } from 'src/utils/changeState';
 import { ProductService } from 'src/product/product.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 @Injectable()
 export class CategoriesService {
@@ -88,12 +89,11 @@ export class CategoriesService {
       );
     }
 
-    if (updateObjectCategory.Name !== undefined && updateObjectCategory.Name != null && 
-      updateObjectCategory.Name !== '') foundCategory.Name = updateObjectCategory.Name;
-    if (updateObjectCategory.Description !== undefined && updateObjectCategory.Description != null && 
-      updateObjectCategory.Description !== '') foundCategory.Description = updateObjectCategory.Description;
-    if (updateObjectCategory.IsActive !== undefined && updateObjectCategory.IsActive != null) 
-      foundCategory.IsActive = updateObjectCategory.IsActive;
+    const { Name, Description, IsActive } = updateObjectCategory;
+
+    applyDefinedFields(foundCategory, {
+      Name, Description, IsActive
+    });
 
     return await this.categoryRepo.save(foundCategory);
   }

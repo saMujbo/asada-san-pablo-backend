@@ -6,10 +6,10 @@ export class UnitMeasure {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column()// falta definir limites
+    @Column({ type: 'varchar', length: 200, unique: true })
     Name: string;
 
-    @Column({ default: true }) // de igual manera falta definir 
+    @Column({ type: 'boolean', default: true })
     IsActive: boolean;
 
     // Lado inverso: una unidad de medida se usa en muchos productos

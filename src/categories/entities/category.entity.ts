@@ -8,16 +8,15 @@ export class Category {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column({ unique: true }) // faltan definir tipos de dato
+    @Column({ type: 'varchar', length: 160, unique: true })
     Name: string;
 
-    @Column()
-    Description: string; // faltan definir tipos de dato
+    @Column({ type: 'text' })
+    Description: string;
 
-    @Column({ default: true })
+    @Column({ type: 'boolean', default: true })
     IsActive: boolean;
 
-    // Lado inverso: una categoría tiene muchos productos
     @OneToMany(() => Product, (product) => product.Category)
     Products: Product[];
 }

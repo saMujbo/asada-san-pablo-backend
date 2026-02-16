@@ -3,7 +3,7 @@ import { AgentSupplierService } from './agent_supplier.service';
 import { AgentSupplierController } from './agent_supplier.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AgentSupplier } from './entities/agent_supplier.entity';
-import { LegalSupplierModule } from 'src/legal-supplier/legal-supplier.module';
+import { LegalSupplierModule } from 'src/supplier/legal-supplier/legal-supplier.module';
 
 
 @Module({

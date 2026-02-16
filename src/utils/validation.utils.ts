@@ -23,7 +23,7 @@ export function isValidDate(value?: Date | string | null): boolean {
     return !isNaN(date.getTime());
 }
 
-import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
+// import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 /**

@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { changeState } from 'src/utils/changeState';
 import { ProductService } from 'src/product/product.service';
 import { UnitMeasurePaginationDto } from './dto/unit_measurePaginationDto';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 @Injectable()
 export class UnitMeasureService {
@@ -20,7 +21,7 @@ export class UnitMeasureService {
   async create(createUnitMeasureDto: CreateUnitMeasureDto) {
     const newUnit = await this.unitRepo.create(createUnitMeasureDto);
     return await this.unitRepo.save(newUnit);
-  } // falta definir validacion de repetidos y errores 
+  }
 
   async findAll() {
     return await this.unitRepo.find({ where: { IsActive: true } });
@@ -86,14 +87,14 @@ export class UnitMeasureService {
       );
     }
 
-    if(updateUnitMeasureDto.Name !== undefined && updateUnitMeasureDto.Name != null && updateUnitMeasureDto.Name !='')
-      updateUnit.Name = updateUnitMeasureDto.Name;
-    if (updateUnitMeasureDto.IsActive !== undefined && updateUnitMeasureDto.IsActive != null) 
-      updateUnit.IsActive = updateUnitMeasureDto.IsActive;
+    const { Name, IsActive } = updateUnitMeasureDto;
+
+    applyDefinedFields(updateUnit, {
+      Name, IsActive
+    });
 
     return await this.unitRepo.save(updateUnit);
   }
-  
 
   async remove(Id: number) {
     const unit_measure = await this.findOne(Id);
