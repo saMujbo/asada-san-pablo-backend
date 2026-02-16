@@ -153,13 +153,13 @@ async search({
   }
 
   async remove(Id: number) {
-    const foundRequestChangeNameMeterr = await this.requestChangeNameMeterRepo.findOne({ where: { Id } })
-    if (!foundRequestChangeNameMeterr) {
+    const foundRequestChangeNameMeter = await this.requestChangeNameMeterRepo.findOne({ where: { Id } })
+    if (!foundRequestChangeNameMeter) {
       throw new NotFoundException(`Request with Id ${Id} not found`);
     }
-    foundRequestChangeNameMeterr.IsActive = false;
+    foundRequestChangeNameMeter.IsActive = false;
     
-    return await this.requestChangeNameMeterRepo.save(foundRequestChangeNameMeterr); 
+    return await this.requestChangeNameMeterRepo.save(foundRequestChangeNameMeter); 
   }
 
     async updateRequestChangeNameMeter(RequestchangeNameMeter: RequestChangeNameMeter) {
