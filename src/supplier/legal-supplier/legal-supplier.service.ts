@@ -7,6 +7,7 @@ import { Repository, DataSource } from 'typeorm';
 import { ProductService } from 'src/product/product.service';
 import { LegalSupplierPaginationDto } from './dto/pagination-legal-supplier.dto';
 import { Supplier, ProviderType } from 'src/supplier/entities/supplier.entity';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 @Injectable()
 export class LegalSupplierService {
@@ -124,25 +125,24 @@ export class LegalSupplierService {
         `No se puede desactivar el proveedor ${Id} porque está asociado a al menos un producto.`
       );
     }
-  
-    if (updateLegalSupplierDto.CompanyName !== undefined && updateLegalSupplierDto.CompanyName != null 
-      && updateLegalSupplierDto.CompanyName!=='') 
-        foundSupplier.Supplier.Name = updateLegalSupplierDto.CompanyName;
-    if (updateLegalSupplierDto.Email !== undefined && updateLegalSupplierDto.Email != null 
-      && updateLegalSupplierDto.Email!=='') 
-        foundSupplier.Supplier.Email = updateLegalSupplierDto.Email;
-    if (updateLegalSupplierDto.PhoneNumber !== undefined && updateLegalSupplierDto.PhoneNumber != null 
-      && updateLegalSupplierDto.PhoneNumber!=='') 
-        foundSupplier.Supplier.PhoneNumber = updateLegalSupplierDto.PhoneNumber;
-    if (updateLegalSupplierDto.Location !== undefined && updateLegalSupplierDto.Location != null 
-      && updateLegalSupplierDto.Location!=='') 
-        foundSupplier.Supplier.Location = updateLegalSupplierDto.Location;  
-    if (updateLegalSupplierDto.WebSite !== undefined && updateLegalSupplierDto.WebSite != null 
-      &&updateLegalSupplierDto.WebSite!=='') 
-        foundSupplier.WebSite = updateLegalSupplierDto.WebSite;  
-    if (updateLegalSupplierDto.IsActive !== undefined && updateLegalSupplierDto.IsActive != null) 
-        foundSupplier.Supplier.IsActive = updateLegalSupplierDto.IsActive;
 
+    const { 
+      CompanyName, Email, PhoneNumber, Location, IsActive, 
+      LegalID, WebSite
+    } = updateLegalSupplierDto;
+
+    // Aplicar updates de Supplier
+    applyDefinedFields(foundSupplier.Supplier, {
+      Name: CompanyName, Email, PhoneNumber, Location, IsActive, IDcard: LegalID
+    });
+
+    await this.supplierRepo.save(foundSupplier.Supplier);
+
+    // Aplicar updates de LegalSupplier
+    applyDefinedFields(foundSupplier, {
+      WebSite
+    });
+    
     return await this.legalSupplierRepo.save(foundSupplier);
   }
 
@@ -163,6 +163,7 @@ export class LegalSupplierService {
       );
     }
     supplierFound.Supplier.IsActive = false;
+    
     return await this.legalSupplierRepo.save(supplierFound);
   }
 }

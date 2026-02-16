@@ -6,7 +6,7 @@ import { Repository } from 'typeorm';
 import { changeState } from 'src/utils/changeState';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AgentSupplier } from './entities/agent_supplier.entity';
-import { LegalSupplierService } from 'src/legal-supplier/legal-supplier.service';
+import { LegalSupplierService } from 'src/supplier/legal-supplier/legal-supplier.service';
 
 @Injectable()
 export class AgentSupplierService {

@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { changeState } from 'src/utils/changeState';
 import { ProductService } from 'src/product/product.service';
 import { MaterialPaginationDto } from './dto/pagination-material.st';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 @Injectable()
 export class MaterialService {
@@ -36,32 +37,32 @@ export class MaterialService {
     .skip(skip)
     .take(take);
 
-        if (name?.trim()) {
-        qb.andWhere('LOWER(material.Name) LIKE :name', {
-          name: `%${name.trim().toLowerCase()}%`,
-        });
-      }
+    if (name?.trim()) {
+      qb.andWhere('LOWER(material.Name) LIKE :name', {
+        name: `%${name.trim().toLowerCase()}%`,
+      });
+    }
 
-      // se aplica solo si viene definido (true o false)
-      if (state) {
-        qb.andWhere('material.IsActive = :state', { state });
-      }
+    // se aplica solo si viene definido (true o false)
+    if (state) {
+      qb.andWhere('material.IsActive = :state', { state });
+    }
 
-          qb.orderBy('material.Name', 'ASC');
+    qb.orderBy('material.Name', 'ASC');
 
-      const [data, total] = await qb.getManyAndCount();
+    const [data, total] = await qb.getManyAndCount();
 
-      return {
-        data,
-        meta: {
-          total,
-          page: pageNum,
-          limit: take,
-          pageCount: Math.max(1, Math.ceil(total / take)),
-          hasNextPage: pageNum * take < total,
-          hasPrevPage: pageNum > 1,
-        },
-      };
+    return {
+      data,
+      meta: {
+        total,
+        page: pageNum,
+        limit: take,
+        pageCount: Math.max(1, Math.ceil(total / take)),
+        hasNextPage: pageNum * take < total,
+        hasPrevPage: pageNum > 1,
+      },
+    };
   }
 
   async findOne(Id: number) {
@@ -85,11 +86,12 @@ export class MaterialService {
         `No se puede desactivar el material ${Id} porque está asociado a al menos un producto.`
       );
     }
-    
-    if(updateMaterialDto.Name !== undefined && updateMaterialDto.Name != null && updateMaterialDto.Name != '')
-      updateMaterial.Name = updateMaterialDto.Name;
-    if (updateMaterialDto.IsActive !== undefined && updateMaterialDto.IsActive != null) 
-      updateMaterial.IsActive = updateMaterialDto.IsActive;
+
+    const { Name, IsActive } = updateMaterialDto;
+
+    applyDefinedFields(updateMaterial, {
+      Name, IsActive
+    });
     
     return await this.materialRepo.save(updateMaterial);
   }

@@ -9,8 +9,8 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductPaginationDto } from './dto/productPaginationDto';
 import { changeState } from 'src/utils/changeState';
-import { LegalSupplierService } from 'src/legal-supplier/legal-supplier.service';
-import { PhysicalSupplierService } from 'src/physical-supplier/physical-supplier.service';
+import { LegalSupplierService } from 'src/supplier/legal-supplier/legal-supplier.service';
+import { PhysicalSupplierService } from 'src/supplier/physical-supplier/physical-supplier.service';
 import { ProductSupplier } from './entities/product-supplier.entity';
 import { SupplierService } from 'src/supplier/supplier.service';
 
