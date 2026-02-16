@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { Service } from './entities/service.entity';
@@ -68,15 +68,40 @@ export class ServiceService {
     return serviceFound;
   }
 
-  async update(id: number, updateServiceDto: UpdateServiceDto) {
-    const service = await this.findOne(id);
+async update(Id: number, updateServiceDto: UpdateServiceDto) {
+  const foundService = await this.serviceRepo.findOne({ where: { Id } });
 
-    // merge updates into the found entity then persist
-    this.serviceRepo.merge(service, updateServiceDto);
-    await this.serviceRepo.save(service);
-    
-    return service;
+  if (!foundService) {
+    throw new ConflictException(`Service with Id ${Id} not found`);
   }
+
+  if (
+    updateServiceDto.Icon !== undefined &&
+    updateServiceDto.Icon != null &&
+    updateServiceDto.Icon !== ''
+  ) {
+    foundService.Icon = updateServiceDto.Icon;
+  }
+
+  if (
+    updateServiceDto.Title !== undefined &&
+    updateServiceDto.Title != null &&
+    updateServiceDto.Title !== ''
+  ) {
+    foundService.Title = updateServiceDto.Title;
+  }
+
+  if (
+    updateServiceDto.Description !== undefined &&
+    updateServiceDto.Description != null &&
+    updateServiceDto.Description !== ''
+  ) {
+    foundService.Description = updateServiceDto.Description;
+  }
+
+  return await this.serviceRepo.save(foundService);
+}
+
 
   async remove(id: number) {
     const service = await this.findOne(id);
