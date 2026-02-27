@@ -8,7 +8,7 @@ export class Category {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column({ type: 'varchar', length: 160, unique: true })
+    @Column({ type: 'varchar', length: 160 })
     Name: string;
 
     @Column({ type: 'text' })
