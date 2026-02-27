@@ -8,7 +8,7 @@ export class Material {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column({ type: 'varchar', length: 160, unique: true })
+    @Column({ type: 'varchar', length: 160 })
     Name: string;
 
     @Column({ type: 'boolean', default: true })

@@ -6,7 +6,7 @@ export class UnitMeasure {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column({ type: 'varchar', length: 200, unique: true })
+    @Column({ type: 'varchar', length: 200 })
     Name: string;
 
     @Column({ type: 'boolean', default: true })
