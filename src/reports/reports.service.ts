@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as PDFDocument from 'pdfkit';
 import { Report } from './entities/report.entity';
 import { User } from 'src/users/entities/user.entity';
 import { CreateReportDto } from './dto/create-report.dto';
@@ -405,6 +406,118 @@ export class ReportsService {
       month: Number(r.month),
       count: Number(r.count),
     }));
+  }
+
+  /** Todos los reportes de un mes/año (para export PDF). Máx 5000. */
+  async getReportsForMonth(year: number, month: number): Promise<Report[]> {
+    const from = new Date(year, month - 1, 1, 0, 0, 0, 0);
+    const to = new Date(year, month, 0, 23, 59, 59, 999);
+    const qb = this.reportRepository
+      .createQueryBuilder('report')
+      .leftJoinAndSelect('report.User', 'user')
+      .leftJoinAndSelect('report.UserInCharge', 'userInCharge')
+      .leftJoinAndSelect('report.ReportLocation', 'reportLocation')
+      .leftJoinAndSelect('report.ReportType', 'reportType')
+      .leftJoinAndSelect('report.ReportState', 'reportState')
+      .where('report.CreatedAt >= :from', { from })
+      .andWhere('report.CreatedAt <= :to', { to })
+      .orderBy('report.CreatedAt', 'DESC')
+      .take(5000);
+    return qb.getMany();
+  }
+
+  /**
+   * Genera un PDF con: lista de reportes del mes/año y gráfico de reportes por ubicación.
+   */
+  async buildExportPdf(year: number, month: number): Promise<Buffer> {
+    const [reports, byLocation] = await Promise.all([
+      this.getReportsForMonth(year, month),
+      this.getMonthlyCountsByLocation({ year, month }),
+    ]);
+
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const title = `Reportes - ${monthNames[month - 1]} ${year}`;
+
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      doc.fontSize(18).text(title, { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(10).text(`Total de reportes: ${reports.length}`, { align: 'center' });
+      doc.moveDown(1.5);
+
+      // Tabla de reportes
+      doc.fontSize(12).text('Listado de reportes', { underline: true });
+      doc.moveDown(0.5);
+      const tableTop = doc.y;
+      const colWidths = [70, 55, 80, 70, 60, 150];
+      const headers = ['Código', 'Fecha', 'Ubicación', 'Tipo', 'Estado', 'Descripción'];
+      doc.fontSize(9).font('Helvetica-Bold');
+      let x = 50;
+      headers.forEach((h, i) => {
+        doc.text(h, x, tableTop, { width: colWidths[i], continued: false });
+        x += colWidths[i];
+      });
+      doc.moveDown(0.3);
+      doc.font('Helvetica');
+      let y = doc.y;
+
+      reports.forEach((r, idx) => {
+        if (y > 700) {
+          doc.addPage();
+          y = 50;
+          doc.font('Helvetica-Bold');
+          headers.forEach((h, i) => {
+            doc.text(h, 50 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, { width: colWidths[i] });
+          });
+          doc.font('Helvetica');
+          y += 14;
+        }
+        const row = [
+          r.Code ?? `#${r.Id}`,
+          new Date(r.CreatedAt).toLocaleDateString('es-CR'),
+          (r as any).ReportLocation?.Neighborhood ?? r.Location ?? '-',
+          (r as any).ReportType?.Name ?? '-',
+          (r as any).ReportState?.Name ?? '-',
+          (r.Description ?? '-').slice(0, 40) + ((r.Description?.length ?? 0) > 40 ? '...' : ''),
+        ];
+        x = 50;
+        row.forEach((cell, i) => {
+          doc.text(String(cell), x, y, { width: colWidths[i], ellipsis: true });
+          x += colWidths[i];
+        });
+        y += 14;
+      });
+      doc.y = y + 10;
+
+      doc.moveDown(1.5);
+      const chartTop = doc.y;
+
+      // Gráfico: reportes por ubicación
+      doc.fontSize(12).text('Reportes por ubicación (mes seleccionado)', { underline: true });
+      doc.moveDown(1);
+      const chartLeft = 50;
+      const chartW = 500;
+      const chartH = 180;
+      const maxCount = Math.max(1, ...byLocation.map((x) => x.count));
+      const barH = byLocation.length ? (chartH - 20) / byLocation.length : 0;
+      const barMaxW = chartW - 120;
+
+      byLocation.forEach((row, i) => {
+        const barY = chartTop + 30 + i * (barH + 2);
+        doc.fontSize(8).fillColor('black').text(row.neighborhood, chartLeft, barY - 2, { width: 110 });
+        const w = (row.count / maxCount) * barMaxW;
+        doc.rect(chartLeft + 115, barY - 1, w, Math.min(barH - 2, 14)).fill('#4A90D9');
+        doc.fillColor('black').text(String(row.count), chartLeft + 120 + w, barY - 2, { width: 30 });
+      });
+
+      doc.end();
+    });
   }
 
   async countAllByUser(userId: number): Promise<number> {
