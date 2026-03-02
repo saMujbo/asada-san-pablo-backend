@@ -10,6 +10,9 @@ export class ReportLocation {
   @Column({ type: 'varchar', length: 50, nullable: false })
   Neighborhood: string;
 
+  @Column({type: 'boolean', default: true})
+  IsActive: boolean;
+
   // 👇 inverso correcto: propiedad de navegación en Report
   @OneToMany(() => Report, (report) => report.ReportLocation)
   Reports: Report[];

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateReportLocationDto } from './dto/create-report-location.dto';
 import { UpdateReportLocationDto } from './dto/update-report-location.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -41,11 +41,29 @@ export class ReportLocationService {
   }
   
 
-  update(id: number, updateReportLocationDto: UpdateReportLocationDto) {
-    return `This action updates a #${id} reportLocation`;
+  async update(id: number, updateReportLocationDto: UpdateReportLocationDto) {
+    const found = await this.reportLocationRepository.findOne({ where: { Id: id } });
+    if(!found) {
+      throw new NotFoundException('La ubicación no existe');
+    }
+    if(updateReportLocationDto.Neighborhood !== undefined && updateReportLocationDto.Neighborhood != null && updateReportLocationDto.Neighborhood !== '') {
+      found.Neighborhood = updateReportLocationDto.Neighborhood.toUpperCase();
+    }
+    if(updateReportLocationDto.IsActive !== undefined && updateReportLocationDto.IsActive != null) {
+      found.IsActive = updateReportLocationDto.IsActive;
+    }
+    return await this.reportLocationRepository.save(found); 
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} reportLocation`;
+  async remove(id: number) {
+    const found = await this.reportLocationRepository.findOne({ where: { Id: id } });
+    if(!found) {
+      throw new NotFoundException('La ubicación no existe');
+    }
+    if(found.IsActive) {
+      throw new BadRequestException('La ubicación no puede ser eliminada porque tiene reportes asociados');
+    }
+    await this.reportLocationRepository.delete(id);
+    return { message: 'Ubicación eliminada correctamente' };  
   }
 }
