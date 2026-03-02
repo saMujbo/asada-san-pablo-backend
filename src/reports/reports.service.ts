@@ -343,6 +343,70 @@ export class ReportsService {
     return result;
   }
 
+  /**
+   * Devuelve [{ locationId, neighborhood, year, month, count }]
+   * - Si se pasa year y month: estadísticas SOLO para ese mes/año.
+   * - Si no: últimos `months` meses hacia atrás.
+   */
+  async getMonthlyCountsByLocation(opts: {
+    months?: number;
+    year?: number;
+    month?: number;
+  }): Promise<Array<{ locationId: number; neighborhood: string; year: number; month: number; count: number }>> {
+    const { months = 12, year, month } = opts;
+
+    const now = new Date();
+    const from = new Date(now);
+
+    if (year && month) {
+      // Primer día del mes seleccionado
+      from.setFullYear(year, month - 1, 1);
+      from.setHours(0, 0, 0, 0);
+    } else {
+      // Desde el primer día del mes N-meses-atrás
+      from.setMonth(from.getMonth() - (months - 1), 1);
+      from.setHours(0, 0, 0, 0);
+    }
+
+    const qb = this.reportRepository
+      .createQueryBuilder('r')
+      .innerJoin('r.ReportLocation', 'loc')
+      .select('loc.Id', 'locationId')
+      .addSelect('loc.Neighborhood', 'neighborhood')
+      .addSelect('YEAR(r.CreatedAt)', 'year')
+      .addSelect('MONTH(r.CreatedAt)', 'month')
+      .addSelect('COUNT(*)', 'count')
+      .where('r.CreatedAt >= :from', { from });
+
+    if (year && month) {
+      qb.andWhere('YEAR(r.CreatedAt) = :year', { year }).andWhere('MONTH(r.CreatedAt) = :month', { month });
+    }
+
+    qb.groupBy('loc.Id')
+      .addGroupBy('loc.Neighborhood')
+      .addGroupBy('YEAR(r.CreatedAt)')
+      .addGroupBy('MONTH(r.CreatedAt)')
+      .orderBy('loc.Neighborhood', 'ASC')
+      .addOrderBy('YEAR(r.CreatedAt)', 'ASC')
+      .addOrderBy('MONTH(r.CreatedAt)', 'ASC');
+
+    const raw = await qb.getRawMany<{
+      locationId: string;
+      neighborhood: string;
+      year: string;
+      month: string;
+      count: string;
+    }>();
+
+    return raw.map((r) => ({
+      locationId: Number(r.locationId),
+      neighborhood: r.neighborhood,
+      year: Number(r.year),
+      month: Number(r.month),
+      count: Number(r.count),
+    }));
+  }
+
   async countAllByUser(userId: number): Promise<number> {
     return this.reportRepository
       .createQueryBuilder('r')
