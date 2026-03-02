@@ -1,30 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, Min, Max, IsOptional, IsString } from 'class-validator';
+import { IsInt, Min, IsOptional } from 'class-validator';
+import { PaginationQueryDto } from 'src/common/pagination/dto/pagination-query.dto';
 
-export class ReportsPaginationDto {
-    @ApiPropertyOptional({ default: 1, minimum: 1 })
-    @Transform(({ value }) => Number(value))
-    @IsInt()
-    @Min(1)
-    page: number = 1;
-
-    @ApiPropertyOptional({ default: 10, minimum: 1, maximum: 100 })
-    @Transform(({ value }) => Number(value))
-    @IsInt()
-    @Min(1)
-    @Max(100)
-    limit: number = 10;
-
-    @ApiPropertyOptional({
-        description: 'Búsqueda por texto en descripción, ubicación o información adicional',
-        example: 'fuga',
-    })
-    @IsOptional()
-    @IsString()
-    @Transform(({ value }) => (typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined))
-    search?: string;
-
+export class ReportsPaginationDto extends PaginationQueryDto {
     @ApiPropertyOptional({
         description: 'Filtra por estado del reporte (ReportStateId)',
         example: 2,

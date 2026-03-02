@@ -10,6 +10,8 @@ import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
 import { ReportsPaginationDto } from './dto/Pagination-report.dto';
+import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
+import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
 
 type MonthlyOpts = {
   months?: number;            // por defecto 12
@@ -110,14 +112,12 @@ export class ReportsService {
     return loadReport;
   }
 
-  async findAll(paginationDto: ReportsPaginationDto){
-    // Sanitiza page/limit (por si llegan como string o fuera de rango)
-    const pageNum = Math.max(1, Number(paginationDto.page) || 1);
-    const take = Math.min(100, Math.max(1, Number(paginationDto.limit) || 10));
-    const skip = (pageNum - 1) * take;
-    const { stateId, locationId, reportTypeId, search } = paginationDto;
+  async findAll(paginationDto: ReportsPaginationDto): Promise<PaginatedResponse<Report>> {
+    const page = Math.max(1, Number(paginationDto.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(paginationDto.limit) || 10));
+    const skip = (page - 1) * limit;
+    const { stateId, locationId, reportTypeId, q } = paginationDto;
 
-    // Solo considerar IDs válidos (evita NaN o strings que pasaron como número)
     const validStateId = stateId != null && Number.isInteger(stateId) && stateId >= 1 ? stateId : undefined;
     const validLocationId = locationId != null && Number.isInteger(locationId) && locationId >= 1 ? locationId : undefined;
     const validReportTypeId = reportTypeId != null && Number.isInteger(reportTypeId) && reportTypeId >= 1 ? reportTypeId : undefined;
@@ -130,8 +130,8 @@ export class ReportsService {
       .leftJoinAndSelect('report.ReportType', 'reportType')
       .leftJoinAndSelect('report.ReportState', 'reportState')
       .skip(skip)
-      .take(take)
-      .orderBy('report.CreatedAt', 'DESC');
+      .take(limit)
+      .orderBy('report.CreatedAt', paginationDto.sortDir ?? 'DESC');
 
     if (validStateId != null) {
       qb.andWhere('report.ReportStateId = :stateId', { stateId: validStateId });
@@ -143,27 +143,24 @@ export class ReportsService {
       qb.andWhere('report.ReportTypeId = :reportTypeId', { reportTypeId: validReportTypeId });
     }
 
-    // Búsqueda por texto: descripción, ubicación o información adicional
-    if (search && search.trim() !== '') {
-      const term = `%${search.trim().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+    if (q?.trim()) {
+      const term = `%${q.trim().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
       qb.andWhere(
         '(report.Description LIKE :term OR report.Location LIKE :term OR report.AdditionalInfo LIKE :term)',
         { term },
       );
     }
 
-    const [data, total] = await qb.getManyAndCount();
+    const [data, totalItems] = await qb.getManyAndCount();
 
     return {
       data,
-      meta: {
-        total,
-        page: pageNum,
-        limit: take,
-        pageCount: Math.max(1, Math.ceil(total / take)),
-        hasNextPage: pageNum * take < total,
-        hasPrevPage: pageNum > 1,
-      },
+      meta: buildPaginationMeta({
+        totalItems,
+        page,
+        limit,
+        itemCount: data.length,
+      }),
     };
   }
 
