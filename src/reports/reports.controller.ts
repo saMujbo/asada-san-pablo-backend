@@ -68,6 +68,20 @@ export class ReportsController {
     });
   }
 
+  // GET reportes por mes y ubicación - para figuras por barrio
+  @Get('stats/monthly-by-location')
+  getMonthlyByLocation(
+    @Query('months') months?: string,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
+  ) {
+    return this.reportsService.getMonthlyCountsByLocation({
+      months: months ? Number(months) : 12,
+      year: year ? Number(year) : undefined,
+      month: month ? Number(month) : undefined,
+    });
+  }
+
   /** Resumen para el usuario autenticado */
   @UseGuards(TokenGuard)
   @Get('me/count')

@@ -20,7 +20,7 @@ export class ReportLocationService {
     });
 
     if(found) {
-      throw new HttpException('La ubicación ya existe', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('La ubicación ya existe');
     }
 
     createReportLocationDto.Neighborhood = createReportLocationDto.Neighborhood.toUpperCase();
@@ -31,7 +31,7 @@ export class ReportLocationService {
   async findAll() {
     const found = await this.reportLocationRepository.find();
     if(!found) {
-      throw new HttpException('No se encontraron ubicaciones', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('No se encontraron ubicaciones');
     }
     return found;
   }
