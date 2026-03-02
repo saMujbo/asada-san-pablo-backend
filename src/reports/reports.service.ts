@@ -221,7 +221,11 @@ export class ReportsService {
     if (q?.trim()) {
       const term = `%${q.trim().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
       qb.andWhere(
-        '(report.Code LIKE :term OR report.Description LIKE :term OR report.Location LIKE :term OR report.AdditionalInfo LIKE :term)',
+        `(
+          report.Code LIKE :term OR report.Description LIKE :term OR report.Location LIKE :term OR report.AdditionalInfo LIKE :term
+          OR user.Name LIKE :term OR user.Surname1 LIKE :term OR user.Surname2 LIKE :term
+          OR userInCharge.Name LIKE :term OR userInCharge.Surname1 LIKE :term OR userInCharge.Surname2 LIKE :term
+        )`,
         { term },
       );
     }
