@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Report } from './entities/report.entity';
@@ -9,7 +9,10 @@ import { ReportsGateway } from './reports.gateway';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
+import { ReportState } from 'src/report-states/entities/report-state.entity';
 import { ReportsPaginationDto } from './dto/Pagination-report.dto';
+import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
+import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
 
 type MonthlyOpts = {
   months?: number;            // por defecto 12
@@ -28,29 +31,99 @@ export class ReportsService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(ReportLocation)
     private readonly reportLocationRepository: Repository<ReportLocation>,
+    @InjectRepository(ReportState)
+    private readonly reportStateRepository: Repository<ReportState>,
     private readonly reportsGateway: ReportsGateway,
-    private readonly mailService: MailServiceService, 
+    private readonly mailService: MailServiceService,
   ) {}
 
+  /**
+   * Valida que todas las entidades referenciadas existan antes de crear/actualizar un reporte.
+   */
+  private async validateReportRelations(dto: {
+    UserId: number;
+    LocationId: number;
+    ReportTypeId: number;
+    ReportStateId?: number;
+    UserInChargeId?: number;
+  }) {
+    const user = await this.usersRepository.findOne({ where: { Id: dto.UserId } });
+    if (!user) {
+      throw new BadRequestException(`No existe un usuario con ID ${dto.UserId}`);
+    }
+
+    const location = await this.reportLocationRepository.findOne({ where: { Id: dto.LocationId } });
+    if (!location) {
+      throw new BadRequestException(`No existe una ubicación con ID ${dto.LocationId}`);
+    }
+
+    const reportType = await this.reportTypeRepository.findOne({ where: { Id: dto.ReportTypeId } });
+    if (!reportType) {
+      throw new BadRequestException(`No existe un tipo de reporte con ID ${dto.ReportTypeId}`);
+    }
+
+    if (dto.ReportStateId != null) {
+      const reportState = await this.reportStateRepository.findOne({
+        where: { IdReportState: dto.ReportStateId },
+      });
+      if (!reportState) {
+        throw new BadRequestException(`No existe un estado de reporte con ID ${dto.ReportStateId}`);
+      }
+    }
+
+    if (dto.UserInChargeId != null) {
+      const userInCharge = await this.usersRepository.findOne({ where: { Id: dto.UserInChargeId } });
+      if (!userInCharge) {
+        throw new BadRequestException(`No existe un usuario encargado con ID ${dto.UserInChargeId}`);
+      }
+    }
+  }
+
+  /**
+   * Genera un código único por día: RPT-yyyymmdd-001 (siglas + fecha + secuencia diaria).
+   */
+  private async generateReportCode(): Promise<string> {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const datePrefix = `${yyyy}${mm}${dd}`;
+
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const count = await this.reportRepository
+      .createQueryBuilder('report')
+      .where('report.CreatedAt >= :start', { start: startOfDay })
+      .andWhere('report.CreatedAt <= :end', { end: endOfDay })
+      .getCount();
+
+    const sequence = String(count + 1).padStart(3, '0');
+    return `RPT-${datePrefix}-${sequence}`;
+  }
+
   async create(createReportDto: CreateReportDto) {
-    // Crear el reporte
+    await this.validateReportRelations(createReportDto);
+
     const report = this.reportRepository.create(createReportDto);
+    report.Code = await this.generateReportCode();
     const saved = await this.reportRepository.save(report);
 
-    // Cargar el reporte con la información del usuario
     const loadReport = await this.reportRepository.findOne({
       where: { Id: saved.Id },
-      relations: ['User', 'ReportLocation', 'ReportType', 'ReportState', 'UserInCharge'], // Esto carga la relación User y ReportLocation
-
+      relations: ['User', 'ReportLocation', 'ReportType', 'ReportState', 'UserInCharge'],
     });
 
     if (!loadReport) {
-      throw new Error('Error al crear el reporte');
+      throw new NotFoundException('Error al cargar el reporte creado');
     }
 
     // Emitir evento WebSocket con información del usuario y ubicación
     this.reportsGateway.emitReportCreated({
       Id: saved.Id,
+      Code: saved.Code ?? undefined,
       Location: loadReport.ReportLocation ? 
         `${loadReport.ReportLocation.Neighborhood} - ${saved.Location}` : 
         saved.Location,
@@ -101,57 +174,83 @@ export class ReportsService {
   }
 
   async createAdminReport(createReportDto: CreateReportDto) {
-    // creamos el reporte y nada mas, sin necesidad de cargar relaciones ni emitir eventos
+    await this.validateReportRelations(createReportDto);
     const report = this.reportRepository.create(createReportDto);
+    report.Code = await this.generateReportCode();
     const saved = await this.reportRepository.save(report);
     const loadReport = await this.reportRepository.findOne({
       where: { Id: saved.Id },
     });
+    if (!loadReport) {
+      throw new NotFoundException('Error al cargar el reporte creado');
+    }
     return loadReport;
   }
 
-  async findAll(paginationDto: ReportsPaginationDto){
-    // Sanitiza page/limit (por si llegan como string o fuera de rango)
-    const pageNum = Math.max(1, Number(paginationDto.page) || 1);
-    const take = Math.min(100, Math.max(1, Number(paginationDto.limit) || 10));
-    const skip = (pageNum - 1) * take;
-    const { stateId, locationId, ReportTypeId } = paginationDto;
+  async findAll(paginationDto: ReportsPaginationDto): Promise<PaginatedResponse<Report>> {
+    const page = Math.max(1, Number(paginationDto.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(paginationDto.limit) || 10));
+    const skip = (page - 1) * limit;
+    const { stateId, locationId, reportTypeId, q, startDate, endDate } = paginationDto;
+
+    const validStateId = stateId != null && Number.isInteger(stateId) && stateId >= 1 ? stateId : undefined;
+    const validLocationId = locationId != null && Number.isInteger(locationId) && locationId >= 1 ? locationId : undefined;
+    const validReportTypeId = reportTypeId != null && Number.isInteger(reportTypeId) && reportTypeId >= 1 ? reportTypeId : undefined;
 
     const qb = this.reportRepository
       .createQueryBuilder('report')
-      // Relaciones (aunque tengas eager, aquí es explícito y optimiza el SELECT)
       .leftJoinAndSelect('report.User', 'user')
       .leftJoinAndSelect('report.UserInCharge', 'userInCharge')
       .leftJoinAndSelect('report.ReportLocation', 'reportLocation')
       .leftJoinAndSelect('report.ReportType', 'reportType')
       .leftJoinAndSelect('report.ReportState', 'reportState')
       .skip(skip)
-      .take(take)
-      .orderBy('report.CreatedAt', 'DESC');
+      .take(limit)
+      .orderBy('report.CreatedAt', paginationDto.sortDir === 'DESC' ? 'DESC' : 'ASC');
 
-    if (stateId) {
-      qb.andWhere('report.ReportStateId = :stateId', { stateId });
+    if (validStateId != null) {
+      qb.andWhere('report.ReportStateId = :stateId', { stateId: validStateId });
     }
-    if (locationId) {
-      qb.andWhere('report.LocationId = :locationId', { locationId });
+    if (validLocationId != null) {
+      qb.andWhere('report.LocationId = :locationId', { locationId: validLocationId });
+    }
+    if (validReportTypeId != null) {
+      qb.andWhere('report.ReportTypeId = :reportTypeId', { reportTypeId: validReportTypeId });
     }
 
-    if (ReportTypeId) {
-      qb.andWhere('report.ReportTypeId = :ReportTypeId', { ReportTypeId });
+    if (q?.trim()) {
+      const term = `%${q.trim().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+      qb.andWhere(
+        `(
+          report.Code LIKE :term OR report.Description LIKE :term OR report.Location LIKE :term OR report.AdditionalInfo LIKE :term
+          OR user.Name LIKE :term OR user.Surname1 LIKE :term OR user.Surname2 LIKE :term
+          OR userInCharge.Name LIKE :term OR userInCharge.Surname1 LIKE :term OR userInCharge.Surname2 LIKE :term
+        )`,
+        { term },
+      );
     }
 
-    const [data, total] = await qb.getManyAndCount();
+    if (startDate) {
+      const from = new Date(startDate);
+      from.setHours(0, 0, 0, 0);
+      qb.andWhere('report.CreatedAt >= :startDate', { startDate: from });
+    }
+    if (endDate) {
+      const to = new Date(endDate);
+      to.setHours(23, 59, 59, 999);
+      qb.andWhere('report.CreatedAt <= :endDate', { endDate: to });
+    }
+
+    const [data, totalItems] = await qb.getManyAndCount();
 
     return {
       data,
-      meta: {
-        total,
-        page: pageNum,
-        limit: take,
-        pageCount: Math.max(1, Math.ceil(total / take)),
-        hasNextPage: pageNum * take < total,
-        hasPrevPage: pageNum > 1,
-      },
+      meta: buildPaginationMeta({
+        totalItems,
+        page,
+        limit,
+        itemCount: data.length,
+      }),
     };
   }
 
@@ -163,17 +262,15 @@ export class ReportsService {
   }
 
   async update(id: number, updateReportDto: UpdateReportDto) {
-    // Verificar que el reporte existe
     const existingReport = await this.reportRepository.findOne({ where: { Id: id } });
     if (!existingReport) {
-      throw new Error('Reporte no encontrado');
+      throw new NotFoundException('Reporte no encontrado');
     }
 
-    // Si se está actualizando el UserInChargeId, verificar que el usuario existe
-    if (updateReportDto.UserInChargeId) {
+    if (updateReportDto.UserInChargeId != null) {
       const user = await this.usersRepository.findOne({ where: { Id: updateReportDto.UserInChargeId } });
       if (!user) {
-        throw new Error('Usuario encargado no encontrado');
+        throw new BadRequestException(`No existe un usuario encargado con ID ${updateReportDto.UserInChargeId}`);
       }
     }
 

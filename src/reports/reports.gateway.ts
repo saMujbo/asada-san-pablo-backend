@@ -4,6 +4,38 @@ import {
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 
+export interface ReportCreatedPayload {
+  Id: number;
+  Code?: string;
+  Location: string;
+  Description: string;
+  User: {
+    Id: number;
+    Name: string;
+    Email: string;
+    FullName: string;
+  };
+  ReportLocation: {
+    Id: number;
+    Neighborhood: string;
+  } | null;
+  ReportType: {
+    Id: number;
+    Name: string;
+  };
+  CreatedAt: Date;
+  ReportState: {
+    Id: number;
+    Name: string;
+  } | null;
+  UserInCharge: {
+    Id: number;
+    Name: string;
+    Email: string;
+    FullName: string;
+  } | null;
+}
+
 @WebSocketGateway({
   namespace: '/reports',
   cors: {
@@ -15,36 +47,7 @@ export class ReportsGateway {
   @WebSocketServer()
   server: Server;
 
-  emitReportCreated(payload: { 
-    Id: number; 
-    Location: string; 
-    Description: string;
-    User: {
-      Id: number;
-      Name: string;
-      Email: string;
-      FullName: string;
-    };
-    ReportLocation: {
-      Id: number;
-      Neighborhood: string;
-    } | null;
-    ReportType: {
-      Id: number;
-      Name: string;
-    };
-    CreatedAt: Date;
-    ReportState: {
-      Id: number;
-      Name: string;
-    } | null;
-    UserInCharge: {
-      Id: number;
-      Name: string;
-      Email: string;
-      FullName: string;
-    } | null;
-  }) {
+  emitReportCreated(payload: ReportCreatedPayload) {
     this.server.emit('report.created', payload);
   }
 }
