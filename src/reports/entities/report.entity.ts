@@ -10,6 +10,10 @@ export class Report {
   @PrimaryGeneratedColumn()
   Id: number;
 
+  /** Código del reporte: RPT-yyyymmdd-001 (siglas + fecha + secuencia diaria) */
+  @Column({ type: 'varchar', length: 30, nullable: true })
+  Code: string;
+
   @Column({ type: 'varchar', length: 255, nullable: false })
   Location: string;
 
