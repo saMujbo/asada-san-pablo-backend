@@ -13,14 +13,20 @@ import { changeState } from 'src/utils/changeState';
 import { UpdateMeDto } from './dto/updateMeDto';
 import { PaginationDto } from './dto/pagination.dto';
 import { In } from 'typeorm';
+import { DropboxService } from 'src/dropbox/dropbox.service';
+
+const PROFILE_PHOTO_FOLDER = 'profile-photos';
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_PROFILE_PHOTO_SIZE = 5 * 1024 * 1024; // 5 MB
 
 @Injectable()
 export class UsersService {
-  constructor (
-      @InjectRepository(User)
-      private readonly userRepo: Repository<User>,
-      private readonly rolesService: RolesService,
-  ){}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private readonly rolesService: RolesService,
+    private readonly dropboxService: DropboxService,
+  ) {}
 
   async createRegister(createUserDto: CreateUserDto) {
   
@@ -259,26 +265,46 @@ async update(Id: number, dto: UpdateUserDto) {
     return false;
   }
 
-  async updateMe(Id: number, dto: UpdateMeDto) {
+  async updateMe(Id: number, dto: UpdateMeDto, file?: Express.Multer.File) {
     const user = await this.userRepo.findOne({ where: { Id } });
 
     if (!user) {
       throw new ConflictException(`User with Id ${Id} not found`);
     }
 
+    if (file) {
+      if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+        throw new BadRequestException(
+          `Tipo de archivo no permitido. Use: ${ALLOWED_MIME_TYPES.join(', ')}`,
+        );
+      }
+      if (file.size > MAX_PROFILE_PHOTO_SIZE) {
+        throw new BadRequestException('La foto no puede superar 5 MB');
+      }
+      const buffer = (file as any).buffer as Buffer;
+      if (!buffer?.length) {
+        throw new BadRequestException('El archivo no pudo leerse correctamente');
+      }
+      const ext = file.originalname?.split('.').pop()?.toLowerCase() || 'jpg';
+      const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+      const dropboxPath = `/${PROFILE_PHOTO_FOLDER}/${Id}/${Date.now()}.${safeExt}`;
+      await this.dropboxService.ensureFolder(`/${PROFILE_PHOTO_FOLDER}/${Id}`);
+      await this.dropboxService.uploadBuffer(buffer, dropboxPath);
+      const photoUrl = await this.dropboxService.getFileSharedLink(dropboxPath);
+      user.ProfilePhoto = photoUrl;
+    }
+
     if (dto.Address !== undefined && dto.Address != null && dto.Address !== '') user.Address = dto.Address;
     if (dto.PhoneNumber !== undefined && dto.PhoneNumber != null && dto.PhoneNumber !== '') user.PhoneNumber = dto.PhoneNumber;
     if (dto.Birthdate !== undefined) user.Birthdate = dto.Birthdate as any;
-    
+
     const saved = await this.userRepo.save(user);
 
-    // Re-carga con relaciones si quieres devolver Roles
     const withRelations = await this.userRepo.findOne({
       where: { Id: saved.Id },
       relations: ['Roles'],
     });
 
-    // Sanea antes de retornar (por si tu entidad expone Password)
     if (withRelations && (withRelations as any).Password !== undefined) {
       delete (withRelations as any).Password;
     }

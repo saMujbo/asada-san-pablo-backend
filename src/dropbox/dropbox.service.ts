@@ -82,15 +82,40 @@ export class DropboxService {
   async getFolderLink(folderPath: string) {
     try {
       const sharedLink = await this.dbx.sharingCreateSharedLinkWithSettings({
-        path: folderPath,
+        path: folderPath.startsWith('/') ? folderPath : `/${folderPath}`,
       });
-      return sharedLink.result.url; // Enlace recién creado
-    } catch (error) {
-      if (error.error.error.shared_link_already_exists.metadata.url) {
-        // Si el enlace ya existe, devolver el enlace existente
+      return sharedLink.result.url;
+    } catch (error: any) {
+      if (error?.error?.error?.shared_link_already_exists?.metadata?.url) {
         return error.error.error.shared_link_already_exists.metadata.url;
       }
-      throw error; // En caso de otros errores
+      throw error;
+    }
+  }
+
+  /** Crea o obtiene enlace compartido de un archivo (para foto de perfil, etc.). Devuelve URL directa (?dl=1). */
+  async getFileSharedLink(filePath: string): Promise<string> {
+    const path = filePath.startsWith('/') ? filePath : `/${filePath}`;
+    const toDirectLink = (url: string) => {
+      if (!url) return url;
+      try {
+        const u = new URL(url);
+        u.searchParams.set('dl', '1');
+        return u.toString();
+      } catch {
+        return url.includes('?') ? `${url}&dl=1` : `${url}?dl=1`;
+      }
+    };
+    try {
+      const { result } = await this.dbx.sharingCreateSharedLinkWithSettings({
+        path,
+      });
+      return toDirectLink(result.url);
+    } catch (error: any) {
+      if (error?.error?.error?.shared_link_already_exists?.metadata?.url) {
+        return toDirectLink(error.error.error.shared_link_already_exists.metadata.url);
+      }
+      throw error;
     }
   }
 

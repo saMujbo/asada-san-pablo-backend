@@ -1,14 +1,30 @@
-import {Controller,Get,Post,Body,Patch,Param,Delete,ParseIntPipe, UseGuards, Query, Put,} from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+  UseGuards,
+  Query,
+  Put,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { UpdateMeDto } from './dto/updateMeDto';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { UpdateEmailDto } from './dto/updateEmail-user';
 import { PaginationDto } from './dto/pagination.dto';
-import { AdminCreateUserDto } from './dto/admin-user.dto';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -23,8 +39,30 @@ export class UsersController {
 
   @UseGuards(TokenGuard)
   @Put('me')
-  async updateMe(@GetUser('id') id: number, @Body() dto: UpdateUserDto) {
-    return this.usersService.updateMe(id, dto);
+  @UseInterceptors(
+    FileInterceptor('photo', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+    }),
+  )
+  @ApiConsumes('application/json', 'multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        photo: { type: 'string', format: 'binary', description: 'Foto de perfil (opcional)' },
+        Address: { type: 'string' },
+        PhoneNumber: { type: 'string' },
+        Birthdate: { type: 'string', example: '1990-01-01' },
+      },
+    },
+  })
+  async updateMe(
+    @GetUser('id') id: number,
+    @Body() dto: UpdateMeDto,
+    @UploadedFile() photo?: Express.Multer.File,
+  ) {
+    return this.usersService.updateMe(id, dto, photo);
   }
 
   @Post()
