@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, Min, Max, IsOptional } from 'class-validator';
+import { IsInt, Min, Max, IsOptional, IsString } from 'class-validator';
 
 export class ReportsPaginationDto {
     @ApiPropertyOptional({ default: 1, minimum: 1 })
@@ -17,11 +17,24 @@ export class ReportsPaginationDto {
     limit: number = 10;
 
     @ApiPropertyOptional({
+        description: 'Búsqueda por texto en descripción, ubicación o información adicional',
+        example: 'fuga',
+    })
+    @IsOptional()
+    @IsString()
+    @Transform(({ value }) => (typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined))
+    search?: string;
+
+    @ApiPropertyOptional({
         description: 'Filtra por estado del reporte (ReportStateId)',
         example: 2,
     })
     @IsOptional()
-    @Transform(({ value }) => (value === '' || value === undefined ? undefined : Number(value)))
+    @Transform(({ value }) => {
+        if (value === '' || value === undefined) return undefined;
+        const n = Number(value);
+        return Number.isInteger(n) && n >= 1 ? n : undefined;
+    })
     @IsInt()
     @Min(1)
     stateId?: number;
@@ -31,19 +44,27 @@ export class ReportsPaginationDto {
         example: 1,
     })
     @IsOptional()
-    @Transform(({ value }) => (value === '' || value === undefined ? undefined : Number(value)))
+    @Transform(({ value }) => {
+        if (value === '' || value === undefined) return undefined;
+        const n = Number(value);
+        return Number.isInteger(n) && n >= 1 ? n : undefined;
+    })
     @IsInt()
     @Min(1)
     locationId?: number;
 
-    // tambien por tipo de reporte
     @ApiPropertyOptional({
         description: 'Filtra por tipo de reporte (ReportTypeId)',
         example: 1,
     })
     @IsOptional()
-    @Transform(({ value }) => (value === '' || value === undefined ? undefined : Number(value)))
+    @Transform(({ value, obj }) => {
+        const v = value ?? obj?.ReportTypeId ?? obj?.reportTypeId;
+        if (v === '' || v === undefined) return undefined;
+        const n = Number(v);
+        return Number.isInteger(n) && n >= 1 ? n : undefined;
+    })
     @IsInt()
     @Min(1)
-    ReportTypeId?: number;
+    reportTypeId?: number;
 }
