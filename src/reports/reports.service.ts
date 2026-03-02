@@ -79,10 +79,36 @@ export class ReportsService {
     }
   }
 
+  /**
+   * Genera un código único por día: RPT-yyyymmdd-001 (siglas + fecha + secuencia diaria).
+   */
+  private async generateReportCode(): Promise<string> {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const datePrefix = `${yyyy}${mm}${dd}`;
+
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const count = await this.reportRepository
+      .createQueryBuilder('report')
+      .where('report.CreatedAt >= :start', { start: startOfDay })
+      .andWhere('report.CreatedAt <= :end', { end: endOfDay })
+      .getCount();
+
+    const sequence = String(count + 1).padStart(3, '0');
+    return `RPT-${datePrefix}-${sequence}`;
+  }
+
   async create(createReportDto: CreateReportDto) {
     await this.validateReportRelations(createReportDto);
 
     const report = this.reportRepository.create(createReportDto);
+    report.Code = await this.generateReportCode();
     const saved = await this.reportRepository.save(report);
 
     const loadReport = await this.reportRepository.findOne({
@@ -97,6 +123,7 @@ export class ReportsService {
     // Emitir evento WebSocket con información del usuario y ubicación
     this.reportsGateway.emitReportCreated({
       Id: saved.Id,
+      Code: saved.Code ?? undefined,
       Location: loadReport.ReportLocation ? 
         `${loadReport.ReportLocation.Neighborhood} - ${saved.Location}` : 
         saved.Location,
@@ -149,6 +176,7 @@ export class ReportsService {
   async createAdminReport(createReportDto: CreateReportDto) {
     await this.validateReportRelations(createReportDto);
     const report = this.reportRepository.create(createReportDto);
+    report.Code = await this.generateReportCode();
     const saved = await this.reportRepository.save(report);
     const loadReport = await this.reportRepository.findOne({
       where: { Id: saved.Id },
@@ -193,7 +221,7 @@ export class ReportsService {
     if (q?.trim()) {
       const term = `%${q.trim().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
       qb.andWhere(
-        '(report.Description LIKE :term OR report.Location LIKE :term OR report.AdditionalInfo LIKE :term)',
+        '(report.Code LIKE :term OR report.Description LIKE :term OR report.Location LIKE :term OR report.AdditionalInfo LIKE :term)',
         { term },
       );
     }
