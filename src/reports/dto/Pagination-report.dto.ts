@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, Min, IsOptional } from 'class-validator';
+import { IsInt, Min, IsOptional, IsDateString } from 'class-validator';
 import { PaginationQueryDto } from 'src/common/pagination/dto/pagination-query.dto';
 
 export class ReportsPaginationDto extends PaginationQueryDto {
@@ -46,4 +46,20 @@ export class ReportsPaginationDto extends PaginationQueryDto {
     @IsInt()
     @Min(1)
     reportTypeId?: number;
+
+    @ApiPropertyOptional({
+        description: 'Fecha desde (inclusive). Formato ISO 8601 (ej: 2024-01-01)',
+        example: '2024-01-01',
+    })
+    @IsOptional()
+    @IsDateString()
+    startDate?: string;
+
+    @ApiPropertyOptional({
+        description: 'Fecha hasta (inclusive). Formato ISO 8601 (ej: 2024-12-31)',
+        example: '2024-12-31',
+    })
+    @IsOptional()
+    @IsDateString()
+    endDate?: string;
 }
