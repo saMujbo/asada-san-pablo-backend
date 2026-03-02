@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
@@ -25,6 +26,30 @@ export class ReportsController {
   @Get('search')
   findAll(@Query() paginationDto: ReportsPaginationDto) {
     return this.reportsService.findAll(paginationDto);
+  }
+
+  /** Exportar PDF: reportes del mes/año + figura por ubicación. Query: year, month (1-12). */
+  @Get('export/pdf')
+  @ApiOperation({ summary: 'Exportar PDF de reportes del mes con gráfico por ubicación' })
+  async exportPdf(
+    @Query('year') yearParam: string,
+    @Query('month') monthParam: string,
+    @Res() res: Response,
+  ) {
+    const year = Number(yearParam);
+    const month = Number(monthParam);
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+      return res.status(400).json({ message: 'Query "year" es requerido y debe ser un año válido (2000-2100)' });
+    }
+    if (!Number.isInteger(month) || month < 1 || month > 12) {
+      return res.status(400).json({ message: 'Query "month" es requerido y debe ser entre 1 y 12' });
+    }
+    const buffer = await this.reportsService.buildExportPdf(year, month);
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const filename = `reportes-${monthNames[month - 1]}-${year}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
   }
 
   @ApiOperation({ summary: 'Obtener un reporte por ID' })
