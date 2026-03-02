@@ -14,9 +14,4 @@ export class ReportLocation {
   @OneToMany(() => Report, (report) => report.ReportLocation)
   Reports: Report[];
 
-  @BeforeInsert()
-  @BeforeUpdate()
-  normalizeNeighborhood() {
-    if (this.Neighborhood) this.Neighborhood = this.Neighborhood.trim().toUpperCase();
-  }
 }
