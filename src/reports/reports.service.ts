@@ -115,11 +115,15 @@ export class ReportsService {
     const pageNum = Math.max(1, Number(paginationDto.page) || 1);
     const take = Math.min(100, Math.max(1, Number(paginationDto.limit) || 10));
     const skip = (pageNum - 1) * take;
-    const { stateId, locationId, ReportTypeId } = paginationDto;
+    const { stateId, locationId, reportTypeId, search } = paginationDto;
+
+    // Solo considerar IDs válidos (evita NaN o strings que pasaron como número)
+    const validStateId = stateId != null && Number.isInteger(stateId) && stateId >= 1 ? stateId : undefined;
+    const validLocationId = locationId != null && Number.isInteger(locationId) && locationId >= 1 ? locationId : undefined;
+    const validReportTypeId = reportTypeId != null && Number.isInteger(reportTypeId) && reportTypeId >= 1 ? reportTypeId : undefined;
 
     const qb = this.reportRepository
       .createQueryBuilder('report')
-      // Relaciones (aunque tengas eager, aquí es explícito y optimiza el SELECT)
       .leftJoinAndSelect('report.User', 'user')
       .leftJoinAndSelect('report.UserInCharge', 'userInCharge')
       .leftJoinAndSelect('report.ReportLocation', 'reportLocation')
@@ -129,15 +133,23 @@ export class ReportsService {
       .take(take)
       .orderBy('report.CreatedAt', 'DESC');
 
-    if (stateId) {
-      qb.andWhere('report.ReportStateId = :stateId', { stateId });
+    if (validStateId != null) {
+      qb.andWhere('report.ReportStateId = :stateId', { stateId: validStateId });
     }
-    if (locationId) {
-      qb.andWhere('report.LocationId = :locationId', { locationId });
+    if (validLocationId != null) {
+      qb.andWhere('report.LocationId = :locationId', { locationId: validLocationId });
+    }
+    if (validReportTypeId != null) {
+      qb.andWhere('report.ReportTypeId = :reportTypeId', { reportTypeId: validReportTypeId });
     }
 
-    if (ReportTypeId) {
-      qb.andWhere('report.ReportTypeId = :ReportTypeId', { ReportTypeId });
+    // Búsqueda por texto: descripción, ubicación o información adicional
+    if (search && search.trim() !== '') {
+      const term = `%${search.trim().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+      qb.andWhere(
+        '(report.Description LIKE :term OR report.Location LIKE :term OR report.AdditionalInfo LIKE :term)',
+        { term },
+      );
     }
 
     const [data, total] = await qb.getManyAndCount();
