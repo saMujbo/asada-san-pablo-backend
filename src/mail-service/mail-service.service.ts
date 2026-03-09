@@ -6,7 +6,6 @@ import { WelcomeMailASADA } from './templates/WelcomeMesage';
 import { WelcomeMailASADADto } from './dto/welcome-mail-service.dto';
 import { AdminUserMailASADADto } from './dto/admin-create-user.dto';
 import { WelcomeTempPasswordMail } from './templates/Password-defa';
-import { NewReportMail } from './templates/NewReport';
 import * as brevo from '@getbrevo/brevo';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -130,47 +129,6 @@ export class MailServiceService {
       console.log('✓ Correo con contraseña temporal enviado exitosamente');
     } catch (error) {
       console.error('Error al enviar correo con contraseña temporal:', error);
-      throw error;
-    }
-  }
-
-  async sendReportCreatedEmail(dto: {
-    to?: string;
-    subject?: string;
-    Id: number;
-    Location: string;
-    Description?: string;
-    UserFullName?: string;
-    UserEmail?: string;
-    CreatedAt: string;
-  }) {
-    try {
-      const to = dto.to ?? this.configService.get<string>('REPORTS_MAIL_TO') ?? 'admin@asada.cr';
-      const subject = dto.subject ?? `Nuevo reporte #${dto.Id} — ${dto.Location}`;
-
-      const sendSmtpEmail = new brevo.SendSmtpEmail();
-      
-      sendSmtpEmail.sender = { name: 'RedSanPablo', email: this.configService.get<string>('BREVO_SENDER_EMAIL') };
-      sendSmtpEmail.to = [{ email: to }];
-      sendSmtpEmail.subject = subject;
-      sendSmtpEmail.htmlContent = await NewReportMail({
-        Id: dto.Id,
-        Location: dto.Location,
-        Description: dto.Description,
-        UserFullName: dto.UserFullName,
-        UserEmail: dto.UserEmail,
-        CreatedAt: dto.CreatedAt,
-      });
-      sendSmtpEmail.textContent = `Nuevo reporte #${dto.Id}
-        Ubicación: ${dto.Location}
-        Descripción: ${dto.Description ?? '-'}
-        Usuario: ${dto.UserFullName ?? '-'} ${dto.UserEmail ? `(${dto.UserEmail})` : ''}
-        Fecha: ${dto.CreatedAt}`;
-
-      await this.apiInstance.sendTransacEmail(sendSmtpEmail);
-      console.log('✓ Correo de reporte enviado exitosamente');
-    } catch (error) {
-      console.error('Error al enviar correo de reporte:', error);
       throw error;
     }
   }
