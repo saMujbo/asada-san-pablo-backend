@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Report } from './entities/report.entity';
 import { User } from 'src/users/entities/user.entity';
@@ -8,11 +8,14 @@ import { ReportsGateway } from './reports.gateway';
 import { MailServiceModule } from 'src/mail-service/mail-service.module';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
-import { ReportState } from 'src/report-states/entities/report-state.entity';
-import { ReportStatesModule } from 'src/report-states/report-states.module';
+import { ReportAssignment } from './entities/report-assignment.entity';
+import { ReportStateHistory } from './entities/report-state-history.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Report, User, ReportLocation, ReportType, ReportState]), forwardRef(() => ReportStatesModule),MailServiceModule,],
+  imports: [
+    TypeOrmModule.forFeature([Report, User, ReportLocation, ReportType, ReportAssignment, ReportStateHistory]),
+    MailServiceModule,
+  ],
   controllers: [ReportsController],
   providers: [ReportsService, ReportsGateway],
   exports: [ReportsService],
