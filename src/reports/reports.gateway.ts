@@ -6,34 +6,25 @@ import { Server } from 'socket.io';
 
 export interface ReportCreatedPayload {
   Id: number;
-  Code?: string;
-  Location: string;
+  Code: string;
+  ExactLocation: string;
   Description: string;
-  User: {
+  ReportedBy: {
     Id: number;
     Name: string;
     Email: string;
     FullName: string;
   };
+  ReportState: string;
   ReportLocation: {
     Id: number;
     Neighborhood: string;
-  } | null;
+  };
   ReportType: {
     Id: number;
     Name: string;
   };
   CreatedAt: Date;
-  ReportState: {
-    Id: number;
-    Name: string;
-  } | null;
-  UserInCharge: {
-    Id: number;
-    Name: string;
-    Email: string;
-    FullName: string;
-  } | null;
 }
 
 @WebSocketGateway({
