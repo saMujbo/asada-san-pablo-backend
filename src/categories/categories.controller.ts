@@ -20,6 +20,11 @@ export class CategoriesController {
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
+  
+  @Get()
+  findAll() {
+    return this.categoriesService.findAll();
+  }
 
   @Get('search')
   search(@Query() pagination: CategoriesPaginationDto) {
