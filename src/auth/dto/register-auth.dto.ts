@@ -1,6 +1,4 @@
-import { PartialType } from "@nestjs/mapped-types";
-import { LoginAuthDto } from "./login-auth.dto";
-import { IsArray, IsDate, IsDateString, IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import { IsArray,IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 

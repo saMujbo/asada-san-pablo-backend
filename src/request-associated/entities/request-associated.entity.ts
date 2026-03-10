@@ -23,7 +23,7 @@ export class RequestAssociated {
         }
     }
 
-    @Column()
+    @Column({ type: 'text' })
     Justification:string;
 
     @Column()

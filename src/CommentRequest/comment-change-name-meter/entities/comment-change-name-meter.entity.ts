@@ -7,10 +7,10 @@ export class CommentChangeNameMeter {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column()
+    @Column({ type: 'text' })
     Subject: string;
 
-    @Column()
+    @Column({ type: 'text' })
     Comment: string;
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

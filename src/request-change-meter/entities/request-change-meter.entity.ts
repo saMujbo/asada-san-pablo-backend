@@ -17,13 +17,13 @@ export class RequestChangeMeter {
     if (!this.Date) this.Date = new Date(); // guarda YYYY-MM-DD en MySQL
     }
 
-    @Column()
+    @Column({ type: 'text' })
     Location:string;
 
     @Column()
     NIS:number;
 
-    @Column()
+    @Column({ type: 'text' })
     Justification:string;
 
     @Column({default:true})
