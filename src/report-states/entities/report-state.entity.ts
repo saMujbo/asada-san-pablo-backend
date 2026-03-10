@@ -1,5 +1,4 @@
-import { Report } from "src/reports/entities/report.entity";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('report_states')
 export class ReportState {
@@ -14,7 +13,4 @@ export class ReportState {
     @Column({ default: true })
     IsActive: boolean;
 
-    // definimos una relacion con la entidad Report
-    @OneToMany(() => Report, (report) => report.ReportState)
-    Reports: Report[];
 }
