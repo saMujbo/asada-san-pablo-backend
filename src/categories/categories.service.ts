@@ -20,14 +20,16 @@ export class CategoriesService {
         private readonly productSv: ProductService,
   ){}
 
-  async create(createObjectCategory: CreateCategoryDto) {
-    const newCategory = this.categoryRepo.create(createObjectCategory);
-    return await this.categoryRepo.save(newCategory);
-  }
+  async create(createCategoryDto: CreateCategoryDto) {
+    const categoryRepo = await this.categoryRepo.findOne({ where: { Name: createCategoryDto.Name } });
 
-  async findAll() {
-    return await this.categoryRepo.find({ where: { IsActive: true } });
-  }
+    if (categoryRepo) {
+      throw new ConflictException(`Category with Name ${createCategoryDto.Name} already exists`);
+    }
+
+    const newCategory = this.categoryRepo.create(createCategoryDto);
+    return await this.categoryRepo.save(newCategory);
+  } 
 
   async search(dto: CategoriesPaginationDto): Promise<PaginatedResponse<Category>> {
     const page = Math.max(1, Number(dto.page) ?? 1);
@@ -116,8 +118,13 @@ export class CategoriesService {
   }
 
   async reactivate(Id: number) {
-    const updateActive = await this.findOne(Id);
-    changeState(updateActive.IsActive);
+    const updateActive = await this.categoryRepo.findOne({ where: { Id } });
+
+    if (!updateActive) {
+      throw new ConflictException(`Category with Id ${Id} not found`);
+    }
+
+    updateActive.IsActive = changeState(updateActive.IsActive);
   
     return await this.categoryRepo.save(updateActive);
   }
