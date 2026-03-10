@@ -22,13 +22,13 @@ export class User {
     @Column({ unique: true })
     IDcard: string;
     
-    @Column()
+    @Column({ type: 'text' })
     Name: string;
 
-    @Column()
+    @Column({ type: 'text' })
     Surname1: string;
 
-    @Column()
+    @Column({ type: 'text' })
     Surname2: string;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
