@@ -21,11 +21,6 @@ export class CategoriesController {
     return this.categoriesService.create(createCategoryDto);
   }
 
-  @Get()
-  findAll() {
-    return this.categoriesService.findAll();
-  }
-
   @Get('search')
   search(@Query() pagination: CategoriesPaginationDto) {
     return this.categoriesService.search(pagination);
