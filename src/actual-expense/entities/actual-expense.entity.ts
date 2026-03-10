@@ -1,12 +1,8 @@
 import {
     BeforeInsert,
-Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn,
-} from 'typeorm';
+Column, Entity, JoinColumn,OneToMany, OneToOne, PrimaryGeneratedColumn} from 'typeorm';
 import { ProductDetail } from 'src/product/product-detail/entities/product-detail.entity';
 import { TraceProject } from 'src/trace-project/entities/trace-project.entity';
-import { Matches } from 'class-validator';
-import { toDateOnly } from 'src/utils/ToDateOnly';
-import { Transform } from 'class-transformer';
 
 
 @Entity({ name: 'actual_expense' })
@@ -14,22 +10,16 @@ import { Transform } from 'class-transformer';
     @PrimaryGeneratedColumn()
     Id: number;
 
-    // @Transform(({ value }) => toDateOnly(value))
-    // @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    // message: 'date debe ser YYYY-MM-DD',
-    // })
-    // Date:Date;
-
-        @Column({ type: 'date', nullable: false })
-        date: Date;
-        @BeforeInsert()
-        setTodayIfMissing() {
-            if (!this.date) {
-            this.date = new Date(); // TypeORM + MySQL 'date' guarda solo YYYY-MM-DD
-            }
+    @Column({ type: 'date', nullable: false })
+    date: Date;
+    @BeforeInsert()
+    setTodayIfMissing() {
+        if (!this.date) {
+        this.date = new Date(); // TypeORM + MySQL 'date' guarda solo YYYY-MM-DD
         }
+    }
 
-    @Column()
+    @Column({ type: 'text' })
     Observation: string;
 
     @Column({ default: true })
