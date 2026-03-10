@@ -13,11 +13,6 @@ export class TraceProject {
   @Column({ unique: true })
   Name: string;
 
-  // Sugerencia: valida en el DTO; en la entidad basta con el tipo/columna
-    // @Transform(({ value }) => toDateOnly(value))
-    // @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    //   message: 'date debe ser YYYY-MM-DD',
-    // })
   @Column({ type: 'date', nullable: false })
   date: Date;
 
@@ -28,7 +23,7 @@ export class TraceProject {
     }
   }
 
-  @Column()
+  @Column({ type: 'text' })
   Observation: string;
 
   @Column({ default: true })
