@@ -68,6 +68,10 @@ export class CategoriesService {
     };
   }
 
+  async findAll() {
+    return await this.categoryRepo.find({ order: { Name: 'ASC' }, where: { IsActive: true } });
+  }
+
   async findOne(Id: number) {
     const categoryFound = await this.categoryRepo.findOne({ 
       where: { Id, IsActive: true },

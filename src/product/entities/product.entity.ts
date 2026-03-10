@@ -19,13 +19,13 @@ export class Product {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column()
+    @Column({ type: 'varchar', length: 150 })
     Name: string;
 
-    @Column()
+    @Column({ type: 'varchar', length: 150 })
     Type: string;
 
-    @Column()
+    @Column({ type: 'varchar', length: 150, nullable: true })
     Observation: string;//faltan agregar tipos de datos 
 
     @Column({ default: true })
