@@ -19,13 +19,13 @@ export class RequestSupervisionMeter {
             }
     }
 
-    @Column()
+    @Column({ type: 'text' })
     Location:string;
 
     @Column()
     NIS: number;
 
-    @Column()
+    @Column({ type: 'text' })
     Justification:string;
 
     @Column({default: true})
