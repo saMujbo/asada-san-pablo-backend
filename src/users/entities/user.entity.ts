@@ -92,6 +92,6 @@ export class User {
     @OneToMany(()=>CommentSupervisionMeter,(comment)=>comment.User)
     CommentsSupervisionMeter?:CommentSupervisionMeter[];
 
-    @OneToMany(()=>Report,(report)=>report.User)
+    @OneToMany(()=>Report,(report)=>report.ReportedBy)
     Reports?:Report[];
 }

@@ -1,26 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ReportsService } from './reports.service';
-import { CreateReportDto } from './dto/create-report.dto';
-import { UpdateReportDto } from './dto/update-report.dto';
-import { ReportsPaginationDto } from './dto/Pagination-report.dto';
-import { AssignUserDto } from './dto/assign-user.dto';
-import { TokenGuard } from 'src/auth/guards/token.guard';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/get-user.decorator';
+import { TokenGuard } from 'src/auth/guards/token.guard';
+import { AssignPlumberDto } from './dto/assign-plumber.dto';
+import { ChangeReportStateDto } from './dto/change-report-state.dto';
+import { CreateReportDto } from './dto/create-report.dto';
+import { ReportsPaginationDto } from './dto/Pagination-report.dto';
+import { UpdateReportDto } from './dto/update-report.dto';
+import { ReportStateEnum } from './enums/report-state.enum';
+import { ReportsService } from './reports.service';
 
+@UseGuards(TokenGuard)
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Post()
-  create(@Body() createReportDto: CreateReportDto) {
-    return this.reportsService.create(createReportDto);
-  }
-
-  @Post('admin')
-  createAdminReport(@Body() createReportDto: CreateReportDto) {
-    return this.reportsService.createAdminReport(createReportDto);
+  create(@Body() createReportDto: CreateReportDto, @GetUser('id') userId: number) {
+    return this.reportsService.create(createReportDto, userId);
   }
 
   @Get('search')
@@ -28,7 +26,6 @@ export class ReportsController {
     return this.reportsService.findAll(paginationDto);
   }
 
-  /** Exportar PDF: reportes del mes/año + figura por ubicación. Query: year, month (1-12). */
   @Get('export/pdf')
   @ApiOperation({ summary: 'Exportar PDF de reportes del mes con gráfico por ubicación' })
   async exportPdf(
@@ -44,12 +41,55 @@ export class ReportsController {
     if (!Number.isInteger(month) || month < 1 || month > 12) {
       return res.status(400).json({ message: 'Query "month" es requerido y debe ser entre 1 y 12' });
     }
+
     const buffer = await this.reportsService.buildExportPdf(year, month);
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const filename = `reportes-${monthNames[month - 1]}-${year}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
+  }
+
+  @Get('stats/monthly')
+  getMonthly(
+    @Query('months') months?: string,
+    @Query('state') state?: ReportStateEnum,
+    @Query('reportLocationId') reportLocationId?: string,
+    @Query('reportTypeId') reportTypeId?: string,
+  ) {
+    return this.reportsService.getMonthlyCounts({
+      months: months ? Number(months) : 12,
+      state,
+      reportLocationId: reportLocationId ? Number(reportLocationId) : undefined,
+      reportTypeId: reportTypeId ? Number(reportTypeId) : undefined,
+    });
+  }
+
+  @Get('stats/monthly-by-location')
+  getMonthlyByLocation(
+    @Query('months') months?: string,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
+  ) {
+    return this.reportsService.getMonthlyCountsByLocation({
+      months: months ? Number(months) : 12,
+      year: year ? Number(year) : undefined,
+      month: month ? Number(month) : undefined,
+    });
+  }
+
+  @Get('me/count')
+  getMyReportsCount(@GetUser('id') userId: number) {
+    return this.reportsService.getMyReportsSummary(userId);
+  }
+
+  @Get('me/count-by-state')
+  async getMyReportsCountByState(
+    @GetUser('id') userId: number,
+    @Query('state') stateName: string,
+  ) {
+    const count = await this.reportsService.countByStateNameForUser(userId, stateName);
+    return { state: stateName, count };
   }
 
   @ApiOperation({ summary: 'Obtener un reporte por ID' })
@@ -69,67 +109,39 @@ export class ReportsController {
     return this.reportsService.update(+id, updateReportDto);
   }
 
+  @Post(':reportId/assignments')
+  assignPlumber(
+    @Param('reportId') reportId: string,
+    @Body() assignPlumberDto: AssignPlumberDto,
+    @GetUser('id') userId: number,
+  ) {
+    return this.reportsService.assignPlumber(
+      +reportId,
+      assignPlumberDto.plumberUserId,
+      assignPlumberDto.instructions,
+      userId,
+    );
+  }
+
+  @Post(':reportId/state-transitions')
+  changeState(
+    @Param('reportId') reportId: string,
+    @Body() changeReportStateDto: ChangeReportStateDto,
+    @GetUser('id') userId: number,
+  ) {
+    return this.reportsService.changeState(
+      +reportId,
+      changeReportStateDto.newState,
+      changeReportStateDto.reasonChange,
+      userId,
+    );
+  }
+
   @ApiOperation({ summary: 'Eliminar un reporte' })
   @ApiResponse({ status: 200, description: 'Reporte eliminado exitosamente' })
   @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.reportsService.remove(+id);
-  }
-
-  // GET reportes por mes - grafica
-  @Get('stats/monthly')
-  getMonthly(
-    @Query('months') months?: string,
-    @Query('state') stateName?: string,
-    @Query('locationId') locationId?: string,
-    @Query('reportTypeId') reportTypeId?: string,
-  ) {
-    return this.reportsService.getMonthlyCounts({
-      months: months ? Number(months) : 12,
-      stateName,
-      locationId: locationId ? Number(locationId) : undefined,
-      reportTypeId: reportTypeId ? Number(reportTypeId) : undefined,
-    });
-  }
-
-  // GET reportes por mes y ubicación - para figuras por barrio
-  @Get('stats/monthly-by-location')
-  getMonthlyByLocation(
-    @Query('months') months?: string,
-    @Query('year') year?: string,
-    @Query('month') month?: string,
-  ) {
-    return this.reportsService.getMonthlyCountsByLocation({
-      months: months ? Number(months) : 12,
-      year: year ? Number(year) : undefined,
-      month: month ? Number(month) : undefined,
-    });
-  }
-
-  /** Resumen para el usuario autenticado */
-  @UseGuards(TokenGuard)
-  @Get('me/count')
-  async getMyReportsCount(@GetUser('id') userId: number) {
-    return this.reportsService.getMyReportsSummary(userId);
-  }
-
-  /** Conteo por estado específico del usuario autenticado */
-  @UseGuards(TokenGuard)
-  @Get('me/count-by-state')
-  async getMyReportsCountByState(
-    @GetUser('id') userId: number,
-    @Query('state') stateName: string,
-  ) {
-    const count = await this.reportsService.countByStateNameForUser(userId, stateName);
-    return { state: stateName, count };
-  }
-
-  @Patch(':reportId/assign-user-in-charge')
-  async assignReportInCharge(
-    @Param('reportId') reportId: string,
-    @Body() assignUserDto: AssignUserDto
-  ) {
-    return this.reportsService.assignUserInCharge(+reportId, assignUserDto.userInChargeId);
   }
 }

@@ -1,33 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, Min, Max, IsOptional, IsString, IsBoolean } from 'class-validator';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { PaginationQueryDto } from 'src/common/pagination/dto/pagination-query.dto';
 
-export class CategoriesPaginationDto {
-  @ApiPropertyOptional({ default: 1, minimum: 1 })
-  @Transform(({ value }) => Number(value))
-  @IsInt()
-  @Min(1)
-  page: number = 1;
-
-  @ApiPropertyOptional({ default: 10, minimum: 1, maximum: 100 })
-  @Transform(({ value }) => Number(value))
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit: number = 10;
-
-  @ApiPropertyOptional({ description: 'Filtro por nombre o apellidos (LIKE)' })
+export class CategoriesPaginationDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ description: 'Filtro por estado activo (true o false)' })
   @IsOptional()
-  @IsString()
   @Transform(({ value }) => {
-    if (typeof value !== 'string') return undefined;
-    const v = value.trim();
-    return v.length ? v : undefined;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return undefined;
   })
-  name?: string;
-
-  @ApiPropertyOptional({description: 'Filtro por estado (true o false)'})
-  @IsOptional()
-  @IsString()
-  state?: string;
+  @IsBoolean()
+  state?: boolean;
 }
