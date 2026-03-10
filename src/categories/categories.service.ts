@@ -8,6 +8,8 @@ import { CategoriesPaginationDto } from './dto/categoriesPaginationDto';
 import { changeState } from 'src/utils/changeState';
 import { ProductService } from 'src/product/product.service';
 import { applyDefinedFields } from 'src/utils/validation.utils';
+import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
+import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
 
 @Injectable()
 export class CategoriesService {
@@ -27,40 +29,40 @@ export class CategoriesService {
     return await this.categoryRepo.find({ where: { IsActive: true } });
   }
 
-  async search({ page = 1, limit = 10, name, state }: CategoriesPaginationDto) {
-    const pageNum = Math.max(1, Number(page) || 1);
-    const take = Math.min(100, Math.max(1, Number(limit) || 10));
-    const skip = (pageNum - 1) * take;
+  async search(dto: CategoriesPaginationDto): Promise<PaginatedResponse<Category>> {
+    const page = Math.max(1, Number(dto.page) ?? 1);
+    const limit = Math.min(100, Math.max(1, Number(dto.limit) ?? 10));
+    const skip = (page - 1) * limit;
+    const { q, state, sortDir = 'ASC' } = dto;
 
-    const qb = this.categoryRepo.createQueryBuilder('category')
+    const qb = this.categoryRepo
+      .createQueryBuilder('category')
       .skip(skip)
-      .take(take);
+      .take(limit)
+      .orderBy('category.Name', sortDir ?? 'ASC');
 
-    if (name?.trim()) {
-      qb.andWhere('LOWER(category.Name) LIKE :name', {
-        name: `%${name.trim().toLowerCase()}%`,
-      });
+    if (q?.trim()) {
+      const term = `%${q.trim().toLowerCase().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+      qb.andWhere(
+        '(LOWER(category.Name) LIKE :term OR LOWER(category.Description) LIKE :term)',
+        { term },
+      );
     }
 
-    // se aplica solo si viene definido (true o false)
-    if (state) {
+    if (state !== undefined) {
       qb.andWhere('category.IsActive = :state', { state });
     }
 
-    qb.orderBy('category.Name', 'ASC');
-
-    const [data, total] = await qb.getManyAndCount();
+    const [data, totalItems] = await qb.getManyAndCount();
 
     return {
       data,
-      meta: {
-        total,
-        page: pageNum,
-        limit: take,
-        pageCount: Math.max(1, Math.ceil(total / take)),
-        hasNextPage: pageNum * take < total,
-        hasPrevPage: pageNum > 1,
-      },
+      meta: buildPaginationMeta({
+        totalItems,
+        page,
+        limit,
+        itemCount: data.length,
+      }),
     };
   }
 

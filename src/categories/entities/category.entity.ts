@@ -8,10 +8,10 @@ export class Category {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column({ type: 'varchar', length: 160 })
+    @Column({ type: 'varchar', length: 50 })
     Name: string;
 
-    @Column({ type: 'text' })
+    @Column({ type: 'varchar', length: 150, nullable: true })
     Description: string;
 
     @Column({ type: 'boolean', default: true })
