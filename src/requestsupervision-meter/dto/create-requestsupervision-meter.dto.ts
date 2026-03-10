@@ -28,8 +28,6 @@ import { TrimAndNullify } from 'src/utils/validation.utils';
     @Type(() => Number)
     @IsInt()
     UserId: number;
-
-        // no debe de ir en el dto el estado 
     }
 
 
