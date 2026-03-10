@@ -10,7 +10,7 @@ import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, Primary
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text' })
     Justification: string;
     
     @Column({ type: 'date', nullable: false })

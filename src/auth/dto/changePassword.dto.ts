@@ -11,9 +11,4 @@ export class ChangepasswordDto{
     @IsNotEmpty()
     @IsString()
     NewPassword:string;
-
-    // @ApiProperty()
-    // @IsNotEmpty()
-    // @IsString()
-    // ConfirmPassword:string;
 }
