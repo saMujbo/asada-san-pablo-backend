@@ -3,7 +3,6 @@ import { NestFactory } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { AppModule } from 'src/app.module';
 import { seedProjectStates } from './catalogs/project-states.seeder';
-import { seedReportStates } from './catalogs/report-states.seeder';
 import { seedReportTypes } from './catalogs/report-types.seeder';
 import { seedRoles } from './catalogs/roles.seeder';
 import { seedStateRequests } from './catalogs/state-request.seeder';
@@ -19,7 +18,6 @@ async function run() {
     const seeders = [
       { name: 'roles', execute: seedRoles },
       { name: 'report-types', execute: seedReportTypes },
-      { name: 'report-states', execute: seedReportStates },
       { name: 'state-request', execute: seedStateRequests },
       { name: 'project-state', execute: seedProjectStates },
     ];

@@ -12,8 +12,8 @@ import {
 import { User } from 'src/users/entities/user.entity';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
-import { ReportAssignment } from './report-assignment.entity';
-import { ReportStateHistory } from './report-state-history.entity';
+import { ReportAssignment } from 'src/report-assignments/entities/report-assignment.entity';
+import { ReportStateHistory } from 'src/report-state-history/entities/report-state-history.entity';
 import { ReportStateEnum } from '../enums/report-state.enum';
 
 @Entity('reports')

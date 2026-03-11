@@ -7,14 +7,16 @@ import { ReportsController } from './reports.controller';
 import { ReportsGateway } from './reports.gateway';
 import { MailServiceModule } from 'src/mail-service/mail-service.module';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
+import { ReportAssignmentsModule } from 'src/report-assignments/report-assignments.module';
+import { ReportStateHistoryModule } from 'src/report-state-history/report-state-history.module';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
-import { ReportAssignment } from './entities/report-assignment.entity';
-import { ReportStateHistory } from './entities/report-state-history.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Report, User, ReportLocation, ReportType, ReportAssignment, ReportStateHistory]),
+    TypeOrmModule.forFeature([Report, User, ReportLocation, ReportType]),
     MailServiceModule,
+    ReportAssignmentsModule,
+    ReportStateHistoryModule,
   ],
   controllers: [ReportsController],
   providers: [ReportsService, ReportsGateway],

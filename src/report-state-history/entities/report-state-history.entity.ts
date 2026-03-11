@@ -8,8 +8,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
-import { Report } from './report.entity';
-import { ReportStateEnum } from '../enums/report-state.enum';
+import { Report } from 'src/reports/entities/report.entity';
+import { ReportStateEnum } from 'src/reports/enums/report-state.enum';
 
 @Entity('report_state_history')
 export class ReportStateHistory {

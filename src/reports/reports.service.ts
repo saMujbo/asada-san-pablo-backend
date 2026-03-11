@@ -5,6 +5,8 @@ import * as PDFDocument from 'pdfkit';
 import { Repository } from 'typeorm';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
+import { ReportAssignment } from 'src/report-assignments/entities/report-assignment.entity';
+import { ReportStateHistory } from 'src/report-state-history/entities/report-state-history.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
 import { User } from 'src/users/entities/user.entity';
 import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
@@ -13,8 +15,6 @@ import { CreateReportDto } from './dto/create-report.dto';
 import { ReportsPaginationDto } from './dto/Pagination-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { Report } from './entities/report.entity';
-import { ReportAssignment } from './entities/report-assignment.entity';
-import { ReportStateHistory } from './entities/report-state-history.entity';
 import { ReportStateEnum } from './enums/report-state.enum';
 import { ReportsGateway } from './reports.gateway';
 
