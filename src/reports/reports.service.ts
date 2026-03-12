@@ -4,9 +4,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as PDFDocument from 'pdfkit';
 import { Repository } from 'typeorm';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
+import { ReportAssignmentsService } from 'src/report-assignments/report-assignments.service';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
-import { ReportAssignment } from 'src/report-assignments/entities/report-assignment.entity';
-import { ReportStateHistory } from 'src/report-state-history/entities/report-state-history.entity';
+import { ReportStateHistoryService } from 'src/report-state-history/report-state-history.service';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
 import { User } from 'src/users/entities/user.entity';
 import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
@@ -36,12 +36,10 @@ export class ReportsService {
     private readonly reportLocationRepository: Repository<ReportLocation>,
     @InjectRepository(ReportType)
     private readonly reportTypeRepository: Repository<ReportType>,
-    @InjectRepository(ReportAssignment)
-    private readonly reportAssignmentRepository: Repository<ReportAssignment>,
-    @InjectRepository(ReportStateHistory)
-    private readonly reportStateHistoryRepository: Repository<ReportStateHistory>,
     private readonly reportsGateway: ReportsGateway,
     private readonly mailService: MailServiceService,
+    private readonly reportAssignmentsService: ReportAssignmentsService,
+    private readonly reportStateHistoryService: ReportStateHistoryService,
   ) {}
 
   private async validateReportRelations(dto: {
@@ -90,24 +88,6 @@ export class ReportsService {
     throw new BadRequestException('No fue posible generar un código único para el reporte');
   }
 
-  private async createStateHistory(params: {
-    reportId: number;
-    previousState: ReportStateEnum | null;
-    newState: ReportStateEnum;
-    reasonChange: string;
-    changedByUserId: number;
-  }) {
-    const history = this.reportStateHistoryRepository.create({
-      ReportId: params.reportId,
-      PreviousState: params.previousState,
-      NewState: params.newState,
-      ReasonChange: params.reasonChange,
-      ChangedByUserId: params.changedByUserId,
-    });
-
-    await this.reportStateHistoryRepository.save(history);
-  }
-
   private async loadReport(id: number): Promise<Report | null> {
     const report = await this.reportRepository.findOne({
       where: { Id: id },
@@ -130,40 +110,6 @@ export class ReportsService {
     }
 
     return report;
-  }
-
-  private async validatePlumberUser(userId: number) {
-    const user = await this.usersRepository.findOne({
-      where: { Id: userId },
-      relations: ['Roles'],
-    });
-
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-
-    const isPlumber = (user.Roles ?? []).some((role) => role.Rolname === 'FONTANERO');
-    if (!isPlumber) {
-      throw new BadRequestException('El usuario asignado no tiene rol FONTANERO');
-    }
-
-    return user;
-  }
-
-  private ensureValidStateTransition(currentState: ReportStateEnum, newState: ReportStateEnum) {
-    if (currentState === newState) {
-      throw new BadRequestException('El reporte ya se encuentra en ese estado');
-    }
-
-    const allowedTransitions: Record<ReportStateEnum, ReportStateEnum[]> = {
-      [ReportStateEnum.PENDIENTE]: [ReportStateEnum.EN_PROCESO],
-      [ReportStateEnum.EN_PROCESO]: [ReportStateEnum.PENDIENTE, ReportStateEnum.RESUELTO],
-      [ReportStateEnum.RESUELTO]: [ReportStateEnum.EN_PROCESO],
-    };
-
-    if (!allowedTransitions[currentState].includes(newState)) {
-      throw new BadRequestException(`No se puede cambiar de "${currentState}" a "${newState}"`);
-    }
   }
 
   private parseReportState(value: string): ReportStateEnum {
@@ -191,7 +137,7 @@ export class ReportsService {
 
     const saved = await this.reportRepository.save(report);
 
-    await this.createStateHistory({
+    await this.reportStateHistoryService.createHistory({
       reportId: saved.Id,
       previousState: null,
       newState: ReportStateEnum.PENDIENTE,
@@ -593,76 +539,22 @@ export class ReportsService {
   }
 
   async assignPlumber(reportId: number, plumberUserId: number, instructions: string, assignedByUserId: number) {
-    const report = await this.reportRepository.findOne({ where: { Id: reportId } });
-    if (!report) {
-      throw new NotFoundException('Reporte no encontrado');
-    }
-
-    if (report.ReportState === ReportStateEnum.RESUELTO) {
-      throw new BadRequestException('No se puede asignar un fontanero a un reporte resuelto');
-    }
-
-    await this.usersRepository.findOneOrFail({ where: { Id: assignedByUserId } }).catch(() => {
-      throw new NotFoundException('Usuario asignador no encontrado');
-    });
-    await this.validatePlumberUser(plumberUserId);
-
-    const assignment =
-      (await this.reportAssignmentRepository.findOne({ where: { ReportId: reportId } })) ??
-      this.reportAssignmentRepository.create({ ReportId: reportId });
-
-    assignment.PlumberUserId = plumberUserId;
-    assignment.AssignedByUserId = assignedByUserId;
-    assignment.Instructions = instructions;
-    await this.reportAssignmentRepository.save(assignment);
-
-    if (report.ReportState === ReportStateEnum.PENDIENTE) {
-      const previousState = report.ReportState;
-      report.ReportState = ReportStateEnum.EN_PROCESO;
-      await this.reportRepository.save(report);
-      await this.createStateHistory({
-        reportId,
-        previousState,
-        newState: ReportStateEnum.EN_PROCESO,
-        reasonChange: 'Asignación de fontanero responsable',
-        changedByUserId: assignedByUserId,
-      });
-    }
-
+    await this.reportAssignmentsService.assignPlumber(
+      reportId,
+      plumberUserId,
+      instructions,
+      assignedByUserId,
+    );
     return this.loadReport(reportId);
   }
 
   async changeState(reportId: number, newState: ReportStateEnum, reasonChange: string, changedByUserId: number) {
-    const report = await this.reportRepository.findOne({ where: { Id: reportId } });
-    if (!report) {
-      throw new NotFoundException('Reporte no encontrado');
-    }
-
-    await this.usersRepository.findOneOrFail({ where: { Id: changedByUserId } }).catch(() => {
-      throw new NotFoundException('Usuario no encontrado');
-    });
-
-    this.ensureValidStateTransition(report.ReportState, newState);
-
-    if (newState === ReportStateEnum.EN_PROCESO || newState === ReportStateEnum.RESUELTO) {
-      const assignment = await this.reportAssignmentRepository.findOne({ where: { ReportId: reportId } });
-      if (!assignment) {
-        throw new BadRequestException(`El reporte debe tener un fontanero asignado antes de pasar a "${newState}"`);
-      }
-    }
-
-    const previousState = report.ReportState;
-    report.ReportState = newState;
-    await this.reportRepository.save(report);
-
-    await this.createStateHistory({
+    await this.reportStateHistoryService.changeState(
       reportId,
-      previousState,
       newState,
       reasonChange,
       changedByUserId,
-    });
-
+    );
     return this.loadReport(reportId);
   }
 }
