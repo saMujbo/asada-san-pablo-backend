@@ -9,12 +9,24 @@ const roles = [
     Description: 'Acceso administrativo completo al sistema.',
   },
   {
-    Rolname: RoleEnum.USER,
-    Description: 'Usuario autenticado con permisos operativos generales.',
-  },
-  {
     Rolname: RoleEnum.GUEST,
     Description: 'Rol por defecto con acceso limitado.',
+  },
+  {
+    Rolname: RoleEnum.BOD,
+    Description: 'Acceso para miembros de la Junta Directiva.',
+  },
+  {
+    Rolname: RoleEnum.SUB,
+    Description: 'Acceso para abonados del sistema.',
+  },
+  {
+    Rolname: RoleEnum.ASSOS,
+    Description: 'Acceso para asociados del sistema.',
+  },
+  {
+    Rolname: RoleEnum.PLMBR,
+    Description: 'Acceso para fontaneros.',
   },
 ];
 
