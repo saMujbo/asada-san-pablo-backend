@@ -12,7 +12,6 @@ import { UpdateEmailDto } from './dto/updateEmail-user';
 import { changeState } from 'src/utils/changeState';
 import { UpdateMeDto } from './dto/updateMeDto';
 import { PaginationDto } from './dto/pagination.dto';
-import { In } from 'typeorm';
 import { DropboxService } from 'src/dropbox/dropbox.service';
 
 const PROFILE_PHOTO_FOLDER = 'profile-photos';
