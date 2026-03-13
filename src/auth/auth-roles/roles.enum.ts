@@ -1,5 +1,8 @@
 export enum Role {
     ADMIN = 'ADMIN',
-    USER = 'USER',
-    GUEST = 'GUEST',
+    GUEST = 'INVITADO',
+    BOD = 'JUNTA',
+    SUB = 'ABONADO',
+    ASSOS = 'ASOCIADO',
+    PLMBR = 'FONTANERO'
 }
