@@ -69,13 +69,21 @@ async search({
   page = 1,
   limit = 10,
   q,
+  UserName,
   StateRequestId,
   State,     // si lo sigues usando en el endpoint general
   userId,    // <-- viene solo desde /me/search (inyectado)
-}: RequestAssociatedPagination & { userId?: number; q?: string }) {
+}: RequestAssociatedPagination & { userId?: number; q?: string; UserName?: string }) {
   const pageNum = Math.max(1, Number(page) || 1);
   const take = Math.min(100, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * take;
+
+  const stateRequestIdNum =
+      StateRequestId !== undefined && StateRequestId !== null
+        ? Number(StateRequestId)
+        : undefined;
+                                                                                                                             
+    const searchText = (q ?? UserName ?? '').trim().toLowerCase();
 
   const qb = this.requestAssociatedRepo
     .createQueryBuilder('req')
@@ -89,7 +97,12 @@ async search({
 
   let isActiveFilter: boolean | undefined = undefined;
   if (State !== undefined && State !== null && State !== '') {
-    isActiveFilter = typeof State === 'string' ? State.toLowerCase() === 'true' : !!State;
+    const normalizedState = String(State).trim().toLowerCase();
+    if (['true', '1', 'activo', 'active', 'si', 'sí'].includes(normalizedState)) {
+      isActiveFilter = true;
+    } else if (['false', '0', 'inactivo', 'inactive', 'no'].includes(normalizedState)) {
+      isActiveFilter = false;
+    }
   } else if (typeof userId === 'number') {
     isActiveFilter = true; // default para "mis solicitudes"
   }
@@ -97,8 +110,8 @@ async search({
     qb.andWhere('req.IsActive = :isActive', { isActive: isActiveFilter });
   }
 
-  if (typeof StateRequestId === 'number') {
-    qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
+  if (typeof stateRequestIdNum === 'number' && !Number.isNaN(stateRequestIdNum)) {
+    qb.andWhere('req.StateRequestId = :stateId', { stateId: stateRequestIdNum });
   }
 
   if (typeof userId === 'number') {
