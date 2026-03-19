@@ -15,6 +15,13 @@ export class CreateReportDto {
   @ApiProperty({ example: 'Fuga de agua en la tubería principal', description: 'Descripción del reporte' })
   Description: string;
 
+  @IsNotEmpty({ message: 'El usuario del catálogo es obligatorio' })
+  @IsInt({ message: 'El ID del usuario debe ser un número entero' })
+  @Min(1, { message: 'El ID del usuario debe ser mayor a 0' })
+  @Transform(({ value }) => (value === '' || value === undefined ? undefined : Number(value)))
+  @ApiProperty({ example: 1, description: 'ID del usuario que reporta' })
+  UserId: number;
+
   @IsNotEmpty({ message: 'La ubicación del catálogo es obligatoria' })
   @IsInt({ message: 'El ID de la ubicación debe ser un número entero' })
   @Min(1, { message: 'El ID de la ubicación debe ser mayor a 0' })
