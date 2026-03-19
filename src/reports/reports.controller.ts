@@ -18,7 +18,7 @@ export class ReportsController {
 
   @Post()
   create(@Body() createReportDto: CreateReportDto, @GetUser('id') userId: number) {
-    return this.reportsService.create(createReportDto, userId);
+    return this.reportsService.create(createReportDto);
   }
 
   @Get('search')

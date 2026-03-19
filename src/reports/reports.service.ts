@@ -175,18 +175,18 @@ export class ReportsService {
     return match;
   }
 
-  async create(createReportDto: CreateReportDto, reportedByUserId: number) {
+  async create(createReportDto: CreateReportDto) {
     await this.validateReportRelations({
       ReportLocationId: createReportDto.ReportLocationId,
       ReportTypeId: createReportDto.ReportTypeId,
-      ReportedByUserId: reportedByUserId,
+      ReportedByUserId: createReportDto.UserId,
     });
 
     const report = this.reportRepository.create({
       ...createReportDto,
       Code: await this.generateReportCode(),
       ReportState: ReportStateEnum.PENDIENTE,
-      ReportedByUserId: reportedByUserId,
+      ReportedByUserId: createReportDto.UserId,
     });
 
     const saved = await this.reportRepository.save(report);
@@ -196,7 +196,7 @@ export class ReportsService {
       previousState: null,
       newState: ReportStateEnum.PENDIENTE,
       reasonChange: 'Creación del reporte',
-      changedByUserId: reportedByUserId,
+      changedByUserId: createReportDto.UserId,
     });
 
     const loadedReport = await this.loadReport(saved.Id);
