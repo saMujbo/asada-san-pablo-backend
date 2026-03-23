@@ -9,6 +9,7 @@ export interface ReportCreatedPayload {
   Code: string;
   ExactLocation: string;
   Description: string;
+  PhotoUrl?: string;
   ReportedBy: {
     Id: number;
     Name: string;

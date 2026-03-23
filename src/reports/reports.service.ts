@@ -1,22 +1,26 @@
 import { randomUUID } from 'crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as ExcelJS from 'exceljs';
 import * as PDFDocument from 'pdfkit';
 import { Repository } from 'typeorm';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
 import { User } from 'src/users/entities/user.entity';
+import { DropboxService } from 'src/dropbox/dropbox.service';
 import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
 import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ReportsPaginationDto } from './dto/Pagination-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { Report } from './entities/report.entity';
-import { ReportAssignment } from './entities/report-assignment.entity';
 import { ReportStateHistory } from './entities/report-state-history.entity';
 import { ReportStateEnum } from './enums/report-state.enum';
 import { ReportsGateway } from './reports.gateway';
+
+const ALLOWED_PHOTO_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 type MonthlyOpts = {
   months?: number;
@@ -36,12 +40,11 @@ export class ReportsService {
     private readonly reportLocationRepository: Repository<ReportLocation>,
     @InjectRepository(ReportType)
     private readonly reportTypeRepository: Repository<ReportType>,
-    @InjectRepository(ReportAssignment)
-    private readonly reportAssignmentRepository: Repository<ReportAssignment>,
     @InjectRepository(ReportStateHistory)
     private readonly reportStateHistoryRepository: Repository<ReportStateHistory>,
     private readonly reportsGateway: ReportsGateway,
     private readonly mailService: MailServiceService,
+    private readonly dropboxService: DropboxService,
   ) {}
 
   private async validateReportRelations(dto: {
@@ -115,9 +118,8 @@ export class ReportsService {
         'ReportLocation',
         'ReportType',
         'ReportedBy',
-        'Assignment',
-        'Assignment.Plumber',
-        'Assignment.AssignedBy',
+        'Plumber',
+        'AssignedBy',
         'StateHistory',
         'StateHistory.ChangedBy',
       ],
@@ -175,18 +177,36 @@ export class ReportsService {
     return match;
   }
 
-  async create(createReportDto: CreateReportDto) {
+  private async uploadReportPhoto(photo: Express.Multer.File, code: string): Promise<string> {
+    if (!ALLOWED_PHOTO_MIMES.includes(photo.mimetype)) {
+      throw new BadRequestException('Formato de foto no válido. Use JPEG, PNG o WebP');
+    }
+    const ext = photo.originalname.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const dbxPath = `/Reportes/${code}/foto.${ext}`;
+    await this.dropboxService.uploadBuffer(photo.buffer, dbxPath);
+    return this.dropboxService.getFileSharedLink(dbxPath);
+  }
+
+  async create(createReportDto: CreateReportDto, photo?: Express.Multer.File) {
     await this.validateReportRelations({
       ReportLocationId: createReportDto.ReportLocationId,
       ReportTypeId: createReportDto.ReportTypeId,
       ReportedByUserId: createReportDto.UserId,
     });
 
+    const code = await this.generateReportCode();
+
+    let photoUrl: string | null = null;
+    if (photo) {
+      photoUrl = await this.uploadReportPhoto(photo, code);
+    }
+
     const report = this.reportRepository.create({
       ...createReportDto,
-      Code: await this.generateReportCode(),
+      Code: code,
       ReportState: ReportStateEnum.PENDIENTE,
       ReportedByUserId: createReportDto.UserId,
+      PhotoUrl: photoUrl,
     });
 
     const saved = await this.reportRepository.save(report);
@@ -211,6 +231,7 @@ export class ReportsService {
       Description: loadedReport.Description,
       ReportState: loadedReport.ReportState,
       CreatedAt: loadedReport.CreatedAt,
+      PhotoUrl: loadedReport.PhotoUrl ?? undefined, // undefined instead of null to avoid type errors
       ReportLocation: {
         Id: loadedReport.ReportLocation.Id,
         Neighborhood: loadedReport.ReportLocation.Neighborhood,
@@ -252,9 +273,8 @@ export class ReportsService {
       .leftJoinAndSelect('report.ReportLocation', 'reportLocation')
       .leftJoinAndSelect('report.ReportType', 'reportType')
       .leftJoinAndSelect('report.ReportedBy', 'reportedBy')
-      .leftJoinAndSelect('report.Assignment', 'assignment')
-      .leftJoinAndSelect('assignment.Plumber', 'plumber')
-      .leftJoinAndSelect('assignment.AssignedBy', 'assignedBy')
+      .leftJoinAndSelect('report.Plumber', 'plumber')
+      .leftJoinAndSelect('report.AssignedBy', 'assignedBy')
       .skip(skip)
       .take(limit)
       .orderBy('report.CreatedAt', paginationDto.sortDir === 'ASC' ? 'ASC' : 'DESC');
@@ -272,7 +292,7 @@ export class ReportsService {
     }
 
     if (plumberUserId != null) {
-      qb.andWhere('assignment.PlumberUserId = :plumberUserId', { plumberUserId });
+      qb.andWhere('report.PlumberUserId = :plumberUserId', { plumberUserId });
     }
 
     if (q?.trim()) {
@@ -459,8 +479,7 @@ export class ReportsService {
       .leftJoinAndSelect('report.ReportLocation', 'reportLocation')
       .leftJoinAndSelect('report.ReportType', 'reportType')
       .leftJoinAndSelect('report.ReportedBy', 'reportedBy')
-      .leftJoinAndSelect('report.Assignment', 'assignment')
-      .leftJoinAndSelect('assignment.Plumber', 'plumber')
+      .leftJoinAndSelect('report.Plumber', 'plumber')
       .where('report.CreatedAt >= :from', { from })
       .andWhere('report.CreatedAt <= :to', { to })
       .orderBy('report.CreatedAt', 'DESC')
@@ -474,95 +493,394 @@ export class ReportsService {
       this.getMonthlyCountsByLocation({ year, month }),
     ]);
 
-    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-    const title = `Reportes - ${monthNames[month - 1]} ${year}`;
+    const title = `Reportes - ${MONTH_NAMES[month - 1]} ${year}`;
 
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
-      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      // Landscape A4: 841 x 595 — da 741pt de ancho útil (841 - 50*2)
+      const doc = new PDFDocument({ margin: 50, size: 'A4', layout: 'landscape' });
 
       doc.on('data', (chunk: Buffer) => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
+      // Trunca un texto para que quepa en maxWidth pt según la fuente/tamaño activos
+      const fit = (text: string, maxWidth: number): string => {
+        if (doc.widthOfString(text) <= maxWidth) return text;
+        let t = text;
+        while (t.length > 0 && doc.widthOfString(t + '…') > maxWidth) {
+          t = t.slice(0, -1);
+        }
+        return t + '…';
+      };
+
       doc.fontSize(18).text(title, { align: 'center' });
-      doc.moveDown();
+      doc.moveDown(0.5);
       doc.fontSize(10).text(`Total de reportes: ${reports.length}`, { align: 'center' });
-      doc.moveDown(1.5);
+      doc.moveDown(1.2);
 
       doc.fontSize(12).text('Listado de reportes', { underline: true });
       doc.moveDown(0.5);
 
-      const tableTop = doc.y;
-      const colWidths = [62, 55, 90, 75, 60, 95, 95];
-      const headers = ['Código', 'Fecha', 'Barrio', 'Estado', 'Tipo', 'Fontanero', 'Ubicación exacta'];
-      doc.fontSize(9).font('Helvetica-Bold');
+      // Layout tipo tarjeta: prioriza espacio para codigo, barrio y ubicacion
+      const MARGIN   = 50;
+      const TABLE_W  = 741;
+      const CELL_PADDING_X = 6;
+      const CELL_PADDING_Y = 6;
+      const PRIMARY_COL_W = 210;
+      const SECONDARY_COL_W = 160;
+      const ROW_GAP = 8;
+      const LABEL_GAP = 11;
+      const MIN_TOP_ROW_H = 30;
+      const MIN_MIDDLE_ROW_H = 30;
+      const LOCATION_MIN_H = 28;
+      const SECTION_H = 30;
+      const PAGE_BOTTOM = 545; // landscape height 595 - margen inferior 50
 
-      let x = 50;
-      headers.forEach((header, index) => {
-        doc.text(header, x, tableTop, { width: colWidths[index], continued: false });
-        x += colWidths[index];
-      });
+      const measureCellHeight = (text: string, width: number, wrap = true): number => {
+        const content = wrap ? text : fit(text, width);
+        const textHeight = doc.heightOfString(content, {
+          width,
+          align: 'left',
+          lineGap: 1,
+        });
+        return textHeight + CELL_PADDING_Y * 2;
+      };
 
-      doc.moveDown(0.3);
-      doc.font('Helvetica');
-      let y = doc.y;
+      const drawSectionHeader = (startY: number) => {
+        doc.rect(MARGIN, startY, TABLE_W, SECTION_H).fill('#E8EEF5');
+        doc.strokeColor('#C7D2E0').lineWidth(0.7).rect(MARGIN, startY, TABLE_W, SECTION_H).stroke();
+        doc.font('Helvetica-Bold').fontSize(10).fillColor('#1F2937').text('Listado de reportes', MARGIN + 10, startY + 9, {
+          width: TABLE_W - 20,
+          align: 'left',
+          lineBreak: false,
+        });
+        doc.font('Helvetica').fillColor('#111827');
+      };
 
-      reports.forEach((report) => {
-        if (y > 700) {
+      let y = doc.y + 2;
+      drawSectionHeader(y);
+      y += SECTION_H + 10;
+
+      doc.fontSize(9);
+      reports.forEach((report, rowIndex) => {
+        const codeValue = String(report.Code ?? '-');
+        const dateValue = new Date(report.CreatedAt).toLocaleDateString('es-CR');
+        const stateValue = String(report.ReportState ?? '-');
+        const typeValue = String(report.ReportType?.Name ?? '-');
+        const neighborhoodValue = String(report.ReportLocation?.Neighborhood ?? '-');
+        const plumberValue = String(report.Plumber ? `${report.Plumber.Name} ${report.Plumber.Surname1}`.trim() : '-');
+        const locationLabel = 'Ubicación exacta';
+        const locationValue = String(report.ExactLocation ?? '-');
+
+        const topRowHeight = Math.max(
+          MIN_TOP_ROW_H,
+          measureCellHeight(codeValue, PRIMARY_COL_W - CELL_PADDING_X * 2),
+          measureCellHeight(dateValue, SECONDARY_COL_W - CELL_PADDING_X * 2, false),
+          measureCellHeight(stateValue, SECONDARY_COL_W - CELL_PADDING_X * 2, false),
+          measureCellHeight(typeValue, SECONDARY_COL_W - CELL_PADDING_X * 2, false),
+        );
+        const middleRowHeight = Math.max(
+          MIN_MIDDLE_ROW_H,
+          measureCellHeight(neighborhoodValue, PRIMARY_COL_W - CELL_PADDING_X * 2),
+          measureCellHeight(plumberValue, TABLE_W - PRIMARY_COL_W - CELL_PADDING_X * 4),
+        );
+        const locationWidth = TABLE_W - CELL_PADDING_X * 2;
+        const locationLabelHeight = doc.heightOfString(locationLabel, {
+          width: locationWidth,
+          lineGap: 1,
+        });
+        const locationValueHeight = doc.heightOfString(locationValue, {
+          width: locationWidth,
+          lineGap: 1,
+        });
+        const locationBlockHeight = Math.max(
+          LOCATION_MIN_H,
+          locationLabelHeight + locationValueHeight + CELL_PADDING_Y * 2 + 6,
+        );
+        const rowHeight = topRowHeight + middleRowHeight + locationBlockHeight;
+
+        if (y + rowHeight > PAGE_BOTTOM) {
           doc.addPage();
-          y = 50;
-          doc.font('Helvetica-Bold');
-          headers.forEach((header, index) => {
-            doc.text(header, 50 + colWidths.slice(0, index).reduce((sum, width) => sum + width, 0), y, { width: colWidths[index] });
-          });
-          doc.font('Helvetica');
-          y += 14;
+          y = MARGIN;
+          drawSectionHeader(y);
+          y += SECTION_H + 10;
         }
 
-        const row = [
-          report.Code,
-          new Date(report.CreatedAt).toLocaleDateString('es-CR'),
-          report.ReportLocation?.Neighborhood ?? '-',
-          report.ReportState,
-          report.ReportType?.Name ?? '-',
-          report.Assignment?.Plumber
-            ? `${report.Assignment.Plumber.Name} ${report.Assignment.Plumber.Surname1}`.trim()
-            : '-',
-          report.ExactLocation,
-        ];
+        doc.rect(MARGIN, y, TABLE_W, rowHeight).fill(rowIndex % 2 === 0 ? '#FFFFFF' : '#F8FAFC');
+        doc.strokeColor('#D7DEE8').lineWidth(0.5).rect(MARGIN, y, TABLE_W, rowHeight).stroke();
 
-        x = 50;
-        row.forEach((cell, index) => {
-          doc.text(String(cell), x, y, { width: colWidths[index], ellipsis: true });
-          x += colWidths[index];
+        const topY = y + CELL_PADDING_Y;
+        const middleY = y + topRowHeight + 2;
+        const locationY = y + topRowHeight + middleRowHeight + CELL_PADDING_Y - 1;
+        const rightColX = MARGIN + PRIMARY_COL_W;
+        const rightCellW = SECONDARY_COL_W;
+        const plumberX = rightColX + rightCellW * 2;
+        const plumberW = TABLE_W - PRIMARY_COL_W - rightCellW * 2;
+
+        doc.font('Helvetica-Bold').fillColor('#374151').text('Código', MARGIN + CELL_PADDING_X, topY, {
+          width: PRIMARY_COL_W - CELL_PADDING_X * 2,
+          align: 'left',
         });
-        y += 14;
+        doc.font('Helvetica').fillColor('#111827').text(codeValue, MARGIN + CELL_PADDING_X, topY + LABEL_GAP, {
+          width: PRIMARY_COL_W - CELL_PADDING_X * 2,
+          height: topRowHeight - CELL_PADDING_Y * 2,
+          align: 'left',
+          lineGap: 1,
+        });
+
+        doc.font('Helvetica-Bold').fillColor('#374151').text('Fecha', rightColX + CELL_PADDING_X, topY, {
+          width: rightCellW - CELL_PADDING_X * 2,
+          align: 'left',
+        });
+        doc.font('Helvetica').fillColor('#111827').text(fit(dateValue, rightCellW - CELL_PADDING_X * 2), rightColX + CELL_PADDING_X, topY + LABEL_GAP, {
+          width: rightCellW - CELL_PADDING_X * 2,
+          align: 'left',
+          lineBreak: false,
+        });
+
+        doc.font('Helvetica-Bold').fillColor('#374151').text('Estado', rightColX + rightCellW + CELL_PADDING_X, topY, {
+          width: rightCellW - CELL_PADDING_X * 2,
+          align: 'left',
+        });
+        doc.font('Helvetica').fillColor('#111827').text(fit(stateValue, rightCellW - CELL_PADDING_X * 2), rightColX + rightCellW + CELL_PADDING_X, topY + LABEL_GAP, {
+          width: rightCellW - CELL_PADDING_X * 2,
+          align: 'left',
+          lineBreak: false,
+        });
+
+        doc.font('Helvetica-Bold').fillColor('#374151').text('Tipo', plumberX + CELL_PADDING_X, topY, {
+          width: plumberW - CELL_PADDING_X * 2,
+          align: 'left',
+        });
+        doc.font('Helvetica').fillColor('#111827').text(fit(typeValue, plumberW - CELL_PADDING_X * 2), plumberX + CELL_PADDING_X, topY + LABEL_GAP, {
+          width: plumberW - CELL_PADDING_X * 2,
+          align: 'left',
+          lineBreak: false,
+        });
+
+        doc.moveTo(MARGIN, y + topRowHeight).lineTo(MARGIN + TABLE_W, y + topRowHeight).stroke('#E3E8EF');
+
+        doc.font('Helvetica-Bold').fillColor('#374151').text('Barrio', MARGIN + CELL_PADDING_X, middleY, {
+          width: PRIMARY_COL_W - CELL_PADDING_X * 2,
+          align: 'left',
+        });
+        doc.font('Helvetica').fillColor('#111827').text(neighborhoodValue, MARGIN + CELL_PADDING_X, middleY + LABEL_GAP, {
+          width: PRIMARY_COL_W - CELL_PADDING_X * 2,
+          height: middleRowHeight - CELL_PADDING_Y * 2,
+          align: 'left',
+          lineGap: 1,
+        });
+
+        doc.font('Helvetica-Bold').fillColor('#374151').text('Fontanero', rightColX + CELL_PADDING_X, middleY, {
+          width: TABLE_W - PRIMARY_COL_W - CELL_PADDING_X * 2,
+          align: 'left',
+        });
+        doc.font('Helvetica').fillColor('#111827').text(plumberValue, rightColX + CELL_PADDING_X, middleY + LABEL_GAP, {
+          width: TABLE_W - PRIMARY_COL_W - CELL_PADDING_X * 2,
+          height: middleRowHeight - CELL_PADDING_Y * 2,
+          align: 'left',
+          lineGap: 1,
+        });
+
+        doc.moveTo(MARGIN, y + topRowHeight + middleRowHeight).lineTo(MARGIN + TABLE_W, y + topRowHeight + middleRowHeight).stroke('#E3E8EF');
+
+        doc.font('Helvetica-Bold').fillColor('#374151').text(locationLabel, MARGIN + CELL_PADDING_X, locationY, {
+          width: locationWidth,
+          align: 'left',
+        });
+        doc.font('Helvetica').fillColor('#111827').text(locationValue, MARGIN + CELL_PADDING_X, locationY + 12, {
+          width: locationWidth,
+          height: locationBlockHeight - CELL_PADDING_Y * 2 - 6,
+          align: 'left',
+          lineGap: 1,
+        });
+
+        y += rowHeight + ROW_GAP;
       });
 
-      doc.y = y + 10;
-      doc.moveDown(1.5);
-      const chartTop = doc.y;
+      // ── Gráfico de barras por ubicación ──────────────────────────────────
+      y += 20;
+      if (y + 220 > PAGE_BOTTOM) {
+        doc.addPage();
+        y = MARGIN;
+      }
 
-      doc.fontSize(12).text('Reportes por ubicación (mes seleccionado)', { underline: true });
-      doc.moveDown(1);
-      const chartLeft = 50;
-      const chartW = 500;
-      const chartH = 180;
-      const maxCount = Math.max(1, ...byLocation.map((item) => item.count));
-      const barH = byLocation.length ? (chartH - 20) / byLocation.length : 0;
-      const barMaxW = chartW - 120;
-
-      byLocation.forEach((row, index) => {
-        const barY = chartTop + 30 + index * (barH + 2);
-        doc.fontSize(8).fillColor('black').text(row.neighborhood, chartLeft, barY - 2, { width: 110 });
-        const width = (row.count / maxCount) * barMaxW;
-        doc.rect(chartLeft + 115, barY - 1, width, Math.min(barH - 2, 14)).fill('#4A90D9');
-        doc.fillColor('black').text(String(row.count), chartLeft + 120 + width, barY - 2, { width: 30 });
+      doc.fontSize(12).font('Helvetica-Bold').fillColor('#111827').text('Reportes por ubicación (mes seleccionado)', MARGIN, y, {
+        width: TABLE_W,
+        align: 'left',
       });
+      doc.font('Helvetica');
+      y += 24;
+
+      if (byLocation.length === 0) {
+        doc.fontSize(9).text('Sin datos para este período.', MARGIN, y);
+      } else {
+        const labelW  = 150;
+        const valueW  = 30;
+        const barMaxW = TABLE_W - labelW - valueW - 20;
+        const barH    = 16;
+        const rowGap  = 10;
+        const maxCount = Math.max(1, ...byLocation.map((b) => b.count));
+
+        doc.fontSize(9);
+        byLocation.forEach((item) => {
+          if (y + barH > PAGE_BOTTOM) {
+            doc.addPage();
+            y = MARGIN;
+          }
+          const label = fit(item.neighborhood, labelW - 8);
+          doc.fillColor('#111827').text(label, MARGIN, y + 3, {
+            width: labelW - 8,
+            align: 'left',
+            lineBreak: false,
+          });
+
+          const barW = Math.max(2, (item.count / maxCount) * barMaxW);
+          doc.roundedRect(MARGIN + labelW, y, barMaxW, barH, 4).fill('#E5EDF6');
+          doc.roundedRect(MARGIN + labelW, y, barW, barH, 4).fill('#4A90D9');
+
+          doc.fillColor('#111827').text(String(item.count), MARGIN + labelW + barMaxW + 8, y + 3, {
+            width: valueW,
+            align: 'left',
+            lineBreak: false,
+          });
+
+          y += barH + rowGap;
+        });
+      }
 
       doc.end();
     });
+  }
+
+  async buildExportExcel(year: number, month: number): Promise<Buffer> {
+    const [reports, byLocation] = await Promise.all([
+      this.getReportsForMonth(year, month),
+      this.getMonthlyCountsByLocation({ year, month }),
+    ]);
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'ASADA San Pablo Backend';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    const sheet = workbook.addWorksheet('Reportes', {
+      views: [{ state: 'frozen', ySplit: 4 }],
+      properties: { defaultRowHeight: 22 },
+    });
+
+    const title = `Reportes - ${MONTH_NAMES[month - 1]} ${year}`;
+    sheet.mergeCells('A1:H1');
+    sheet.getCell('A1').value = title;
+    sheet.getCell('A1').font = { bold: true, size: 16, color: { argb: '1F2937' } };
+    sheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
+
+    sheet.mergeCells('A2:H2');
+    sheet.getCell('A2').value = `Total de reportes: ${reports.length}`;
+    sheet.getCell('A2').font = { size: 11, color: { argb: '4B5563' } };
+    sheet.getCell('A2').alignment = { vertical: 'middle', horizontal: 'left' };
+
+    sheet.columns = [
+      { header: 'Código', key: 'code', width: 24 },
+      { header: 'Fecha', key: 'date', width: 14 },
+      { header: 'Barrio', key: 'neighborhood', width: 24 },
+      { header: 'Estado', key: 'state', width: 18 },
+      { header: 'Tipo', key: 'type', width: 18 },
+      { header: 'Fontanero', key: 'plumber', width: 28 },
+      { header: 'Ubicación exacta', key: 'location', width: 46 },
+      { header: 'Reportado por', key: 'reportedBy', width: 28 },
+    ];
+
+    const headerRow = sheet.getRow(4);
+    headerRow.values = ['Código', 'Fecha', 'Barrio', 'Estado', 'Tipo', 'Fontanero', 'Ubicación exacta', 'Reportado por'];
+    headerRow.height = 24;
+    headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '3B82F6' },
+      };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'D1D5DB' } },
+        left: { style: 'thin', color: { argb: 'D1D5DB' } },
+        bottom: { style: 'thin', color: { argb: 'D1D5DB' } },
+        right: { style: 'thin', color: { argb: 'D1D5DB' } },
+      };
+    });
+
+    reports.forEach((report, index) => {
+      const row = sheet.addRow({
+        code: report.Code,
+        date: new Date(report.CreatedAt),
+        neighborhood: report.ReportLocation?.Neighborhood ?? '-',
+        state: report.ReportState,
+        type: report.ReportType?.Name ?? '-',
+        plumber: report.Plumber ? `${report.Plumber.Name} ${report.Plumber.Surname1}`.trim() : '-',
+        location: report.ExactLocation ?? '-',
+        reportedBy: report.ReportedBy
+          ? `${report.ReportedBy.Name} ${report.ReportedBy.Surname1 ?? ''}`.trim()
+          : '-',
+      });
+
+      row.height = 34;
+      row.eachCell((cell, colNumber) => {
+        cell.alignment = {
+          vertical: 'top',
+          horizontal: colNumber === 2 ? 'center' : 'left',
+          wrapText: colNumber === 1 || colNumber === 3 || colNumber === 6 || colNumber === 7 || colNumber === 8,
+        };
+        cell.border = {
+          bottom: { style: 'thin', color: { argb: 'E5E7EB' } },
+        };
+        if (index % 2 === 1) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'F8FAFC' },
+          };
+        }
+      });
+
+      row.getCell(2).numFmt = 'dd/mm/yyyy';
+    });
+
+    sheet.autoFilter = {
+      from: 'A4',
+      to: 'H4',
+    };
+
+    sheet.getColumn(7).alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+    sheet.getColumn(1).alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+    sheet.getColumn(3).alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+
+    const summaryStartRow = Math.max(sheet.rowCount + 3, 8);
+    sheet.mergeCells(`A${summaryStartRow}:C${summaryStartRow}`);
+    sheet.getCell(`A${summaryStartRow}`).value = 'Resumen por ubicación';
+    sheet.getCell(`A${summaryStartRow}`).font = { bold: true, size: 12, color: { argb: '1F2937' } };
+
+    const summaryHeader = sheet.getRow(summaryStartRow + 1);
+    summaryHeader.values = ['Ubicación', 'Cantidad'];
+    summaryHeader.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: '1F2937' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'DBEAFE' },
+      };
+      cell.border = {
+        bottom: { style: 'thin', color: { argb: 'BFDBFE' } },
+      };
+    });
+
+    byLocation.forEach((item) => {
+      sheet.addRow([item.neighborhood, item.count]);
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
   }
 
   async countAllByUser(userId: number): Promise<number> {
@@ -592,6 +910,17 @@ export class ReportsService {
     return { total, pending, inProcess, resolved };
   }
 
+  async uploadPhoto(reportId: number, photo: Express.Multer.File) {
+    const report = await this.reportRepository.findOne({ where: { Id: reportId } });
+    if (!report) {
+      throw new NotFoundException('Reporte no encontrado');
+    }
+    const photoUrl = await this.uploadReportPhoto(photo, report.Code);
+    report.PhotoUrl = photoUrl;
+    await this.reportRepository.save(report);
+    return this.loadReport(reportId);
+  }
+
   async assignPlumber(reportId: number, plumberUserId: number, instructions: string, assignedByUserId: number) {
     const report = await this.reportRepository.findOne({ where: { Id: reportId } });
     if (!report) {
@@ -607,14 +936,9 @@ export class ReportsService {
     });
     await this.validatePlumberUser(plumberUserId);
 
-    const assignment =
-      (await this.reportAssignmentRepository.findOne({ where: { ReportId: reportId } })) ??
-      this.reportAssignmentRepository.create({ ReportId: reportId });
-
-    assignment.PlumberUserId = plumberUserId;
-    assignment.AssignedByUserId = assignedByUserId;
-    assignment.Instructions = instructions;
-    await this.reportAssignmentRepository.save(assignment);
+    report.PlumberUserId = plumberUserId;
+    report.AssignedByUserId = assignedByUserId;
+    report.Instructions = instructions;
 
     if (report.ReportState === ReportStateEnum.PENDIENTE) {
       const previousState = report.ReportState;
@@ -627,6 +951,8 @@ export class ReportsService {
         reasonChange: 'Asignación de fontanero responsable',
         changedByUserId: assignedByUserId,
       });
+    } else {
+      await this.reportRepository.save(report);
     }
 
     return this.loadReport(reportId);
@@ -645,8 +971,7 @@ export class ReportsService {
     this.ensureValidStateTransition(report.ReportState, newState);
 
     if (newState === ReportStateEnum.EN_PROCESO || newState === ReportStateEnum.RESUELTO) {
-      const assignment = await this.reportAssignmentRepository.findOne({ where: { ReportId: reportId } });
-      if (!assignment) {
+      if (!report.PlumberUserId) {
         throw new BadRequestException(`El reporte debe tener un fontanero asignado antes de pasar a "${newState}"`);
       }
     }
