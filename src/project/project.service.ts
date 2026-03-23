@@ -206,7 +206,7 @@ export class ProjectService {
   }
 
   async updateProject(project: Project) {
-    this.projectRepo.save(project);
+    return await this.projectRepo.save(project);
   }
 
   async remove(Id: number) {
@@ -217,7 +217,7 @@ export class ProjectService {
   }
 
   async isOnProjectState(Id: number) {
-    const hasActiveProjectState = await this.projectRepo.exist({
+    const hasActiveProjectState = await this.projectRepo.exists({
       where: { ProjectState: { Id }, IsActive: true },
     });
     return hasActiveProjectState;

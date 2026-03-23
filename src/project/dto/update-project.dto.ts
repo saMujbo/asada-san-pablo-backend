@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Transform, Type } from "class-transformer";
-import { IsOptional, IsString, Matches, IsBoolean, IsArray, ArrayUnique, IsInt, ArrayMinSize, ValidateNested, IsNotEmpty } from "class-validator";
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
+import { IsOptional, IsString, Matches, IsBoolean, IsInt } from "class-validator";
 import { toDateOnly } from "src/utils/ToDateOnly";
 
 export class UpdateProjectDto {
@@ -52,13 +52,13 @@ export class UpdateProjectDto {
 
     @ApiPropertyOptional()
     @IsOptional()
-    @IsString()
+    @IsInt()
     ProjectStateId?: number;
 
-    @ApiProperty()
-    @IsNotEmpty()
+    @ApiPropertyOptional()
+    @IsOptional()
     @IsInt()
-    UserId: number;
+    UserId?: number;
 
     @ApiPropertyOptional()
     @IsBoolean()
