@@ -43,6 +43,7 @@ import { CommentChangeNameMeterModule } from './CommentRequest/comment-change-na
 import { CommentChangeMeterModule } from './CommentRequest/comment-change-meter/comment-change-meter.module';
 import { CommentSupervisionMeterModule } from './CommentRequest/comment-supervision-meter/comment-supervision-meter.module';
 import { SupplierModule } from './supplier/supplier.module';
+import { NotificationModule } from './notification/notification.module';
 
 
 
@@ -109,6 +110,7 @@ import { SupplierModule } from './supplier/supplier.module';
     CommentChangeMeterModule,
     CommentSupervisionMeterModule,
     SupplierModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}
