@@ -25,6 +25,16 @@ export class ProjectService {
   async create(createProjectDto: CreateProjectDto) {
     const { ProjectStateId, UserId,...rest } = createProjectDto;
 
+    const normalizedName = rest.Name.trim().toLowerCase();
+    const existingProject = await this.projectRepo
+      .createQueryBuilder('project')
+      .where('LOWER(project.Name) = :name', { name: normalizedName })
+      .getOne();
+
+    if (existingProject) {
+      throw new ConflictException('Ya existe un proyecto con ese nombre.');
+    }
+
     if (rest.InnitialDate && rest.EndDate) {
       const ini = new Date(rest.InnitialDate);
       const end = new Date(rest.EndDate);
