@@ -1,4 +1,6 @@
 import {
+  BeforeInsert,
+  BeforeUpdate,
   Column,
   CreateDateColumn,
   Entity,
@@ -8,6 +10,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { User } from 'src/users/entities/user.entity';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
@@ -92,4 +95,20 @@ export class Report {
 
   @OneToMany(() => ReportStateHistory, (history) => history.Report)
   StateHistory: ReportStateHistory[];
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  ensureCode() {
+    if (typeof this.Code === 'string' && this.Code.trim()) {
+      this.Code = this.Code.trim();
+      return;
+    }
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const suffix = randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase();
+    this.Code = `RPT-${yyyy}${mm}${dd}-${suffix}`;
+  }
 }

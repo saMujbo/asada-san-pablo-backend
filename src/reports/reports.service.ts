@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import * as ExcelJS from 'exceljs';
 import * as PDFDocument from 'pdfkit';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
@@ -187,6 +187,17 @@ export class ReportsService {
     return this.dropboxService.getFileSharedLink(dbxPath);
   }
 
+  private isDuplicateReportCodeError(error: unknown): boolean {
+    if (!(error instanceof QueryFailedError)) return false;
+
+    const driverError = error.driverError as { code?: string; sqlMessage?: string } | undefined;
+    return Boolean(
+      driverError?.code === 'ER_DUP_ENTRY'
+      && driverError?.sqlMessage?.includes('reports')
+      && driverError.sqlMessage.includes('IDX_4f36c0536493c16558c9ccbe78')
+    );
+  }
+
   async create(createReportDto: CreateReportDto, photo?: Express.Multer.File) {
     await this.validateReportRelations({
       ReportLocationId: createReportDto.ReportLocationId,
@@ -194,22 +205,45 @@ export class ReportsService {
       ReportedByUserId: createReportDto.UserId,
     });
 
-    const code = await this.generateReportCode();
+    let saved: Report | null = null;
 
-    let photoUrl: string | null = null;
-    if (photo) {
-      photoUrl = await this.uploadReportPhoto(photo, code);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const code = (await this.generateReportCode()).trim();
+      if (!code) {
+        throw new BadRequestException('No fue posible generar un código válido para el reporte');
+      }
+
+      let photoUrl: string | null = null;
+      if (photo) {
+        photoUrl = await this.uploadReportPhoto(photo, code);
+      }
+
+      const report = this.reportRepository.create({
+        ...createReportDto,
+        Code: code,
+        ReportState: ReportStateEnum.PENDIENTE,
+        ReportedByUserId: createReportDto.UserId,
+        PhotoUrl: photoUrl,
+      });
+
+      if (!report.Code?.trim()) {
+        throw new BadRequestException('El código del reporte no puede quedar vacío');
+      }
+
+      try {
+        saved = await this.reportRepository.save(report);
+        break;
+      } catch (error) {
+        if (this.isDuplicateReportCodeError(error) && attempt < 2) {
+          continue;
+        }
+        throw error;
+      }
     }
 
-    const report = this.reportRepository.create({
-      ...createReportDto,
-      Code: code,
-      ReportState: ReportStateEnum.PENDIENTE,
-      ReportedByUserId: createReportDto.UserId,
-      PhotoUrl: photoUrl,
-    });
-
-    const saved = await this.reportRepository.save(report);
+    if (!saved) {
+      throw new BadRequestException('No fue posible guardar el reporte con un código único');
+    }
 
     await this.createStateHistory({
       reportId: saved.Id,
