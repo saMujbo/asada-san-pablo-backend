@@ -107,7 +107,7 @@ export class ProjectService {
       qb.andWhere('LOWER(project.Name) LIKE :name', {
         name: `%${name.trim().toLowerCase()}%`,
       });
-    }
+    }//
 
     if (state) {
       qb.andWhere('project.IsActive = :state', { state });
