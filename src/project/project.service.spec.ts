@@ -5,6 +5,7 @@ import { Project } from './entities/project.entity';
 import { ProjectStateService } from './project-state/project-state.service';
 import { UsersService } from 'src/users/users.service';
 import { TotalActualExpenseService } from 'src/total-actual-expense/total-actual-expense.service';
+import { DropboxService } from 'src/dropbox/dropbox.service';
 
 describe('ProjectService', () => {
   let service: ProjectService;
@@ -34,6 +35,10 @@ describe('ProjectService', () => {
         },
         {
           provide: TotalActualExpenseService,
+          useValue: {},
+        },
+        {
+          provide: DropboxService,
           useValue: {},
         },
       ],

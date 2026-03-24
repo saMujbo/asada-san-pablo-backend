@@ -25,18 +25,22 @@ export class NotificationService {
     return date.toTimeString().slice(0, 5);
   }
 
-  async getNotificationsSummary(): Promise<NotificationSummaryPayload[]> {
-    const notifications = await this.notificationRepository.find({
-      select: {
-        Id: true,
-        Subject: true,
-        Message: true,
-        CreatedAt: true,
-      },
-      order: {
-        CreatedAt: 'DESC',
-      },
-    });
+  async getNotificationsSummary(userId?: number): Promise<NotificationSummaryPayload[]> {
+    const qb = this.notificationRepository
+      .createQueryBuilder('notification')
+      .select(['notification.Id', 'notification.Subject', 'notification.Message', 'notification.CreatedAt'])
+      .orderBy('notification.CreatedAt', 'DESC');
+
+    if (userId !== undefined) {
+      qb.innerJoin(
+        'notification.UserNotifications',
+        'un',
+        'un.User_id = :userId',
+        { userId },
+      );
+    }
+
+    const notifications = await qb.getMany();
 
     return notifications.map((notification) => ({
       Id: notification.Id,
@@ -45,6 +49,11 @@ export class NotificationService {
       Hour: this.formatHour(notification.CreatedAt),
       CreatedAt: notification.CreatedAt,
     }));
+  }
+
+  private async emitNotificationsToUser(userId: number) {
+    const payload = await this.getNotificationsSummary(userId);
+    this.notificationGateway.emitNotificationsToUser(userId, payload);
   }
 
   private async emitAllNotificationsSummary() {
@@ -63,11 +72,11 @@ export class NotificationService {
         return un;
       });
       await this.userNotificationRepository.save(userNotifications);
-      await this.emitAllNotificationsSummary();
+      await Promise.all(users.map((user) => this.emitNotificationsToUser(user.Id)));
       return notification;
     });
   }
-  
+
   async createNotificationByUserID(createNotificationDto: CreateNotificationUserDto) {
     const { UserID, ...rest } = createNotificationDto;
     return this.notificationRepository.save(rest).then(async (notification) => {
@@ -78,11 +87,11 @@ export class NotificationService {
       };
 
       await this.userNotificationRepository.save(userNotifications);
-      await this.emitAllNotificationsSummary();
+      await this.emitNotificationsToUser(UserID);
       return notification;
     });
   }
-  
+
   async createImportantNotification(createNotificationDto: CreateImportantNotificationDto) {
     return this.notificationRepository.save(createNotificationDto).then(async (notification) => {
       const users = await this.userService.findAllWithoutRelations();

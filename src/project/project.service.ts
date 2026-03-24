@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from './entities/project.entity';
 import { Repository } from 'typeorm';
 import * as PDFDocument from 'pdfkit';
+import { extname } from 'path';
 import { hasNonEmptyString, isValidDate } from 'src/utils/validation.utils';
 import { ProjectPaginationDto } from './dto/pagination-project.dto';
 import { ProjectStateService } from './project-state/project-state.service';
@@ -12,6 +13,8 @@ import { UsersService } from 'src/users/users.service';
 import { TotalActualExpenseService } from 'src/total-actual-expense/total-actual-expense.service';
 import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
 import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
+import { DropboxService } from 'src/dropbox/dropbox.service';
+import { slug } from 'src/utils/slug.util';
 
 @Injectable()
 export class ProjectService {
@@ -23,7 +26,28 @@ export class ProjectService {
     private readonly userSv: UsersService,
     @Inject(forwardRef(() => TotalActualExpenseService))
     private readonly totalAESv: TotalActualExpenseService,
+    private readonly dropbox: DropboxService,
   ){}
+
+  private buildBasePath(project: Project) {
+    if (project.SpaceOfDocument) {
+      return project.SpaceOfDocument.startsWith('/') ? project.SpaceOfDocument : `/${project.SpaceOfDocument}`;
+    }
+
+    return `/Proyectos/${slug(project.Name)}`;
+  }
+
+  private async ensureProjectBaseFolder(project: Project) {
+    const basePath = this.buildBasePath(project);
+    await this.dropbox.ensureFolder(basePath);
+
+    if (!project.SpaceOfDocument) {
+      project.SpaceOfDocument = basePath;
+      await this.projectRepo.save(project);
+    }
+
+    return basePath;
+  }
 
   async create(createProjectDto: CreateProjectDto) {
     const { ProjectStateId, UserId,...rest } = createProjectDto;
@@ -329,6 +353,62 @@ export class ProjectService {
 
       doc.end();
     });
+  }
+
+  async uploadCoverImage(Id: number, file: Express.Multer.File) {
+    const project = await this.findOne(Id);
+
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('No se recibió ningún archivo para la portada.');
+    }
+
+    if (!file.mimetype?.startsWith('image/')) {
+      throw new BadRequestException('La portada debe ser una imagen válida.');
+    }
+
+    const basePath = await this.ensureProjectBaseFolder(project);
+    const coverFolder = `${basePath}/Portada`;
+    await this.dropbox.ensureFolder(coverFolder);
+
+    const rawName = file.originalname?.replace(/\.[^.]+$/, '') || `portada-${project.Id}`;
+    const extension = extname(file.originalname || '').toLowerCase() || '.jpg';
+    const safeName = slug(rawName) || `portada-${project.Id}`;
+    const destinationPath = `${coverFolder}/${Date.now()}-${safeName}${extension}`;
+
+    if (project.CoverImagePath) {
+      try {
+        await this.dropbox.delete(project.CoverImagePath);
+      } catch {
+        // Si el archivo anterior ya no existe en Dropbox, no bloqueamos el reemplazo.
+      }
+    }
+
+    const uploaded = await this.dropbox.uploadBuffer(file.buffer, destinationPath);
+    const storedPath = uploaded.path_lower ?? destinationPath.toLowerCase();
+    const coverUrl = await this.dropbox.getFileSharedLink(storedPath);
+
+    project.CoverImagePath = storedPath;
+    project.CoverImageUrl = coverUrl;
+
+    return this.projectRepo.save(project);
+  }
+
+  async removeCoverImage(Id: number) {
+    const project = await this.findOne(Id);
+
+    if (project.CoverImagePath) {
+      try {
+        await this.dropbox.delete(project.CoverImagePath);
+      } catch {
+        // Si ya no existe en Dropbox, limpiamos igualmente la referencia local.
+      }
+    }
+
+    project.CoverImagePath = null;
+    project.CoverImageUrl = null;
+
+    await this.projectRepo.save(project);
+    return { ok: true };
   }
 
   async update(Id: number, updateProjectDto: UpdateProjectDto) {
