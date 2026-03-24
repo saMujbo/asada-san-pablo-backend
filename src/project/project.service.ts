@@ -49,6 +49,28 @@ export class ProjectService {
     return basePath;
   }
 
+  private async getProjectCoverBuffer(project: Project): Promise<Buffer | null> {
+    const sourceUrl = project.CoverImagePath
+      ? (await this.dropbox.getTempLink(project.CoverImagePath)).link
+      : project.CoverImageUrl;
+
+    if (!sourceUrl) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(sourceUrl);
+      if (!response.ok) {
+        return null;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch {
+      return null;
+    }
+  }
+
   async create(createProjectDto: CreateProjectDto) {
     const { ProjectStateId, UserId,...rest } = createProjectDto;
 
@@ -192,6 +214,7 @@ export class ProjectService {
 
   async buildProjectPdf(Id: number): Promise<{ buffer: Buffer; filename: string }> {
     const project = await this.findOne(Id);
+    const projectCoverBuffer = await this.getProjectCoverBuffer(project);
 
     const stripHtml = (value?: string | null) =>
       (value ?? '')
@@ -267,6 +290,31 @@ export class ProjectService {
         doc.moveDown(0.6);
       };
 
+      const renderCoverImage = () => {
+        if (!projectCoverBuffer) {
+          return;
+        }
+
+        ensureSpace(220);
+
+        try {
+          const x = doc.page.margins.left;
+          const y = doc.y;
+          const maxWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+          const maxHeight = 210;
+
+          doc.image(projectCoverBuffer, x, y, {
+            fit: [maxWidth, maxHeight],
+            align: 'center',
+            valign: 'center',
+          });
+          doc.moveDown(0.2);
+          doc.y = y + maxHeight + 16;
+        } catch {
+          // Si PDFKit no logra interpretar la imagen, seguimos generando el PDF sin portada.
+        }
+      };
+
       doc.font('Helvetica-Bold').fontSize(18).fillColor('#091540').text('Reporte de Proyecto', {
         align: 'center',
       });
@@ -275,6 +323,8 @@ export class ProjectService {
         align: 'center',
       });
       doc.moveDown(1);
+
+      renderCoverImage();
 
       section('Informacion general');
       line('ID', String(project.Id ?? '—'));
