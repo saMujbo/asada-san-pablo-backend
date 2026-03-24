@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { Notification } from './entities/notification.entity';
 import { Repository } from 'typeorm';
@@ -17,6 +17,7 @@ export class NotificationService {
     @InjectRepository(UserNotification)
     private readonly userNotificationRepository: Repository<UserNotification>,
     private readonly userService: UsersService,
+    @Inject(forwardRef(() => NotificationGateway))
     private readonly notificationGateway: NotificationGateway,
   ) {}
 
@@ -24,10 +25,12 @@ export class NotificationService {
     return date.toTimeString().slice(0, 5);
   }
 
-  private async emitAllNotificationsSummary() {
+  async getNotificationsSummary(): Promise<NotificationSummaryPayload[]> {
     const notifications = await this.notificationRepository.find({
       select: {
+        Id: true,
         Subject: true,
+        Message: true,
         CreatedAt: true,
       },
       order: {
@@ -35,11 +38,17 @@ export class NotificationService {
       },
     });
 
-    const payload: NotificationSummaryPayload[] = notifications.map((notification) => ({
+    return notifications.map((notification) => ({
+      Id: notification.Id,
       Subject: notification.Subject,
+      Message: notification.Message,
       Hour: this.formatHour(notification.CreatedAt),
+      CreatedAt: notification.CreatedAt,
     }));
+  }
 
+  private async emitAllNotificationsSummary() {
+    const payload = await this.getNotificationsSummary();
     this.notificationGateway.emitAllNotifications(payload);
   }
   
