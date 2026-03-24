@@ -4,6 +4,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from './entities/project.entity';
 import { Repository } from 'typeorm';
+import * as PDFDocument from 'pdfkit';
 import { hasNonEmptyString, isValidDate } from 'src/utils/validation.utils';
 import { ProjectPaginationDto } from './dto/pagination-project.dto';
 import { ProjectStateService } from './project-state/project-state.service';
@@ -161,6 +162,171 @@ export class ProjectService {
     
     if(!foundProject) throw new NotFoundException(`Project with Id ${Id} not found`);
     return foundProject;
+  }
+
+  async buildProjectPdf(Id: number): Promise<{ buffer: Buffer; filename: string }> {
+    const project = await this.findOne(Id);
+
+    const stripHtml = (value?: string | null) =>
+      (value ?? '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+        .replace(/<li>/gi, '• ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim();
+
+    const formatDate = (value?: Date | string | null) => {
+      if (!value) return '—';
+      const dt = new Date(value);
+      return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('es-CR');
+    };
+
+    const safeName = (project.Name ?? `proyecto-${Id}`)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9-_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
+
+    const filename = `${safeName || `proyecto-${Id}`}.pdf`;
+
+    const userName =
+      [project.User?.Name, project.User?.Surname1, project.User?.Surname2]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || '—';
+
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve({ buffer: Buffer.concat(chunks), filename }));
+      doc.on('error', reject);
+
+      const ensureSpace = (required = 80) => {
+        if (doc.y + required > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage();
+        }
+      };
+
+      const section = (title: string) => {
+        ensureSpace(36);
+        doc.moveDown(0.4);
+        doc.font('Helvetica-Bold').fontSize(13).fillColor('#091540').text(title);
+        doc.moveDown(0.2);
+        doc.strokeColor('#D9E0EA').lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+        doc.moveDown(0.5);
+      };
+
+      const line = (label: string, value: string) => {
+        ensureSpace(20);
+        doc.font('Helvetica-Bold').fontSize(10).fillColor('#111827').text(`${label}: `, { continued: true });
+        doc.font('Helvetica').fillColor('#374151').text(value || '—');
+      };
+
+      const paragraph = (value?: string | null, fallback = '—') => {
+        ensureSpace(36);
+        doc.font('Helvetica').fontSize(10).fillColor('#374151').text(stripHtml(value) || fallback, {
+          lineGap: 2,
+        });
+        doc.moveDown(0.6);
+      };
+
+      doc.font('Helvetica-Bold').fontSize(18).fillColor('#091540').text('Reporte de Proyecto', {
+        align: 'center',
+      });
+      doc.moveDown(0.4);
+      doc.font('Helvetica').fontSize(11).fillColor('#374151').text(project.Name ?? `Proyecto ${project.Id}`, {
+        align: 'center',
+      });
+      doc.moveDown(1);
+
+      section('Informacion general');
+      line('ID', String(project.Id ?? '—'));
+      line('Nombre', project.Name ?? '—');
+      line('Ubicacion', project.Location ?? '—');
+      line('Fecha de inicio', formatDate(project.InnitialDate));
+      line('Fecha de fin', formatDate(project.EndDate));
+      line('Estado', project.ProjectState?.Name ?? '—');
+      line('Encargado', userName);
+
+      section('Objetivo');
+      paragraph(project.Objective, 'Sin objetivo registrado.');
+
+      section('Descripcion');
+      paragraph(project.Description, 'Sin descripcion registrada.');
+
+      if (stripHtml(project.Observation)) {
+        section('Observaciones');
+        paragraph(project.Observation);
+      }
+
+      if (project.ProjectProjection) {
+        section('Proyeccion');
+
+        if (stripHtml(project.ProjectProjection.Observation)) {
+          paragraph(project.ProjectProjection.Observation);
+        }
+
+        const projectedDetails = project.ProjectProjection.ProductDetails ?? [];
+        if (projectedDetails.length === 0) {
+          paragraph('', 'Sin productos proyectados.');
+        } else {
+          projectedDetails.forEach((detail) => {
+            ensureSpace(24);
+            const productName = detail.Product?.Name ?? 'Producto';
+            const unit = detail.Product?.UnitMeasure?.Name ?? 'unidad';
+            const category = detail.Product?.Category?.Name ?? '—';
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#111827').text(productName);
+            doc.font('Helvetica').fontSize(10).fillColor('#374151').text(
+              `Cantidad proyectada: ${detail.Quantity ?? 0} ${unit} | Categoria: ${category}`,
+            );
+            doc.moveDown(0.4);
+          });
+        }
+      }
+
+      section('Seguimientos');
+      const traces = (project.TraceProject ?? []).filter((trace) => trace?.IsActive !== false);
+      if (traces.length === 0) {
+        paragraph('', 'Sin seguimientos registrados.');
+      } else {
+        traces.forEach((trace, index) => {
+          ensureSpace(48);
+          doc.font('Helvetica-Bold').fontSize(11).fillColor('#111827').text(
+            `${index + 1}. ${trace.Name || 'Seguimiento'}`,
+          );
+          doc.font('Helvetica').fontSize(10).fillColor('#374151').text(`Fecha: ${formatDate((trace as any).date)}`);
+          if (stripHtml(trace.Observation)) {
+            paragraph(trace.Observation, '');
+          } else {
+            doc.moveDown(0.4);
+          }
+
+          const details = trace.ActualExpense?.ProductDetails ?? [];
+          details.forEach((detail) => {
+            ensureSpace(18);
+            const productName = detail.Product?.Name ?? 'Producto';
+            const unit = detail.Product?.UnitMeasure?.Name ?? 'unidad';
+            doc.font('Helvetica').fontSize(9).fillColor('#4B5563').text(
+              `• ${productName}: ${detail.Quantity ?? 0} ${unit}`,
+            );
+          });
+          doc.moveDown(0.5);
+        });
+      }
+
+      doc.end();
+    });
   }
 
   async update(Id: number, updateProjectDto: UpdateProjectDto) {

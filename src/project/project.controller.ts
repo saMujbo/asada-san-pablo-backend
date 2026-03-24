@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -21,6 +22,16 @@ export class ProjectController {
   @Get('search')
   Search(@Query() pagination:ProjectPaginationDto){
     return this.projectService.search(pagination);
+  }
+
+  @Get(':id/export/pdf')
+  async exportPdf(@Param('id') id: string, @Res() res: Response) {
+    const projectId = Number(id);
+    const { buffer, filename } = await this.projectService.buildProjectPdf(projectId);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
   }
 
   @Get(':id')
