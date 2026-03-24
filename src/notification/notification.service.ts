@@ -73,7 +73,7 @@ export class NotificationService {
       return notification;
     });
   }
-  
+
   async createImportantNotification(createNotificationDto: CreateImportantNotificationDto) {
     return this.notificationRepository.save(createNotificationDto).then(async (notification) => {
       const users = await this.userService.findAllWithoutRelations();
@@ -93,6 +93,26 @@ export class NotificationService {
     return this.notificationRepository.find({ relations: ['UserNotifications'] });
   }
 
+  async findAllByUser(userId: number) {
+    const userNotifications = await this.userNotificationRepository.find({
+      where: { User_id: userId },
+      relations: ['Notification'],
+      order: {
+        CreatedAt: 'DESC',
+        Notification: {
+          CreatedAt: 'DESC',
+        },
+      },
+    });
+
+    return userNotifications.map((userNotification) => ({
+      Id: userNotification.Id,
+      Is_Read: userNotification.Is_Read,
+      CreatedAt: userNotification.CreatedAt,
+      Notification: userNotification.Notification,
+    }));
+  }
+
   // findOne(id: number) {
   //   return `This action returns a #${id} notification`;
   // }
@@ -101,7 +121,7 @@ export class NotificationService {
   //   return `This action updates a #${id} notification`;
   // }
 
-  // remove(id: number) {
-  //   return `This action removes a #${id} notification`;
-  // }
+  remove(id: number) {
+    return `This action removes a #${id} notification`;
+  }
 }

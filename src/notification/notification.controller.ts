@@ -1,9 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { CreateImportantNotificationDto } from './dto/create-important-notification.dto';
+import { GetUser } from 'src/auth/get-user.decorator';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
+@UseGuards(AuthGuard, RolesGuard)
+@ApiBearerAuth()
 @Controller('notification')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
@@ -21,6 +26,11 @@ export class NotificationController {
   @Get()
   findAll() {
     return this.notificationService.findAll();
+  }
+
+  @Get('me')
+  async findMine(@GetUser('id') userId: number) {
+    return await this.notificationService.findAllByUser(userId);
   }
 
   // @Get(':id')
