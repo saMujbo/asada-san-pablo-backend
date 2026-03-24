@@ -5,9 +5,9 @@ import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
 import { ReportType } from 'src/report-types/entities/report-type.entity';
 import { User } from 'src/users/entities/user.entity';
+import { DropboxService } from 'src/dropbox/dropbox.service';
 import { ReportsGateway } from './reports.gateway';
 import { ReportsService } from './reports.service';
-import { ReportAssignment } from './entities/report-assignment.entity';
 import { ReportStateHistory } from './entities/report-state-history.entity';
 import { Report } from './entities/report.entity';
 import { ReportStateEnum } from './enums/report-state.enum';
@@ -18,10 +18,10 @@ describe('ReportsService', () => {
   let usersRepository: any;
   let reportLocationRepository: any;
   let reportTypeRepository: any;
-  let reportAssignmentRepository: any;
   let reportStateHistoryRepository: any;
   let reportsGateway: any;
   let mailService: any;
+  let dropboxService: any;
 
   beforeEach(async () => {
     reportRepository = {
@@ -43,11 +43,6 @@ describe('ReportsService', () => {
     reportTypeRepository = {
       findOne: jest.fn(),
     };
-    reportAssignmentRepository = {
-      findOne: jest.fn(),
-      create: jest.fn(),
-      save: jest.fn(),
-    };
     reportStateHistoryRepository = {
       create: jest.fn(),
       save: jest.fn(),
@@ -58,6 +53,10 @@ describe('ReportsService', () => {
     mailService = {
       sendReportCreatedEmail: jest.fn().mockResolvedValue(undefined),
     };
+    dropboxService = {
+      uploadBuffer: jest.fn().mockResolvedValue(undefined),
+      getFileSharedLink: jest.fn().mockResolvedValue('https://dropbox.example/photo.jpg'),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -66,10 +65,10 @@ describe('ReportsService', () => {
         { provide: getRepositoryToken(User), useValue: usersRepository },
         { provide: getRepositoryToken(ReportLocation), useValue: reportLocationRepository },
         { provide: getRepositoryToken(ReportType), useValue: reportTypeRepository },
-        { provide: getRepositoryToken(ReportAssignment), useValue: reportAssignmentRepository },
         { provide: getRepositoryToken(ReportStateHistory), useValue: reportStateHistoryRepository },
         { provide: ReportsGateway, useValue: reportsGateway },
         { provide: MailServiceService, useValue: mailService },
+        { provide: DropboxService, useValue: dropboxService },
       ],
     }).compile();
 
@@ -101,7 +100,10 @@ describe('ReportsService', () => {
         Surname2: 'Lopez',
         Email: 'ana@example.com',
       },
-      Assignment: null,
+      PlumberUserId: null,
+      AssignedByUserId: null,
+      Instructions: null,
+      PhotoUrl: null,
       StateHistory: [],
     };
     const historyEntity = { Id: 1 };
@@ -115,7 +117,7 @@ describe('ReportsService', () => {
     reportStateHistoryRepository.create.mockReturnValue(historyEntity);
     reportRepository.findOne.mockResolvedValue(loadedReport);
 
-    const result = await service.create(dto as any, 7);
+    const result = await service.create(dto as any);
 
     expect(reportRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -143,7 +145,6 @@ describe('ReportsService', () => {
     await expect(
       service.create(
         { ReportLocationId: 99, ReportTypeId: 3, ExactLocation: 'x', Description: 'y' } as any,
-        7,
       ),
     ).rejects.toThrow(BadRequestException);
   });
@@ -174,8 +175,7 @@ describe('ReportsService', () => {
   });
 
   it('assigns a plumber and moves a pending report to in process', async () => {
-    const report = { Id: 5, ReportState: ReportStateEnum.PENDIENTE };
-    const assignment = { ReportId: 5 };
+    const report = { Id: 5, ReportState: ReportStateEnum.PENDIENTE, PlumberUserId: null, AssignedByUserId: null, Instructions: null };
     const loaded = { Id: 5, ReportState: ReportStateEnum.EN_PROCESO };
     const historyEntity = { Id: 20 };
 
@@ -187,18 +187,13 @@ describe('ReportsService', () => {
       Id: 12,
       Roles: [{ Rolname: 'FONTANERO' }],
     });
-    reportAssignmentRepository.findOne.mockResolvedValue(null);
-    reportAssignmentRepository.create.mockReturnValue(assignment);
     reportStateHistoryRepository.create.mockReturnValue(historyEntity);
 
     const result = await service.assignPlumber(5, 12, 'Atender hoy', 9);
 
-    expect(reportAssignmentRepository.save).toHaveBeenCalledWith({
-      ReportId: 5,
-      PlumberUserId: 12,
-      AssignedByUserId: 9,
-      Instructions: 'Atender hoy',
-    });
+    expect(report.PlumberUserId).toBe(12);
+    expect(report.AssignedByUserId).toBe(9);
+    expect(report.Instructions).toBe('Atender hoy');
     expect(report.ReportState).toBe(ReportStateEnum.EN_PROCESO);
     expect(reportRepository.save).toHaveBeenCalledWith(report);
     expect(reportStateHistoryRepository.save).toHaveBeenCalledWith(historyEntity);
@@ -217,7 +212,7 @@ describe('ReportsService', () => {
   });
 
   it('changes state when the transition is valid and there is an assignment', async () => {
-    const report = { Id: 4, ReportState: ReportStateEnum.EN_PROCESO };
+    const report = { Id: 4, ReportState: ReportStateEnum.EN_PROCESO, PlumberUserId: 12 };
     const loaded = { Id: 4, ReportState: ReportStateEnum.RESUELTO };
     const historyEntity = { Id: 30 };
 
@@ -225,7 +220,6 @@ describe('ReportsService', () => {
       .mockResolvedValueOnce(report)
       .mockResolvedValueOnce(loaded);
     usersRepository.findOneOrFail.mockResolvedValue({ Id: 9 });
-    reportAssignmentRepository.findOne.mockResolvedValue({ Id: 1, ReportId: 4 });
     reportStateHistoryRepository.create.mockReturnValue(historyEntity);
 
     const result = await service.changeState(
@@ -238,6 +232,7 @@ describe('ReportsService', () => {
     expect(reportRepository.save).toHaveBeenCalledWith({
       Id: 4,
       ReportState: ReportStateEnum.RESUELTO,
+      PlumberUserId: 12,
     });
     expect(reportStateHistoryRepository.save).toHaveBeenCalledWith(historyEntity);
     expect(result).toEqual(loaded);
@@ -247,9 +242,9 @@ describe('ReportsService', () => {
     reportRepository.findOne.mockResolvedValue({
       Id: 4,
       ReportState: ReportStateEnum.PENDIENTE,
+      PlumberUserId: null,
     });
     usersRepository.findOneOrFail.mockResolvedValue({ Id: 9 });
-    reportAssignmentRepository.findOne.mockResolvedValue(null);
 
     await expect(
       service.changeState(4, ReportStateEnum.EN_PROCESO, 'Iniciar trabajo', 9),

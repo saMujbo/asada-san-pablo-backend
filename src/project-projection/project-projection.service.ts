@@ -36,15 +36,19 @@ export class ProjectProjectionService {
   }
 
   async update(Id: number, updateProjectProjectionDto: UpdateProjectProjectionDto) {
-    const updatedProjectProjection = await this.projectProjectionRepo.findOne({ where: { Id: Id } });
+    const updatedProjectProjection = await this.projectProjectionRepo.findOne({ where: { Id } });
+
+    if (!updatedProjectProjection)
+      throw new NotFoundException(`ProjectProjection with Id ${Id} not found`);
+
     if (
       updateProjectProjectionDto.Observation !== undefined &&
-      updateProjectProjectionDto.Observation != null &&
-      updateProjectProjectionDto.Observation !== '' &&
-      updatedProjectProjection
+      updateProjectProjectionDto.Observation !== null &&
+      updateProjectProjectionDto.Observation !== ''
     ) {
       updatedProjectProjection.Observation = updateProjectProjectionDto.Observation;
-      return await this.projectProjectionRepo.save(updatedProjectProjection);
     }
+
+    return await this.projectProjectionRepo.save(updatedProjectProjection);
   }
 }

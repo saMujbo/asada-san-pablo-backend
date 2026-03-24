@@ -1,6 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Response } from 'express';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { AssignPlumberDto } from './dto/assign-plumber.dto';
@@ -19,6 +21,19 @@ export class ReportsController {
   @Post()
   create(@Body() createReportDto: CreateReportDto, @GetUser('id') userId: number) {
     return this.reportsService.create(createReportDto);
+  }
+
+  @Post(':reportId/photo')
+  @ApiOperation({ summary: 'Subir o reemplazar la foto de un reporte' })
+  @UseInterceptors(FileInterceptor('photo', {
+    storage: memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+  }))
+  uploadPhoto(
+    @Param('reportId') reportId: string,
+    @UploadedFile() photo: Express.Multer.File,
+  ) {
+    return this.reportsService.uploadPhoto(+reportId, photo);
   }
 
   @Get('search')
@@ -46,6 +61,30 @@ export class ReportsController {
     const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const filename = `reportes-${monthNames[month - 1]}-${year}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  }
+
+  @Get('export/excel')
+  @ApiOperation({ summary: 'Exportar Excel de reportes del mes con formato legible' })
+  async exportExcel(
+    @Query('year') yearParam: string,
+    @Query('month') monthParam: string,
+    @Res() res: Response,
+  ) {
+    const year = Number(yearParam);
+    const month = Number(monthParam);
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+      return res.status(400).json({ message: 'Query "year" es requerido y debe ser un año válido (2000-2100)' });
+    }
+    if (!Number.isInteger(month) || month < 1 || month > 12) {
+      return res.status(400).json({ message: 'Query "month" es requerido y debe ser entre 1 y 12' });
+    }
+
+    const buffer = await this.reportsService.buildExportExcel(year, month);
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const filename = `reportes-${monthNames[month - 1]}-${year}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
   }

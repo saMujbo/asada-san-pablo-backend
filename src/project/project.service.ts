@@ -25,6 +25,16 @@ export class ProjectService {
   async create(createProjectDto: CreateProjectDto) {
     const { ProjectStateId, UserId,...rest } = createProjectDto;
 
+    const normalizedName = rest.Name.trim().toLowerCase();
+    const existingProject = await this.projectRepo
+      .createQueryBuilder('project')
+      .where('LOWER(project.Name) = :name', { name: normalizedName })
+      .getOne();
+
+    if (existingProject) {
+      throw new ConflictException('Ya existe un proyecto con ese nombre.');
+    }
+
     if (rest.InnitialDate && rest.EndDate) {
       const ini = new Date(rest.InnitialDate);
       const end = new Date(rest.EndDate);
@@ -206,7 +216,7 @@ export class ProjectService {
   }
 
   async updateProject(project: Project) {
-    this.projectRepo.save(project);
+    return await this.projectRepo.save(project);
   }
 
   async remove(Id: number) {
@@ -217,7 +227,7 @@ export class ProjectService {
   }
 
   async isOnProjectState(Id: number) {
-    const hasActiveProjectState = await this.projectRepo.exist({
+    const hasActiveProjectState = await this.projectRepo.exists({
       where: { ProjectState: { Id }, IsActive: true },
     });
     return hasActiveProjectState;

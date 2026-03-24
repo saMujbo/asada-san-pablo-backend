@@ -63,7 +63,7 @@ export class TraceProjectService {
     if(!updateTraceProject) throw new NotFoundException(`TraceProject with Id ${Id} not found`)
       if(updateTraceProjectDto.Name !== undefined && updateTraceProjectDto.Name != null && updateTraceProjectDto.Name!='')
         updateTraceProject.Name = updateTraceProjectDto.Name;
-    if (updateTraceProject.date !== undefined) updateTraceProject.date = updateTraceProject.date as any;
+    if (updateTraceProjectDto.date !== undefined) updateTraceProject.date = updateTraceProjectDto.date as any;
       if(updateTraceProjectDto.Observation !== undefined && updateTraceProjectDto.Observation != null && updateTraceProjectDto.Observation!='')
           updateTraceProject.Observation = updateTraceProjectDto.Observation;
     return await this.traceProjectRepo.save(updateTraceProject);
@@ -82,7 +82,7 @@ export class TraceProjectService {
 
     async reactive(Id: number){
     const updateActive = await this.findOne(Id);
-    changeState(updateActive.IsActive);
+    updateActive.IsActive = changeState(updateActive.IsActive);
 
     return await this.traceProjectRepo.save(updateActive);
   }

@@ -10,6 +10,7 @@ describe('ReportsController', () => {
     create: jest.fn(),
     findAll: jest.fn(),
     buildExportPdf: jest.fn(),
+    buildExportExcel: jest.fn(),
     getMonthlyCounts: jest.fn(),
     getMonthlyCountsByLocation: jest.fn(),
     getMyReportsSummary: jest.fn(),
@@ -51,8 +52,8 @@ describe('ReportsController', () => {
     const created = { Id: 1 };
     reportsServiceMock.create.mockResolvedValue(created);
 
-    await expect(controller.create(dto as any, 9)).resolves.toEqual(created);
-    expect(reportsServiceMock.create).toHaveBeenCalledWith(dto, 9);
+    await expect(controller.create(dto as any)).resolves.toEqual(created);
+    expect(reportsServiceMock.create).toHaveBeenCalledWith(dto);
   });
 
   it('delegates findAll to the service', async () => {
@@ -94,6 +95,28 @@ describe('ReportsController', () => {
       'attachment; filename="reportes-Marzo-2026.pdf"',
     );
     expect(res.send).toHaveBeenCalledWith(pdf);
+  });
+
+  it('builds the excel and sends it with the right headers', async () => {
+    const excel = Buffer.from('excel');
+    const res = {
+      setHeader: jest.fn(),
+      send: jest.fn(),
+    };
+    reportsServiceMock.buildExportExcel.mockResolvedValue(excel);
+
+    await controller.exportExcel('2026', '3', res as any);
+
+    expect(reportsServiceMock.buildExportExcel).toHaveBeenCalledWith(2026, 3);
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'Content-Disposition',
+      'attachment; filename="reportes-Marzo-2026.xlsx"',
+    );
+    expect(res.send).toHaveBeenCalledWith(excel);
   });
 
   it('parses monthly stats query params', async () => {
