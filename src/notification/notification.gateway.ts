@@ -32,22 +32,8 @@ export class NotificationGateway implements OnGatewayConnection {
 	) {}
 
 	async handleConnection(client: Socket) {
-		const userId = client.handshake.auth?.userId ?? client.handshake.query?.userId;
-
-		if (!userId) {
-			client.disconnect();
-			return;
-		}
-
-		const userIdNum = Number(userId);
-		client.join(`user-${userIdNum}`);
-
-		const payload = await this.notificationService.getNotificationsSummary(userIdNum);
+		const payload = await this.notificationService.getNotificationsSummary();
 		client.emit('notification.all', payload);
-	}
-
-	emitNotificationsToUser(userId: number, payload: NotificationSummaryPayload[]) {
-		this.server.to(`user-${userId}`).emit('notification.all', payload);
 	}
 
 	emitAllNotifications(payload: NotificationSummaryPayload[]) {

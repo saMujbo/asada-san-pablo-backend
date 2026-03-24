@@ -25,22 +25,18 @@ export class NotificationService {
     return date.toTimeString().slice(0, 5);
   }
 
-  async getNotificationsSummary(userId?: number): Promise<NotificationSummaryPayload[]> {
-    const qb = this.notificationRepository
-      .createQueryBuilder('notification')
-      .select(['notification.Id', 'notification.Subject', 'notification.Message', 'notification.CreatedAt'])
-      .orderBy('notification.CreatedAt', 'DESC');
-
-    if (userId !== undefined) {
-      qb.innerJoin(
-        'notification.UserNotifications',
-        'un',
-        'un.User_id = :userId',
-        { userId },
-      );
-    }
-
-    const notifications = await qb.getMany();
+  async getNotificationsSummary(): Promise<NotificationSummaryPayload[]> {
+    const notifications = await this.notificationRepository.find({
+      select: {
+        Id: true,
+        Subject: true,
+        Message: true,
+        CreatedAt: true,
+      },
+      order: {
+        CreatedAt: 'DESC',
+      },
+    });
 
     return notifications.map((notification) => ({
       Id: notification.Id,
@@ -51,16 +47,11 @@ export class NotificationService {
     }));
   }
 
-  private async emitNotificationsToUser(userId: number) {
-    const payload = await this.getNotificationsSummary(userId);
-    this.notificationGateway.emitNotificationsToUser(userId, payload);
-  }
-
   private async emitAllNotificationsSummary() {
     const payload = await this.getNotificationsSummary();
     this.notificationGateway.emitAllNotifications(payload);
   }
-  
+
   async createNotificationByRole(createNotificationDto: CreateNotificationDto) {
     const { User_Role, ...rest } = createNotificationDto;
     return this.notificationRepository.save(rest).then(async (notification) => {
@@ -72,7 +63,7 @@ export class NotificationService {
         return un;
       });
       await this.userNotificationRepository.save(userNotifications);
-      await Promise.all(users.map((user) => this.emitNotificationsToUser(user.Id)));
+      await this.emitAllNotificationsSummary();
       return notification;
     });
   }
@@ -87,7 +78,7 @@ export class NotificationService {
       };
 
       await this.userNotificationRepository.save(userNotifications);
-      await this.emitNotificationsToUser(UserID);
+      await this.emitAllNotificationsSummary();
       return notification;
     });
   }
