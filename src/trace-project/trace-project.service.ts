@@ -26,9 +26,14 @@ export class TraceProjectService {
     return await this.traceProjectRepo.save(newTraceProject)
   }
 
-  async findAll() {
+  async findAll(projectId?: number) {
+    const where =
+      projectId != null && Number.isFinite(projectId)
+        ? { IsActive: true, Project: { Id: projectId } }
+        : { IsActive: true };
+
     return await this.traceProjectRepo.find({
-      where:{IsActive:true},
+      where,
       relations:[
         'Project',
         "ActualExpense",
