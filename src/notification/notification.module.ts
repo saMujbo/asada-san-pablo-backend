@@ -6,11 +6,13 @@ import { Notification } from './entities/notification.entity';
 import { UsersModule } from 'src/users/users.module';
 import { UserNotification } from './user_notifications/user_notifications.entity';
 import { NotificationGateway } from './notification.gateway';
+import { MailServiceModule } from 'src/mail-service/mail-service.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Notification, UserNotification]),
-    UsersModule
+    UsersModule,
+    MailServiceModule,
   ],
   controllers: [NotificationController],
   providers: [NotificationService, NotificationGateway],

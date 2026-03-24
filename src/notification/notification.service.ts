@@ -8,6 +8,9 @@ import { UserNotification } from './user_notifications/user_notifications.entity
 import { CreateImportantNotificationDto } from './dto/create-important-notification.dto';
 import { CreateNotificationUserDto } from './dto/create-notification-user.dto';
 import { NotificationGateway, NotificationSummaryPayload } from './notification.gateway';
+import { MailServiceService } from 'src/mail-service/mail-service.service';
+
+const IMPORTANT_NOTIFICATION_EMAIL_LIMIT = 75;
 
 @Injectable()
 export class NotificationService {
@@ -17,6 +20,7 @@ export class NotificationService {
     @InjectRepository(UserNotification)
     private readonly userNotificationRepository: Repository<UserNotification>,
     private readonly userService: UsersService,
+    private readonly mailService: MailServiceService,
     @Inject(forwardRef(() => NotificationGateway))
     private readonly notificationGateway: NotificationGateway,
   ) {}
@@ -52,6 +56,17 @@ export class NotificationService {
     this.notificationGateway.emitAllNotifications(payload);
   }
 
+  private pickRandomUsers<T>(users: T[], limit: number): T[] {
+    const shuffled = [...users];
+
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    return shuffled.slice(0, Math.min(limit, shuffled.length));
+  }
+
   async createNotificationByRole(createNotificationDto: CreateNotificationDto) {
     const { User_Role, ...rest } = createNotificationDto;
     return this.notificationRepository.save(rest).then(async (notification) => {
@@ -63,6 +78,23 @@ export class NotificationService {
         return un;
       });
       await this.userNotificationRepository.save(userNotifications);
+      const eligibleUsers = users.filter(
+        (user) => user.IsActive && typeof user.Email === 'string' && user.Email.trim() !== '',
+      );
+      const emailRecipients = this.pickRandomUsers(
+        eligibleUsers,
+        IMPORTANT_NOTIFICATION_EMAIL_LIMIT,
+      );
+
+      await Promise.allSettled(
+        emailRecipients.map((user) =>
+          this.mailService.sendIncidentNotificationEmail({
+            to: user.Email,
+            subject: rest.Subject,
+            message: rest.Message,
+          }),
+        ),
+      );
       await this.emitAllNotificationsSummary();
       return notification;
     });
@@ -93,6 +125,23 @@ export class NotificationService {
         return un;
       });
       await this.userNotificationRepository.save(userNotifications);
+      const eligibleUsers = users.filter(
+        (user) => user.IsActive && typeof user.Email === 'string' && user.Email.trim() !== '',
+      );
+      const emailRecipients = this.pickRandomUsers(
+        eligibleUsers,
+        IMPORTANT_NOTIFICATION_EMAIL_LIMIT,
+      );
+
+      await Promise.allSettled(
+        emailRecipients.map((user) =>
+          this.mailService.sendIncidentNotificationEmail({
+            to: user.Email,
+            subject: createNotificationDto.Subject,
+            message: createNotificationDto.Message,
+          }),
+        ),
+      );
       await this.emitAllNotificationsSummary();
       return notification;
     });
