@@ -10,6 +10,8 @@ import { ProjectPaginationDto } from './dto/pagination-project.dto';
 import { ProjectStateService } from './project-state/project-state.service';
 import { UsersService } from 'src/users/users.service';
 import { TotalActualExpenseService } from 'src/total-actual-expense/total-actual-expense.service';
+import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
+import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
 
 @Injectable()
 export class ProjectService {
@@ -76,12 +78,18 @@ export class ProjectService {
     ] });
   }
   
-  async search({ page = 1, limit = 10, name, state, projectState}:ProjectPaginationDto){
-    const pageNum = Math.max(1, Number(page)||1);
-    const take = Math.min(100, Math.max(1,Number(limit)||10));
-    const skip = (pageNum -1)* take;
+  async search({
+    page = 1,
+    limit = 10,
+    name,
+    projectState,
+  }: ProjectPaginationDto): Promise<PaginatedResponse<Project>> {
+    const pageNum = Math.max(1, Number(page) || 1);
+    const take = Math.min(100, Math.max(1, Number(limit) || 10));
+    const skip = (pageNum - 1) * take;
 
-    const qb = this.projectRepo.createQueryBuilder('project')
+    const qb = this.projectRepo
+      .createQueryBuilder('project')
       .leftJoinAndSelect('project.ProjectState', 'ProjectState')
       .leftJoinAndSelect('project.User', 'User')
       .leftJoinAndSelect('project.TraceProject', 'TraceProject')
@@ -110,27 +118,21 @@ export class ProjectService {
       });
     }
 
-    if (state) {
-      qb.andWhere('project.IsActive = :state', { state });
-    }
-
     if (projectState) {
       qb.andWhere('project.ProjectState = :projectState', { projectState });
     }
 
     qb.orderBy('project.Name', 'ASC');
-        const [data, total] = await qb.getManyAndCount();
+    const [data, totalItems] = await qb.getManyAndCount();
 
     return {
       data,
-      meta: {
-        total,
+      meta: buildPaginationMeta({
+        totalItems,
         page: pageNum,
         limit: take,
-        pageCount: Math.max(1, Math.ceil(total / take)),
-        hasNextPage: pageNum * take < total,
-        hasPrevPage: pageNum > 1,
-      },
+        itemCount: data.length,
+      }),
     };
   }
 
