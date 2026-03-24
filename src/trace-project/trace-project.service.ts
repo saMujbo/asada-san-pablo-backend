@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTraceProjectDto } from './dto/create-trace-project.dto';
 import { UpdateTraceProjectDto } from './dto/update-trace-project.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,6 +6,7 @@ import { changeState } from 'src/utils/changeState';
 import { Repository } from 'typeorm';
 import { TraceProject } from './entities/trace-project.entity';
 import { ProjectService } from 'src/project/project.service';
+import { hasNonEmptyString } from 'src/utils/validation.utils';
 
 @Injectable()
 export class TraceProjectService {
@@ -17,10 +18,29 @@ export class TraceProjectService {
   ){}
   
   async create(createTraceProjectDto: CreateTraceProjectDto) {
+    if (!hasNonEmptyString(createTraceProjectDto.Name)) {
+      throw new BadRequestException('El nombre del seguimiento es requerido');
+    }
+
+    if (!hasNonEmptyString(createTraceProjectDto.Observation)) {
+      throw new BadRequestException('La observacion del seguimiento es requerida');
+    }
+
     const projectExists = await this.projecService.findOne(createTraceProjectDto.ProjectId);
+    const normalizedName = createTraceProjectDto.Name.trim().toLowerCase();
+
+    const existingTraceProject = await this.traceProjectRepo
+      .createQueryBuilder('traceProject')
+      .where('LOWER(traceProject.Name) = :name', { name: normalizedName })
+      .getOne();
+
+    if (existingTraceProject) {
+      throw new ConflictException('Ya existe un seguimiento con ese nombre.');
+    }
+
     const newTraceProject = this.traceProjectRepo.create({
-      Name: createTraceProjectDto.Name,
-      Observation: createTraceProjectDto.Observation,
+      Name: createTraceProjectDto.Name.trim(),
+      Observation: createTraceProjectDto.Observation.trim(),
       Project: projectExists,
     })  
     return await this.traceProjectRepo.save(newTraceProject)
@@ -66,11 +86,36 @@ export class TraceProjectService {
     const updateTraceProject = await this.traceProjectRepo.findOne({where:{Id}});
 
     if(!updateTraceProject) throw new NotFoundException(`TraceProject with Id ${Id} not found`)
-      if(updateTraceProjectDto.Name !== undefined && updateTraceProjectDto.Name != null && updateTraceProjectDto.Name!='')
-        updateTraceProject.Name = updateTraceProjectDto.Name;
+
+    if (updateTraceProjectDto.Name !== undefined) {
+      if (!hasNonEmptyString(updateTraceProjectDto.Name)) {
+        throw new BadRequestException('El nombre del seguimiento no puede estar vacio');
+      }
+
+      const normalizedName = updateTraceProjectDto.Name.trim().toLowerCase();
+      const duplicatedTraceProject = await this.traceProjectRepo
+        .createQueryBuilder('traceProject')
+        .where('LOWER(traceProject.Name) = :name', { name: normalizedName })
+        .andWhere('traceProject.Id != :id', { id: Id })
+        .getOne();
+
+      if (duplicatedTraceProject) {
+        throw new ConflictException('Ya existe un seguimiento con ese nombre.');
+      }
+
+      updateTraceProject.Name = updateTraceProjectDto.Name.trim();
+    }
+
     if (updateTraceProjectDto.date !== undefined) updateTraceProject.date = updateTraceProjectDto.date as any;
-      if(updateTraceProjectDto.Observation !== undefined && updateTraceProjectDto.Observation != null && updateTraceProjectDto.Observation!='')
-          updateTraceProject.Observation = updateTraceProjectDto.Observation;
+
+    if (updateTraceProjectDto.Observation !== undefined) {
+      if (!hasNonEmptyString(updateTraceProjectDto.Observation)) {
+        throw new BadRequestException('La observacion del seguimiento no puede estar vacia');
+      }
+
+      updateTraceProject.Observation = updateTraceProjectDto.Observation.trim();
+    }
+
     return await this.traceProjectRepo.save(updateTraceProject);
   }
 
