@@ -29,20 +29,17 @@ export class NotificationService {
     return date.toTimeString().slice(0, 5);
   }
 
-  async getNotificationsSummary(): Promise<NotificationSummaryPayload[]> {
-    const notifications = await this.notificationRepository.find({
-      select: {
-        Id: true,
-        Subject: true,
-        Message: true,
-        CreatedAt: true,
-      },
-      order: {
-        CreatedAt: 'DESC',
-      },
-    });
+  async getNotificationsSummaryByUserId(
+    userId: number,
+  ): Promise<NotificationSummaryPayload[]> {
+    const userNotifications = await this.userNotificationRepository
+      .createQueryBuilder('userNotification')
+      .leftJoinAndSelect('userNotification.Notification', 'notification')
+      .where('userNotification.User_id = :userId', { userId })
+      .orderBy('notification.CreatedAt', 'DESC')
+      .getMany();
 
-    return notifications.map((notification) => ({
+    return userNotifications.map(({ Notification: notification }) => ({
       Id: notification.Id,
       Subject: notification.Subject,
       Message: notification.Message,
@@ -51,9 +48,13 @@ export class NotificationService {
     }));
   }
 
-  private async emitAllNotificationsSummary() {
-    const payload = await this.getNotificationsSummary();
-    this.notificationGateway.emitAllNotifications(payload);
+  private async emitNotificationsSummaryToUsers(userIds: number[]) {
+    const uniqueUserIds = [...new Set(userIds)];
+    await Promise.all(
+      uniqueUserIds.map((userId) =>
+        this.notificationGateway.emitNotificationsToUser(userId),
+      ),
+    );
   }
 
   private pickRandomUsers<T>(users: T[], limit: number): T[] {
@@ -95,7 +96,6 @@ export class NotificationService {
           }),
         ),
       );
-      await this.emitAllNotificationsSummary();
       return notification;
     });
   }
@@ -110,7 +110,7 @@ export class NotificationService {
       };
 
       await this.userNotificationRepository.save(userNotifications);
-      await this.emitAllNotificationsSummary();
+      await this.emitNotificationsSummaryToUsers([user.Id]);
       return notification;
     });
   }
@@ -142,7 +142,8 @@ export class NotificationService {
           }),
         ),
       );
-      await this.emitAllNotificationsSummary();
+
+      await this.emitNotificationsSummaryToUsers(users.map((user) => user.Id));
       return notification;
     });
   }
