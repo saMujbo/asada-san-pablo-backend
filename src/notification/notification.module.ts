@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification } from './entities/notification.entity';
 import { UsersModule } from 'src/users/users.module';
 import { UserNotification } from './user_notifications/user_notifications.entity';
+import { NotificationGateway } from './notification.gateway';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { UserNotification } from './user_notifications/user_notifications.entity
     UsersModule
   ],
   controllers: [NotificationController],
-  providers: [NotificationService],
+  providers: [NotificationService, NotificationGateway],
   exports: [NotificationService],
 })
 export class NotificationModule {}

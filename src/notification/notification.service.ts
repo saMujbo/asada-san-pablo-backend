@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { Notification } from './entities/notification.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from 'src/users/users.service';
 import { UserNotification } from './user_notifications/user_notifications.entity';
 import { CreateImportantNotificationDto } from './dto/create-important-notification.dto';
+import { CreateNotificationUserDto } from './dto/create-notification-user.dto';
+import { NotificationGateway, NotificationSummaryPayload } from './notification.gateway';
 
 @Injectable()
 export class NotificationService {
@@ -16,7 +17,31 @@ export class NotificationService {
     @InjectRepository(UserNotification)
     private readonly userNotificationRepository: Repository<UserNotification>,
     private readonly userService: UsersService,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
+
+  private formatHour(date: Date): string {
+    return date.toTimeString().slice(0, 5);
+  }
+
+  private async emitAllNotificationsSummary() {
+    const notifications = await this.notificationRepository.find({
+      select: {
+        Subject: true,
+        CreatedAt: true,
+      },
+      order: {
+        CreatedAt: 'DESC',
+      },
+    });
+
+    const payload: NotificationSummaryPayload[] = notifications.map((notification) => ({
+      Subject: notification.Subject,
+      Hour: this.formatHour(notification.CreatedAt),
+    }));
+
+    this.notificationGateway.emitAllNotifications(payload);
+  }
   
   async createNotificationByRole(createNotificationDto: CreateNotificationDto) {
     const { User_Role, ...rest } = createNotificationDto;
@@ -29,6 +54,22 @@ export class NotificationService {
         return un;
       });
       await this.userNotificationRepository.save(userNotifications);
+      await this.emitAllNotificationsSummary();
+      return notification;
+    });
+  }
+  
+  async createNotificationByUserID(createNotificationDto: CreateNotificationUserDto) {
+    const { UserID, ...rest } = createNotificationDto;
+    return this.notificationRepository.save(rest).then(async (notification) => {
+      const user = await this.userService.findOne(UserID);
+      const userNotifications = {
+        User: user,
+        Notification: notification
+      };
+
+      await this.userNotificationRepository.save(userNotifications);
+      await this.emitAllNotificationsSummary();
       return notification;
     });
   }
@@ -43,6 +84,7 @@ export class NotificationService {
         return un;
       });
       await this.userNotificationRepository.save(userNotifications);
+      await this.emitAllNotificationsSummary();
       return notification;
     });
   }
