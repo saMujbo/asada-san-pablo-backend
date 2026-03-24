@@ -110,11 +110,11 @@ export class UsersService {
   }
 
   async findOne(Id: number) {
-      const found = await this.userRepo.findOne({ where: { Id }, relations: ['Roles'] });
+    const found = await this.userRepo.findOne({ where: { Id }, relations: ['Roles'] });
 
-      if (!found) throw new ConflictException(`User with Id ${Id} not found`);
+    if (!found) throw new ConflictException(`User with Id ${Id} not found`);
 
-      return found;
+    return found;
   }
 
   async findByEmail(Email: string) {
