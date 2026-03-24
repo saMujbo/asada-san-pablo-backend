@@ -41,9 +41,24 @@ export class UsersService {
     return await this.userRepo.save(newUser);
   }
 
+  async findAllWithoutRelations() {
+    return await this.userRepo.find();
+  }
+
   async findAll() {
     return await this.userRepo.find({
       relations: ['Roles'], // Carga los roles asociados
+    });
+  }
+
+  async findByRole(roleName: string) {
+    return await this.userRepo.find({
+      relations: ['Roles'], // Carga los roles asociados
+      where: {
+        Roles: {
+          Rolname: roleName
+        }
+      }
     });
   }
 
