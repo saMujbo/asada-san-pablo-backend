@@ -9,6 +9,8 @@ import { TokenGuard } from './guards/token.guard';
 import { resetPasswordDto } from './dto/resetPassword.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { AdminCreateUserDto } from 'src/users/dto/admin-user.dto';
+import { GetAuditContext } from 'src/audit/audit.decorator';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -19,9 +21,13 @@ export class AuthController {
     return this.authService.register(registerAuthDto);
   }
 
+  @UseGuards(TokenGuard)
   @Post('admin/create-user')
-  adminCreateuser(@Body()adminUserDto: AdminCreateUserDto){
-    return this.authService.adminCreateUser(adminUserDto)
+  adminCreateuser(
+    @Body()adminUserDto: AdminCreateUserDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ){
+    return this.authService.adminCreateUser(adminUserDto, auditContext)
   }
 
   @Post('forgot-password')
@@ -32,20 +38,30 @@ export class AuthController {
 
   @UseGuards(AuthGuard, TokenGuard)
   @Put('change-password')
-  async Register(@Req() req, @Body() changePasswordDto: ChangepasswordDto) {
+  async Register(
+    @Req() req,
+    @Body() changePasswordDto: ChangepasswordDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
     return await this.authService.changePassword(
       req.user.id,
       changePasswordDto.OldPassword,
       changePasswordDto.NewPassword,
+      auditContext,
     );
   }
 
   @UseGuards(AuthGuard, TokenGuard)
   @Put('reset-password')
-  async resetPassword(@Req() req, @Body() userObjectReset: resetPasswordDto) {
+  async resetPassword(
+    @Req() req,
+    @Body() userObjectReset: resetPasswordDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
     return this.authService.resetPassword(
       req.user.id,
-      userObjectReset
+      userObjectReset,
+      auditContext,
     );
   }
   

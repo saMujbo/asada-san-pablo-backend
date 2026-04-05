@@ -13,6 +13,7 @@ import { changeState } from 'src/utils/changeState';
 import { UpdateMeDto } from './dto/updateMeDto';
 import { PaginationDto } from './dto/pagination.dto';
 import { DropboxService } from 'src/dropbox/dropbox.service';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 const PROFILE_PHOTO_FOLDER = 'profile-photos';
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -27,18 +28,27 @@ export class UsersService {
     private readonly dropboxService: DropboxService,
   ) {}
 
-  async createRegister(createUserDto: CreateUserDto) {
-  
-    const newUser = await this.userRepo.create(createUserDto); 
-    return await this.userRepo.save(newUser);
+  private getUserRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(User) ?? this.userRepo;
   }
 
-  async create(createUserDto: CreateUserDto) {
+  async createRegister(
+    createUserDto: CreateUserDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const userRepository = this.getUserRepository(auditContext);
+  
+    const newUser = userRepository.create(createUserDto);
+    return await userRepository.save(newUser);
+  }
+
+  async create(createUserDto: CreateUserDto, auditContext?: AuditRequestContext) {
+    const userRepository = this.getUserRepository(auditContext);
     const {Password, ...rest}= createUserDto;
     const hashed= await bcrypt.hash(Password,10);
 
-    const newUser = await this.userRepo.create({...rest,Password:hashed}); 
-    return await this.userRepo.save(newUser);
+    const newUser = userRepository.create({...rest,Password:hashed});
+    return await userRepository.save(newUser);
   }
 
   async findAllWithoutRelations() {
@@ -131,8 +141,14 @@ export class UsersService {
   }
 
 
-async update(Id: number, dto: UpdateUserDto) {
-  const user = await this.userRepo.findOne({
+async update(
+  Id: number,
+  dto: UpdateUserDto,
+  auditContext?: AuditRequestContext,
+) {
+  const userRepository = this.getUserRepository(auditContext);
+
+  const user = await userRepository.findOne({
     where: { Id },
     relations: ['Roles'],
   });
@@ -173,36 +189,45 @@ async update(Id: number, dto: UpdateUserDto) {
     user.Roles = roles;
   }
 
-  const saved = await this.userRepo.save(user);
+  const saved = await userRepository.save(user);
 
   // devolver con relaciones
-  return await this.userRepo.findOne({
+  return await userRepository.findOne({
     where: { Id: saved.Id },
     relations: ['Roles'],
   });
 }
 
-  async remove(Id: number) {
-    const user = await this.userRepo.findOneBy({ Id });
+  async remove(Id: number, auditContext?: AuditRequestContext) {
+    const userRepository = this.getUserRepository(auditContext);
+    const user = await userRepository.findOneBy({ Id });
 
     if (!user) {
       throw new ConflictException(`User with Id ${Id} not found`);
     }
     user.IsActive = false;
-    return await this.userRepo.save(user);
+    return await userRepository.save(user);
   }
   
-  async reactive(Id: number){
-    const updateActive = await this.findOne(Id);
+  async reactive(Id: number, auditContext?: AuditRequestContext){
+    const userRepository = this.getUserRepository(auditContext);
+    const updateActive = await userRepository.findOneBy({ Id });
+    if (!updateActive) {
+      throw new ConflictException(`User with Id ${Id} not found`);
+    }
     changeState(updateActive.IsActive);
 
-    return await this.userRepo.save(updateActive);
+    return await userRepository.save(updateActive);
   }
 
-  async removeRolesFromUser(updateRoles:UpdateRolesUserDto){ 
+  async removeRolesFromUser(
+    updateRoles:UpdateRolesUserDto,
+    auditContext?: AuditRequestContext,
+  ){
+      const userRepository = this.getUserRepository(auditContext);
       const { Id, RoleId } = updateRoles;
 
-      const user = await this.userRepo.findOne({
+      const user = await userRepository.findOne({
         where: { Id : Id },
         relations: ['Roles']
       });
@@ -215,17 +240,21 @@ async update(Id: number, dto: UpdateUserDto) {
       }
       user.Roles = user.Roles.filter(r => r.Id !== RoleId);
 
-      await this.userRepo.save(user);
+      await userRepository.save(user);
       return {
         message: `Role ${role.Rolname} removed from user ${user.Id}`,
         user,
       };
   }
 
-  async AddRolesFromUser(updateRoles:UpdateRolesUserDto){
+  async AddRolesFromUser(
+    updateRoles:UpdateRolesUserDto,
+    auditContext?: AuditRequestContext,
+  ){
+    const userRepository = this.getUserRepository(auditContext);
     const { Id, RoleId } = updateRoles;
 
-    const user = await this.userRepo.findOne({
+    const user = await userRepository.findOne({
       where: { Id : Id },
       relations: ['Roles'],
     });
@@ -243,7 +272,7 @@ async update(Id: number, dto: UpdateUserDto) {
     user.Roles.push(role);
     // if (!user.Roles.find(r => r.Id === RoleId)) {
     // user.Roles.push(role); // agrega el rol solo si no lo tiene
-    await this.userRepo.save(user);
+    await userRepository.save(user);
 
     return {
       message: `Role ${role.Rolname} uptade from user ${user.Id}`,
@@ -255,11 +284,22 @@ async update(Id: number, dto: UpdateUserDto) {
     return await bcrypt.hash(password, salt);
   }
 
-  async updatePassword(UserId:number, NewPassword: string){
+  async updatePassword(
+    UserId:number,
+    NewPassword: string,
+    auditContext?: AuditRequestContext,
+  ){
+    const userRepository = this.getUserRepository(auditContext);
     try{  
-      const user = await this.findOne(UserId);
+      const user = await userRepository.findOne({
+        where: { Id: UserId },
+        relations: ['Roles'],
+      });
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado!');
+      }
       user.Password = await this.hashPassword(NewPassword,10);
-      return await this.userRepo.save(user);
+      return await userRepository.save(user);
     } catch (error){
       throw new InternalServerErrorException({
         message:
@@ -279,8 +319,14 @@ async update(Id: number, dto: UpdateUserDto) {
     return false;
   }
 
-  async updateMe(Id: number, dto: UpdateMeDto, file?: Express.Multer.File) {
-    const user = await this.userRepo.findOne({ where: { Id } });
+  async updateMe(
+    Id: number,
+    dto: UpdateMeDto,
+    file?: Express.Multer.File,
+    auditContext?: AuditRequestContext,
+  ) {
+    const userRepository = this.getUserRepository(auditContext);
+    const user = await userRepository.findOne({ where: { Id } });
 
     if (!user) {
       throw new ConflictException(`User with Id ${Id} not found`);
@@ -312,9 +358,9 @@ async update(Id: number, dto: UpdateUserDto) {
     if (dto.PhoneNumber !== undefined && dto.PhoneNumber != null && dto.PhoneNumber !== '') user.PhoneNumber = dto.PhoneNumber;
     if (dto.Birthdate !== undefined) user.Birthdate = dto.Birthdate as any;
 
-    const saved = await this.userRepo.save(user);
+    const saved = await userRepository.save(user);
 
-    const withRelations = await this.userRepo.findOne({
+    const withRelations = await userRepository.findOne({
       where: { Id: saved.Id },
       relations: ['Roles'],
     });
@@ -326,8 +372,13 @@ async update(Id: number, dto: UpdateUserDto) {
     return withRelations ?? saved;
   }
 
-  async updateMyEmail(Id: number, { OldEmail, NewEmail }: UpdateEmailDto) {
-    const user = await this.userRepo.findOne({ where: { Id } });
+  async updateMyEmail(
+    Id: number,
+    { OldEmail, NewEmail }: UpdateEmailDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const userRepository = this.getUserRepository(auditContext);
+    const user = await userRepository.findOne({ where: { Id } });
     if (!user) throw new NotFoundException('User not found');
 
     const current = (user.Email ?? '').trim().toLowerCase();
@@ -343,7 +394,7 @@ async update(Id: number, dto: UpdateUserDto) {
     if (exists) throw new ConflictException('Email already in use');
 
     user.Email = next;
-    await this.userRepo.save(user);
+    await userRepository.save(user);
     return { message: 'Email updated', email: user.Email };
   }
 

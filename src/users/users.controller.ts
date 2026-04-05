@@ -25,6 +25,8 @@ import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { UpdateEmailDto } from './dto/updateEmail-user';
 import { PaginationDto } from './dto/pagination.dto';
+import { GetAuditContext } from 'src/audit/audit.decorator';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -61,13 +63,18 @@ export class UsersController {
     @GetUser('id') id: number,
     @Body() dto: UpdateMeDto,
     @UploadedFile() photo?: Express.Multer.File,
+    @GetAuditContext() auditContext?: AuditRequestContext,
   ) {
-    return this.usersService.updateMe(id, dto, photo);
+    return this.usersService.updateMe(id, dto, photo, auditContext);
   }
 
+  @UseGuards(TokenGuard)
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(
+    @Body() createUserDto: CreateUserDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return this.usersService.create(createUserDto, auditContext);
   }
 
   //@UseGuards(RolesGuard)
@@ -102,35 +109,54 @@ export class UsersController {
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return await this.usersService.findOne(id);
   }
+
+  @UseGuards(TokenGuard)
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return this.usersService.remove(id, auditContext);
   }
 
   @Put('roles/updateroles')
-  async removeRoleFromUser(@Query() updateRoles: UpdateRolesUserDto) {
-    return this.usersService.removeRolesFromUser(updateRoles);
+  @UseGuards(TokenGuard)
+  async removeRoleFromUser(
+    @Query() updateRoles: UpdateRolesUserDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return this.usersService.removeRolesFromUser(updateRoles, auditContext);
   }
 
    //@UseGuards(AuthGuard('jwt'), RolesGuard)
   @Put('roles/addroles/id')
+  @UseGuards(TokenGuard)
    //@Roles(Role.ADMIN) 
-  async AddRoleToUser( @Query() updateRoles: UpdateRolesUserDto ) {
-    return await this.usersService.AddRolesFromUser(updateRoles);
+  async AddRoleToUser(
+    @Query() updateRoles: UpdateRolesUserDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return await this.usersService.AddRolesFromUser(updateRoles, auditContext);
   }
 
+  @UseGuards(TokenGuard)
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
   ) {
-    return await  this.usersService.update(id, updateUserDto);
+    return await this.usersService.update(id, updateUserDto, auditContext);
   }
 
   @UseGuards(TokenGuard)
   @Put('update/email')
-  async updateMyEmail( @GetUser('id') id: number, @Body() dto: UpdateEmailDto ){
-    return await this.usersService.updateMyEmail(id, dto);
+  async updateMyEmail(
+    @GetUser('id') id: number,
+    @Body() dto: UpdateEmailDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return await this.usersService.updateMyEmail(id, dto, auditContext);
   }
   
 
