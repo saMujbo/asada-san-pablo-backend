@@ -3,12 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindManyOptions, Repository } from 'typeorm';
 import { AuditLog } from './entities/audit-log.entity';
 import { AuditQueryDto } from './dto/audit-query.dto';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuditService {
   constructor(
     @InjectRepository(AuditLog)
     private readonly auditLogRepository: Repository<AuditLog>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async findAll(query: AuditQueryDto) {
@@ -26,7 +29,7 @@ export class AuditService {
     const [logs, total] = await this.auditLogRepository.findAndCount(options);
 
     return {
-      data: logs.map((log) => this.serializeLog(log)),
+      data: await Promise.all(logs.map((log) => this.serializeLog(log))),
       meta: {
         total,
         page,
@@ -49,7 +52,7 @@ export class AuditService {
       );
     }
 
-    return logs.map((log) => this.serializeLog(log));
+    return Promise.all(logs.map((log) => this.serializeLog(log)));
   }
 
   private buildWhere(filters: Omit<AuditQueryDto, 'page' | 'limit'>) {
@@ -84,7 +87,7 @@ export class AuditService {
     return where;
   }
 
-  private serializeLog(log: AuditLog) {
+  private async serializeLog(log: AuditLog) {
     const actor = log.actorUser
       ? {
           Id: log.actorUser.Id,
@@ -98,7 +101,13 @@ export class AuditService {
     const actorDisplayName = actor
       ? this.buildFullName(actor.Name, actor.Surname1, actor.Surname2)
       : null;
-    const targetDisplayName = this.resolveTargetDisplayName(log);
+    const targetDisplayName = await this.resolveTargetDisplayName(log);
+    const oldData = this.buildPublicData(log.tableName ?? null, log.oldData);
+    const newData = this.buildPublicData(log.tableName ?? null, log.newData);
+    const changedFields = this.buildPublicChangedFields(
+      log.tableName ?? null,
+      log.changedFields,
+    );
 
     return {
       id: log.id,
@@ -107,18 +116,20 @@ export class AuditService {
       action: log.action,
       actorUserId: log.actorUserId,
       actor,
+      author: actorDisplayName,
       actorDisplayName,
+      target: targetDisplayName,
       targetDisplayName,
-      oldData: log.oldData,
-      newData: log.newData,
-      changedFields: log.changedFields,
-      description: log.description,
+      oldData,
+      newData,
+      changedFields,
+      description: this.buildDescription(log, targetDisplayName),
       summary: this.buildSummary(log, actorDisplayName, targetDisplayName),
       createdAt: log.createdAt,
     };
   }
 
-  private resolveTargetDisplayName(log: AuditLog) {
+  private async resolveTargetDisplayName(log: AuditLog) {
     const sourceData = log.newData ?? log.oldData;
     if (!sourceData) {
       return `${log.tableName}#${log.recordId}`;
@@ -134,6 +145,26 @@ export class AuditService {
       return fullName || email || `Usuario #${log.recordId}`;
     }
 
+    if (log.tableName === 'user_roles_role') {
+      const targetUserId = this.readNumber(sourceData, 'userId');
+      if (targetUserId) {
+        const user = await this.userRepository.findOne({
+          where: { Id: targetUserId },
+        });
+
+        if (user) {
+          const fullName = this.buildFullName(
+            user.Name,
+            user.Surname1,
+            user.Surname2,
+          );
+          return fullName || user.Email || `Usuario #${targetUserId}`;
+        }
+
+        return `Usuario #${targetUserId}`;
+      }
+    }
+
     return `${log.tableName}#${log.recordId}`;
   }
 
@@ -145,6 +176,64 @@ export class AuditService {
     const actorLabel = actorDisplayName ?? 'Actor no identificado';
     const actionLabel = this.translateAction(log.action);
     return `${actorLabel} ${actionLabel} ${targetDisplayName}`;
+  }
+
+  private buildDescription(log: AuditLog, targetDisplayName: string) {
+    if (log.tableName === 'users') {
+      switch (log.action) {
+        case 'INSERT':
+          return `Usuario creado: ${targetDisplayName}`;
+        case 'UPDATE':
+          return `Usuario actualizado: ${targetDisplayName}`;
+        case 'DELETE':
+          return `Usuario eliminado: ${targetDisplayName}`;
+        default:
+          return `Usuario modificado: ${targetDisplayName}`;
+      }
+    }
+
+    if (log.tableName === 'user_roles_role') {
+      switch (log.action) {
+        case 'INSERT':
+          return `Rol asignado a ${targetDisplayName}`;
+        case 'DELETE':
+          return `Rol removido de ${targetDisplayName}`;
+        default:
+          return `Rol actualizado para ${targetDisplayName}`;
+      }
+    }
+
+    return log.description;
+  }
+
+  private buildPublicData(
+    tableName: string | null,
+    data: Record<string, unknown> | null | undefined,
+  ) {
+    if (!data) {
+      return data ?? null;
+    }
+
+    if (tableName === 'users' || tableName === 'user_roles_role') {
+      return null;
+    }
+
+    return data;
+  }
+
+  private buildPublicChangedFields(
+    tableName: string | null,
+    changedFields: string[] | null | undefined,
+  ) {
+    if (!changedFields) {
+      return changedFields ?? null;
+    }
+
+    if (tableName === 'users' || tableName === 'user_roles_role') {
+      return null;
+    }
+
+    return changedFields;
   }
 
   private translateAction(action: AuditLog['action']) {
@@ -173,5 +262,13 @@ export class AuditService {
   ): string | null {
     const value = data[key];
     return typeof value === 'string' && value.trim() ? value.trim() : null;
+  }
+
+  private readNumber(
+    data: Record<string, unknown>,
+    key: string,
+  ): number | null {
+    const value = data[key];
+    return typeof value === 'number' && Number.isInteger(value) ? value : null;
   }
 }

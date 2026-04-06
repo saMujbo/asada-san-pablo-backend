@@ -5,9 +5,10 @@ import { AuditController } from './audit.controller';
 import { AuditActorInterceptor } from './audit.interceptor';
 import { AuditService } from './audit.service';
 import { AuditLog } from './entities/audit-log.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AuditLog])],
+  imports: [TypeOrmModule.forFeature([AuditLog, User])],
   controllers: [AuditController],
   providers: [
     AuditService,
