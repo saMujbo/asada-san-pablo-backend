@@ -32,7 +32,7 @@ export class UsersService {
     return auditContext?.queryRunner.manager.getRepository(User) ?? this.userRepo;
   }
 
-  async createRegister(
+  async createRegister( 
     createUserDto: CreateUserDto,
     auditContext?: AuditRequestContext,
   ) {

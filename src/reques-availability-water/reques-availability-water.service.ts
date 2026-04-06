@@ -9,6 +9,8 @@ import { StateRequestService } from 'src/state-request/state-request.service';
 import { RequestAvailabilityWaterPagination } from './dto/pagination-request-availabaility.dto';
 import { applyDefinedFields } from 'src/utils/validation.utils';
 import { NotificationService } from 'src/notification/notification.service';
+import { audit } from 'rxjs';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -22,6 +24,10 @@ export class RequesAvailabilityWaterService {
     private readonly userSerive:UsersService,
     private readonly notificationSv: NotificationService,
   ) {}
+
+  private getRequestRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(RequesAvailabilityWater)?? this.requesAvailabilityWaterRepository;
+  }
 
   // Método público para contar las solicitudes pendientes de disponibilidad de agua
   async countPendingRequests(): Promise<number> {
@@ -146,8 +152,13 @@ export class RequesAvailabilityWaterService {
     return foundRequestAvailabilityWater;
   }
 
-  async update(Id: number, updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto) {
-    const foundRequestAvailabilityWater = await this.requesAvailabilityWaterRepository.findOne({
+  async update(Id: number, updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto
+    , auditContext?: AuditRequestContext,
+  ){
+
+    const requesAvailabilityWaterRepository = this.getRequestRepository(auditContext);
+
+    const foundRequestAvailabilityWater = await requesAvailabilityWaterRepository.findOne({
       where: { Id },
       relations: ['User', 'StateRequest'],
     });
@@ -162,7 +173,7 @@ export class RequesAvailabilityWaterService {
     const { CanComment } = updateRequesAvailabilityWaterDto;
     applyDefinedFields(foundRequestAvailabilityWater, { CanComment });
 
-    const updatedRequest = await this.requesAvailabilityWaterRepository.save(foundRequestAvailabilityWater);
+    const updatedRequest = await requesAvailabilityWaterRepository.save(foundRequestAvailabilityWater);
 
     const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
     const normalizedState = stateName.trim().toLowerCase();

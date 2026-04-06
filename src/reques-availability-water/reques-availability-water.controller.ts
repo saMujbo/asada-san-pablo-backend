@@ -6,6 +6,8 @@ import { RequestAvailabilityWaterPagination } from './dto/pagination-request-ava
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { PaginationMyRequestsDto } from './dto/pagination-my-requests.dto';
+import { GetAuditContext } from 'src/audit/audit.decorator';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 @Controller('request-availability-water')
 export class RequesAvailabilityWaterController {
@@ -53,9 +55,14 @@ export class RequesAvailabilityWaterController {
     return this.requesAvailabilityWaterService.findOne(Id);
   }
 
+  @UseGuards(TokenGuard)
   @Put(':id')
-  update(@Param('id') Id: number, @Body() updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto) {
-    return this.requesAvailabilityWaterService.update(Id, updateRequesAvailabilityWaterDto);
+  update(
+    @Param('id') Id: number,
+    @Body() updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return this.requesAvailabilityWaterService.update(Id, updateRequesAvailabilityWaterDto, auditContext);
   }
 
   @Delete(':id')
