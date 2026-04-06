@@ -6,6 +6,8 @@ import { RequestChangeMeterPagination } from './dto/pagination-request-change-me
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { PaginationMyRequestsChangeMeterDto } from './dto/pagination-my-requestchangemeter.dto';
+import { GetAuditContext } from 'src/audit/audit.decorator';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 @Controller('request-change-meter')
 export class RequestChangeMeterController {
@@ -52,9 +54,14 @@ export class RequestChangeMeterController {
     return this.requestChangeMeterService.findOne(id);
   }
 
+  @UseGuards(TokenGuard)
   @Put(':id')
-  update(@Param('id') id: number, @Body() updateRequestChangeMeterDto: UpdateRequestChangeMeterDto) {
-    return this.requestChangeMeterService.update(id, updateRequestChangeMeterDto);
+  update(
+    @Param('id') id: number,
+    @Body() updateRequestChangeMeterDto: UpdateRequestChangeMeterDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return this.requestChangeMeterService.update(id, updateRequestChangeMeterDto, auditContext);
   }
 
   @Delete(':id')

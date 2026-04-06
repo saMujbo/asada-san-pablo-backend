@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
 import { RequestSupervisionPagination } from './dto/pagination-requesSupervisiom-meter.tdo';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -19,6 +20,10 @@ export class RequestsupervisionMeterService {
     @Inject(forwardRef(() => UsersService))
     private readonly userSv: UsersService
   ){}
+
+  private getRequestRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(RequestSupervisionMeter) ?? this.requestSupervisionMeterRepo;
+  }
 
   async countPendingRequests(): Promise<number> {
     const pendingState = await this.requestSupervisionMeterRepo
@@ -150,8 +155,13 @@ async findOne(Id: number) {
   return foundRequestSupervision;
 }
 
-  async update(Id: number, updateRequestsupervisionMeterDto: UpdateRequestsupervisionMeterDto) {
-    const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({where:{Id, IsActive:true}}) 
+  async update(
+    Id: number,
+    updateRequestsupervisionMeterDto: UpdateRequestsupervisionMeterDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const requestSupervisionMeterRepository = this.getRequestRepository(auditContext);
+    const foundRequestSupervision = await requestSupervisionMeterRepository.findOne({where:{Id, IsActive:true}}) 
     if(!foundRequestSupervision) throw new NotFoundException(`Request with ${Id} not found`)
   
     if(updateRequestsupervisionMeterDto.StateRequestId != null) {
@@ -161,8 +171,8 @@ async findOne(Id: number) {
     }
     const patch: Partial<typeof foundRequestSupervision>= {};
     if (updateRequestsupervisionMeterDto.CanComment !== undefined) patch.CanComment = updateRequestsupervisionMeterDto.CanComment
-        this.requestSupervisionMeterRepo.merge(foundRequestSupervision, patch);
-          return await this.requestSupervisionMeterRepo.save(foundRequestSupervision)
+        requestSupervisionMeterRepository.merge(foundRequestSupervision, patch);
+          return await requestSupervisionMeterRepository.save(foundRequestSupervision)
     }
 
   async remove(Id: number) {

@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
 import { RequestAssociatedPagination } from './dto/pagination-request-associated.dtp';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -20,6 +21,10 @@ export class RequestAssociatedService {
     private readonly userSv:UsersService
     
   ){}
+
+  private getRequestRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(RequestAssociated) ?? this.requestAssociatedRepo;
+  }
 
   // Método público para contar las solicitudes pendientes asociadas
   async countPendingRequests(): Promise<number> {
@@ -145,8 +150,13 @@ async search({
     return foundRequestAssociated;
   }
 
-  async update(Id: number, updateRequestAssociatedDto:UpdateRequestAssociatedDto) {
-    const foundRequestAssociated = await this.requestAssociatedRepo.findOne({where:{Id}})
+  async update(
+    Id: number,
+    updateRequestAssociatedDto:UpdateRequestAssociatedDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const requestAssociatedRepository = this.getRequestRepository(auditContext);
+    const foundRequestAssociated = await requestAssociatedRepository.findOne({where:{Id}})
     if(!foundRequestAssociated){throw new NotFoundException(`Request with ${Id} not found`) }
 
     if (updateRequestAssociatedDto.StateRequestId != null) {
@@ -157,9 +167,9 @@ async search({
 
     const patch: Partial<typeof foundRequestAssociated> = {}
     if (updateRequestAssociatedDto.CanComment !== undefined) patch.CanComment = updateRequestAssociatedDto.CanComment
-        this.requestAssociatedRepo.merge(foundRequestAssociated, patch);
+        requestAssociatedRepository.merge(foundRequestAssociated, patch);
     
-    return await this.requestAssociatedRepo.save(foundRequestAssociated);
+    return await requestAssociatedRepository.save(foundRequestAssociated);
   }
 
   async remove(Id: number) {

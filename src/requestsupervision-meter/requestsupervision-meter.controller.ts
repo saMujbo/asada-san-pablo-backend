@@ -5,6 +5,8 @@ import { UpdateRequestsupervisionMeterDto } from './dto/update-requestsupervisio
 import { RequestSupervisionPagination } from './dto/pagination-requesSupervisiom-meter.tdo';
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { GetUser } from 'src/auth/get-user.decorator';
+import { GetAuditContext } from 'src/audit/audit.decorator';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 @Controller('requestsupervision-meter')
 export class RequestsupervisionMeterController {
@@ -51,9 +53,14 @@ export class RequestsupervisionMeterController {
     return this.requestsupervisionMeterService.findOne(id);
   }
 
+  @UseGuards(TokenGuard)
   @Put(':id')
-  update(@Param('id') id: number, @Body() updateRequestsupervisionMeterDto: UpdateRequestsupervisionMeterDto) {
-    return this.requestsupervisionMeterService.update(id, updateRequestsupervisionMeterDto);
+  update(
+    @Param('id') id: number,
+    @Body() updateRequestsupervisionMeterDto: UpdateRequestsupervisionMeterDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return this.requestsupervisionMeterService.update(id, updateRequestsupervisionMeterDto, auditContext);
   }
 
   @Delete(':id')

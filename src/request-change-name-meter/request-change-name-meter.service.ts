@@ -8,6 +8,7 @@ import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
 import { RequestChangeNameMeterPagination } from './dto/pagination-request-change-name-meter.dt';
 import { Project } from 'src/project/entities/project.entity';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -20,6 +21,10 @@ export class RequestChangeNameMeterService {
     @Inject(forwardRef(()=> UsersService))
         private readonly userSerive:UsersService
   ){}
+
+  private getRequestRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(RequestChangeNameMeter) ?? this.requestChangeNameMeterRepo;
+  }
 
   // Método público para contar las solicitudes pendientes de cambio de nombre de medidor
   async countPendingRequests(): Promise<number> {
@@ -145,8 +150,13 @@ async search({
     return foundRequestChangeNameMeter;
   }
 
-  async update(Id: number, updateRequestChangeNameMeterDto: UpdateRequestChangeNameMeterDto) {
-    const foundRequestChangeNameMeter = await this.requestChangeNameMeterRepo.findOne({where:{Id}});
+  async update(
+    Id: number,
+    updateRequestChangeNameMeterDto: UpdateRequestChangeNameMeterDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const requestChangeNameMeterRepository = this.getRequestRepository(auditContext);
+    const foundRequestChangeNameMeter = await requestChangeNameMeterRepository.findOne({where:{Id}});
     if(!foundRequestChangeNameMeter)  throw new NotFoundException(`Request with ${Id} not found`)
 
     if(updateRequestChangeNameMeterDto.StateRequestId != null) {
@@ -157,9 +167,9 @@ async search({
 
     const patch: Partial<typeof foundRequestChangeNameMeter> ={}
     if (updateRequestChangeNameMeterDto.CanComment !== undefined) patch.CanComment = updateRequestChangeNameMeterDto.CanComment 
-        this.requestChangeNameMeterRepo.merge(foundRequestChangeNameMeter, patch)
+        requestChangeNameMeterRepository.merge(foundRequestChangeNameMeter, patch)
         
-    return await this.requestChangeNameMeterRepo.save(foundRequestChangeNameMeter);
+    return await requestChangeNameMeterRepository.save(foundRequestChangeNameMeter);
   }
 
   async remove(Id: number) {

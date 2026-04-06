@@ -9,6 +9,7 @@ import { UsersService } from 'src/users/users.service';
 import { CreateRequestChangeMeterDto } from './dto/create-request-change-meter.dto';
 import { RequestChangeMeterPagination } from './dto/pagination-request-change-meter.dto';
 import { request } from 'http';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -21,6 +22,10 @@ export class RequestChangeMeterService {
     @Inject(forwardRef(()=> UsersService))
       private readonly userSerive:UsersService
   ){}
+
+  private getRequestRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(RequestChangeMeter) ?? this.requestChangeMeterRepo;
+  }
 
   // Método público para contar las solicitudes pendientes de cambio de medidor
   async countPendingRequests(): Promise<number> {
@@ -142,8 +147,13 @@ async search({
     return foundRequestChangeMeter;
   }
 
-  async update(Id: number, updateRequestChangeMeterDto: UpdateRequestChangeMeterDto) {
-    const foundRequestChangeMeter = await this.requestChangeMeterRepo.findOne({ where: { Id } });
+  async update(
+    Id: number,
+    updateRequestChangeMeterDto: UpdateRequestChangeMeterDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const requestChangeMeterRepository = this.getRequestRepository(auditContext);
+    const foundRequestChangeMeter = await requestChangeMeterRepository.findOne({ where: { Id } });
     if(!foundRequestChangeMeter) throw new NotFoundException(`Request with ${Id} not found`);
       
     if(updateRequestChangeMeterDto.StateRequestId != null) {
@@ -154,9 +164,9 @@ async search({
 
     const patch: Partial<typeof foundRequestChangeMeter> ={};
     if (updateRequestChangeMeterDto.CanComment !== undefined) patch.CanComment =updateRequestChangeMeterDto.CanComment 
-      this.requestChangeMeterRepo.merge(foundRequestChangeMeter, patch);
+      requestChangeMeterRepository.merge(foundRequestChangeMeter, patch);
   
-      return await this.requestChangeMeterRepo.save(foundRequestChangeMeter);
+      return await requestChangeMeterRepository.save(foundRequestChangeMeter);
   }
 
   async remove(Id: number) {

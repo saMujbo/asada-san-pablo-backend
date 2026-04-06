@@ -45,6 +45,7 @@ import { CommentSupervisionMeterModule } from './CommentRequest/comment-supervis
 import { SupplierModule } from './supplier/supplier.module';
 import { Not } from 'typeorm';
 import { NotificationModule } from './notification/notification.module';
+import { AuditModule } from './audit/audit.module';
 
 
 
@@ -111,7 +112,8 @@ import { NotificationModule } from './notification/notification.module';
     CommentChangeMeterModule,
     CommentSupervisionMeterModule,
     SupplierModule,
-    NotificationModule
+    NotificationModule,
+    AuditModule,
   ],
 })
 export class AppModule {}
