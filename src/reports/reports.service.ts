@@ -368,6 +368,35 @@ export class ReportsService {
     };
   }
 
+  async findByUserId(userId: number): Promise<Report[]> {
+    if (!Number.isInteger(userId) || userId < 1) {
+      throw new BadRequestException('El ID del usuario debe ser un número entero mayor a 0');
+    }
+
+    const userExists = await this.usersRepository.exists({ where: { Id: userId } });
+    if (!userExists) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return this.reportRepository.find({
+      where: { ReportedByUserId: userId },
+      relations: [
+        'ReportLocation',
+        'ReportType',
+        'ReportedBy',
+        'Plumber',
+        'AssignedBy',
+        'StateHistory',
+        'StateHistory.ChangedBy',
+      ],
+      order: {
+        CreatedAt: 'DESC',
+        StateHistory: {
+          CreatedAt: 'ASC',
+        },
+      },
+    });
+  }
   findOne(id: number) {
     return this.loadReport(id);
   }
