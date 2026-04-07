@@ -17,15 +17,14 @@ export interface NotificationSummaryPayload {
 }
 
 @WebSocketGateway({
-	namespace: '/notification',
 	cors: {
 		origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
 		credentials: true,
 	},
 })
-export class NotificationGateway implements OnGatewayConnection {
+export class NotificationsGateway implements OnGatewayConnection {
 	@WebSocketServer()
-	server: Server;
+	server!: Server;
 
 	constructor(
 		private readonly jwtService: JwtService,
@@ -34,15 +33,19 @@ export class NotificationGateway implements OnGatewayConnection {
 	) {}
 
 	async handleConnection(client: Socket) {
-		const token = this.extractToken(client);
+		const token = client.handshake.auth?.token;
 
-		if (!token) {
+		if (typeof token !== 'string' || token.trim().length === 0) {
 			client.disconnect(true);
 			return;
 		}
 
 		try {
-			const payload = await this.jwtService.verifyAsync<{ id: number }>(token);
+			const payload = await this.jwtService.verifyAsync<{
+				id: number;
+				roles?: string[];
+				role?: string;
+			}>(token);
 			const userId = payload?.id;
 
 			if (!userId) {
@@ -51,6 +54,9 @@ export class NotificationGateway implements OnGatewayConnection {
 			}
 
 			await client.join(this.getUserRoom(userId));
+			if (this.isAdmin(payload)) {
+				await client.join(this.getAdminsRoom());
+			}
 
 			const notifications =
 				await this.notificationService.getNotificationsSummaryByUserId(userId);
@@ -60,35 +66,46 @@ export class NotificationGateway implements OnGatewayConnection {
 		}
 	}
 
+	emitAveriaAlert(payload: unknown) {
+		this.server.to(this.getAdminsRoom()).emit('averia:nueva', payload);
+	}
+
+	emitGeneralNotification(type: string, payload: unknown) {
+		this.server.emit(`notificacion:${type}`, payload);
+	}
+
+	emitUserNotification(userId: string, payload: unknown) {
+		this.server
+			.to(this.getUserRoom(userId))
+			.emit('solicitud:resuelta', payload);
+	}
+
 	async emitNotificationsToUser(userId: number) {
 		const payload =
 			await this.notificationService.getNotificationsSummaryByUserId(userId);
 		this.server.to(this.getUserRoom(userId)).emit('notification.all', payload);
 	}
 
-	private getUserRoom(userId: number) {
+	emitReportCreated(payload: unknown) {
+		this.emitAveriaAlert(payload);
+	}
+
+	private getUserRoom(userId: number | string) {
 		return `user:${userId}`;
 	}
 
-	private extractToken(client: Socket) {
-		const authToken = client.handshake.auth?.token;
-		if (typeof authToken === 'string' && authToken.trim().length > 0) {
-			return authToken;
-		}
+	private getAdminsRoom() {
+		return 'admins';
+	}
 
-		const authorizationHeader = client.handshake.headers.authorization;
-		if (typeof authorizationHeader === 'string') {
-			const [scheme, token] = authorizationHeader.split(' ');
-			if (scheme?.toLowerCase() === 'bearer' && token) {
-				return token;
-			}
-		}
+	private isAdmin(payload: { roles?: string[]; role?: string }) {
+		const roles = [
+			...(Array.isArray(payload.roles) ? payload.roles : []),
+			...(typeof payload.role === 'string' ? [payload.role] : []),
+		];
 
-		const queryToken = client.handshake.query?.token;
-		if (typeof queryToken === 'string' && queryToken.trim().length > 0) {
-			return queryToken;
-		}
-
-		return null;
+		return roles.some((role) => role?.toLowerCase() === 'admin');
 	}
 }
+
+export { NotificationsGateway as NotificationGateway };

@@ -7,6 +7,7 @@ import { UsersModule } from 'src/users/users.module';
 import { StateRequestModule } from 'src/state-request/state-request.module';
 import { RequestAssociatedFileModule } from 'src/request-associated-file/request-associated-file.module';
 import { CommentAssociatedModule } from 'src/CommentRequest/comment-associated/comment-associated.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   imports:[
@@ -15,7 +16,8 @@ import { CommentAssociatedModule } from 'src/CommentRequest/comment-associated/c
     forwardRef(() => StateRequestModule),
     forwardRef(() => RequestAssociatedFileModule),
     forwardRef(() => CommentAssociatedModule),
-    
+    forwardRef(() => NotificationModule),
+
   ],
   controllers: [RequestAssociatedController],
   providers: [RequestAssociatedService],

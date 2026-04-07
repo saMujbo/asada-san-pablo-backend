@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as ExcelJS from 'exceljs';
-import * as PDFDocument from 'pdfkit';
+import PDFDocument from 'pdfkit';
 import { QueryFailedError, Repository } from 'typeorm';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 import { ReportLocation } from 'src/report-location/entities/report-location.entity';
@@ -17,7 +17,7 @@ import { UpdateReportDto } from './dto/update-report.dto';
 import { Report } from './entities/report.entity';
 import { ReportStateHistory } from './entities/report-state-history.entity';
 import { ReportStateEnum } from './enums/report-state.enum';
-import { ReportsGateway } from './reports.gateway';
+import { NotificationsGateway } from 'src/notification/notification.gateway';
 
 const ALLOWED_PHOTO_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -42,7 +42,7 @@ export class ReportsService {
     private readonly reportTypeRepository: Repository<ReportType>,
     @InjectRepository(ReportStateHistory)
     private readonly reportStateHistoryRepository: Repository<ReportStateHistory>,
-    private readonly reportsGateway: ReportsGateway,
+    private readonly notificationsGateway: NotificationsGateway,
     private readonly mailService: MailServiceService,
     private readonly dropboxService: DropboxService,
   ) {}
@@ -258,7 +258,7 @@ export class ReportsService {
       throw new NotFoundException('Error al cargar el reporte creado');
     }
 
-    this.reportsGateway.emitReportCreated({
+    this.notificationsGateway.emitReportCreated({
       Id: loadedReport.Id,
       Code: loadedReport.Code,
       ExactLocation: loadedReport.ExactLocation,
