@@ -10,6 +10,8 @@ import { CreateRequestChangeMeterDto } from './dto/create-request-change-meter.d
 import { RequestChangeMeterPagination } from './dto/pagination-request-change-meter.dto';
 import { request } from 'http';
 import { AuditRequestContext } from 'src/audit/audit.types';
+import { NotificationService } from 'src/notification/notification.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -20,7 +22,9 @@ export class RequestChangeMeterService {
     @Inject(forwardRef(()=> StateRequestService))
       private readonly stateRequestSv: StateRequestService,
     @Inject(forwardRef(()=> UsersService))
-      private readonly userSerive:UsersService
+      private readonly userSerive:UsersService,
+    @Inject(forwardRef(() => NotificationService))
+      private readonly notificationSv: NotificationService,
   ){}
 
   private getRequestRepository(auditContext?: AuditRequestContext) {
@@ -153,20 +157,47 @@ async search({
     auditContext?: AuditRequestContext,
   ) {
     const requestChangeMeterRepository = this.getRequestRepository(auditContext);
-    const foundRequestChangeMeter = await requestChangeMeterRepository.findOne({ where: { Id } });
+    const foundRequestChangeMeter = await requestChangeMeterRepository.findOne({
+      where: { Id },
+      relations: ['User', 'StateRequest'],
+    });
     if(!foundRequestChangeMeter) throw new NotFoundException(`Request with ${Id} not found`);
-      
+
     if(updateRequestChangeMeterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestChangeMeterDto.StateRequestId)
       if(!foundState){throw new NotFoundException(`state with Id ${updateRequestChangeMeterDto.StateRequestId} not found`)}
       foundRequestChangeMeter.StateRequest = foundState;
     }
 
-    const patch: Partial<typeof foundRequestChangeMeter> ={};
-    if (updateRequestChangeMeterDto.CanComment !== undefined) patch.CanComment =updateRequestChangeMeterDto.CanComment 
-      requestChangeMeterRepository.merge(foundRequestChangeMeter, patch);
-  
-      return await requestChangeMeterRepository.save(foundRequestChangeMeter);
+    const { CanComment } = updateRequestChangeMeterDto;
+    applyDefinedFields(foundRequestChangeMeter, { CanComment });
+
+    const updatedRequest = await requestChangeMeterRepository.save(foundRequestChangeMeter);
+
+    const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
+    const normalizedState = stateName.trim().toLowerCase();
+
+    let subject = 'Actualización de solicitud de cambio de medidor';
+    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+
+    if (['aprobado', 'aprobada'].includes(normalizedState)) {
+      subject = 'Solicitud de cambio de medidor aprobada';
+      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+    } else if (normalizedState === 'pendiente') {
+      subject = 'Solicitud de cambio de medidor en revisión';
+      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revisión.`;
+    } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
+      subject = 'Solicitud de cambio de medidor rechazada';
+      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
+    }
+
+    await this.notificationSv.createNotificationByUserID({
+      UserID: updatedRequest.User.Id,
+      Subject: subject,
+      Message: message,
+    });
+
+    return updatedRequest;
   }
 
   async remove(Id: number) {

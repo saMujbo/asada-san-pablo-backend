@@ -9,6 +9,8 @@ import { UsersService } from 'src/users/users.service';
 import { RequestChangeNameMeterPagination } from './dto/pagination-request-change-name-meter.dt';
 import { Project } from 'src/project/entities/project.entity';
 import { AuditRequestContext } from 'src/audit/audit.types';
+import { NotificationService } from 'src/notification/notification.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -19,7 +21,9 @@ export class RequestChangeNameMeterService {
     @Inject(forwardRef(()=> StateRequestService))
         private readonly stateRequestSv: StateRequestService,
     @Inject(forwardRef(()=> UsersService))
-        private readonly userSerive:UsersService
+        private readonly userSerive:UsersService,
+    @Inject(forwardRef(() => NotificationService))
+        private readonly notificationSv: NotificationService,
   ){}
 
   private getRequestRepository(auditContext?: AuditRequestContext) {
@@ -156,7 +160,10 @@ async search({
     auditContext?: AuditRequestContext,
   ) {
     const requestChangeNameMeterRepository = this.getRequestRepository(auditContext);
-    const foundRequestChangeNameMeter = await requestChangeNameMeterRepository.findOne({where:{Id}});
+    const foundRequestChangeNameMeter = await requestChangeNameMeterRepository.findOne({
+      where: { Id },
+      relations: ['User', 'StateRequest'],
+    });
     if(!foundRequestChangeNameMeter)  throw new NotFoundException(`Request with ${Id} not found`)
 
     if(updateRequestChangeNameMeterDto.StateRequestId != null) {
@@ -165,11 +172,35 @@ async search({
       foundRequestChangeNameMeter.StateRequest = foundState
     }
 
-    const patch: Partial<typeof foundRequestChangeNameMeter> ={}
-    if (updateRequestChangeNameMeterDto.CanComment !== undefined) patch.CanComment = updateRequestChangeNameMeterDto.CanComment 
-        requestChangeNameMeterRepository.merge(foundRequestChangeNameMeter, patch)
-        
-    return await requestChangeNameMeterRepository.save(foundRequestChangeNameMeter);
+    const { CanComment } = updateRequestChangeNameMeterDto;
+    applyDefinedFields(foundRequestChangeNameMeter, { CanComment });
+
+    const updatedRequest = await requestChangeNameMeterRepository.save(foundRequestChangeNameMeter);
+
+    const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
+    const normalizedState = stateName.trim().toLowerCase();
+
+    let subject = 'Actualización de solicitud de cambio de nombre de medidor';
+    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+
+    if (['aprobado', 'aprobada'].includes(normalizedState)) {
+      subject = 'Solicitud de cambio de nombre de medidor aprobada';
+      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+    } else if (normalizedState === 'pendiente') {
+      subject = 'Solicitud de cambio de nombre de medidor en revisión';
+      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revisión.`;
+    } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
+      subject = 'Solicitud de cambio de nombre de medidor rechazada';
+      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
+    }
+
+    await this.notificationSv.createNotificationByUserID({
+      UserID: updatedRequest.User.Id,
+      Subject: subject,
+      Message: message,
+    });
+
+    return updatedRequest;
   }
 
   async remove(Id: number) {

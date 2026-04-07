@@ -6,7 +6,7 @@ import { ReportLocation } from 'src/report-location/entities/report-location.ent
 import { ReportType } from 'src/report-types/entities/report-type.entity';
 import { User } from 'src/users/entities/user.entity';
 import { DropboxService } from 'src/dropbox/dropbox.service';
-import { ReportsGateway } from './reports.gateway';
+import { NotificationsGateway } from 'src/notification/notification.gateway';
 import { ReportsService } from './reports.service';
 import { ReportStateHistory } from './entities/report-state-history.entity';
 import { Report } from './entities/report.entity';
@@ -19,7 +19,7 @@ describe('ReportsService', () => {
   let reportLocationRepository: any;
   let reportTypeRepository: any;
   let reportStateHistoryRepository: any;
-  let reportsGateway: any;
+  let notificationsGateway: any;
   let mailService: any;
   let dropboxService: any;
 
@@ -47,7 +47,7 @@ describe('ReportsService', () => {
       create: jest.fn(),
       save: jest.fn(),
     };
-    reportsGateway = {
+    notificationsGateway = {
       emitReportCreated: jest.fn(),
     };
     mailService = {
@@ -66,7 +66,7 @@ describe('ReportsService', () => {
         { provide: getRepositoryToken(ReportLocation), useValue: reportLocationRepository },
         { provide: getRepositoryToken(ReportType), useValue: reportTypeRepository },
         { provide: getRepositoryToken(ReportStateHistory), useValue: reportStateHistoryRepository },
-        { provide: ReportsGateway, useValue: reportsGateway },
+        { provide: NotificationsGateway, useValue: notificationsGateway },
         { provide: MailServiceService, useValue: mailService },
         { provide: DropboxService, useValue: dropboxService },
       ],
@@ -81,6 +81,7 @@ describe('ReportsService', () => {
 
   it('creates a report, stores history, emits the socket event and queues the email', async () => {
     const dto = {
+      UserId: 7,
       ReportLocationId: 2,
       ReportTypeId: 3,
       ExactLocation: 'Frente a la escuela',
@@ -134,7 +135,7 @@ describe('ReportsService', () => {
       ChangedByUserId: 7,
     });
     expect(reportStateHistoryRepository.save).toHaveBeenCalledWith(historyEntity);
-    expect(reportsGateway.emitReportCreated).toHaveBeenCalled();
+    expect(notificationsGateway.emitReportCreated).toHaveBeenCalled();
     expect(mailService.sendReportCreatedEmail).toHaveBeenCalled();
     expect(result).toEqual(loadedReport);
   });

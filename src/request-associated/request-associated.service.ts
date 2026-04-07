@@ -8,6 +8,8 @@ import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
 import { RequestAssociatedPagination } from './dto/pagination-request-associated.dtp';
 import { AuditRequestContext } from 'src/audit/audit.types';
+import { NotificationService } from 'src/notification/notification.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -18,8 +20,9 @@ export class RequestAssociatedService {
     @Inject(forwardRef(()=> StateRequestService))
     private readonly stateRequestSv: StateRequestService,
     @Inject(forwardRef(()=> UsersService))
-    private readonly userSv:UsersService
-    
+    private readonly userSv:UsersService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationSv: NotificationService,
   ){}
 
   private getRequestRepository(auditContext?: AuditRequestContext) {
@@ -156,7 +159,10 @@ async search({
     auditContext?: AuditRequestContext,
   ) {
     const requestAssociatedRepository = this.getRequestRepository(auditContext);
-    const foundRequestAssociated = await requestAssociatedRepository.findOne({where:{Id}})
+    const foundRequestAssociated = await requestAssociatedRepository.findOne({
+      where: { Id },
+      relations: ['User', 'StateRequest'],
+    });
     if(!foundRequestAssociated){throw new NotFoundException(`Request with ${Id} not found`) }
 
     if (updateRequestAssociatedDto.StateRequestId != null) {
@@ -165,11 +171,35 @@ async search({
       foundRequestAssociated.StateRequest = foundState;
     }
 
-    const patch: Partial<typeof foundRequestAssociated> = {}
-    if (updateRequestAssociatedDto.CanComment !== undefined) patch.CanComment = updateRequestAssociatedDto.CanComment
-        requestAssociatedRepository.merge(foundRequestAssociated, patch);
-    
-    return await requestAssociatedRepository.save(foundRequestAssociated);
+    const { CanComment } = updateRequestAssociatedDto;
+    applyDefinedFields(foundRequestAssociated, { CanComment });
+
+    const updatedRequest = await requestAssociatedRepository.save(foundRequestAssociated);
+
+    const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
+    const normalizedState = stateName.trim().toLowerCase();
+
+    let subject = 'Actualización de solicitud de asociado';
+    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+
+    if (['aprobado', 'aprobada'].includes(normalizedState)) {
+      subject = 'Solicitud de asociado aprobada';
+      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+    } else if (normalizedState === 'pendiente') {
+      subject = 'Solicitud de asociado en revisión';
+      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revisión.`;
+    } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
+      subject = 'Solicitud de asociado rechazada';
+      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
+    }
+
+    await this.notificationSv.createNotificationByUserID({
+      UserID: updatedRequest.User.Id,
+      Subject: subject,
+      Message: message,
+    });
+
+    return updatedRequest;
   }
 
   async remove(Id: number) {

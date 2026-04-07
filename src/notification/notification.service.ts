@@ -7,7 +7,10 @@ import { UsersService } from 'src/users/users.service';
 import { UserNotification } from './user_notifications/user_notifications.entity';
 import { CreateImportantNotificationDto } from './dto/create-important-notification.dto';
 import { CreateNotificationUserDto } from './dto/create-notification-user.dto';
-import { NotificationGateway, NotificationSummaryPayload } from './notification.gateway';
+import {
+  NotificationSummaryPayload,
+  NotificationsGateway,
+} from './notification.gateway';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
 
 const IMPORTANT_NOTIFICATION_EMAIL_LIMIT = 75;
@@ -21,8 +24,8 @@ export class NotificationService {
     private readonly userNotificationRepository: Repository<UserNotification>,
     private readonly userService: UsersService,
     private readonly mailService: MailServiceService,
-    @Inject(forwardRef(() => NotificationGateway))
-    private readonly notificationGateway: NotificationGateway,
+    @Inject(forwardRef(() => NotificationsGateway))
+    private readonly notificationGateway: NotificationsGateway,
   ) {}
 
   private formatHour(date: Date): string {

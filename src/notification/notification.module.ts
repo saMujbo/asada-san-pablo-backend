@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification } from './entities/notification.entity';
 import { UsersModule } from 'src/users/users.module';
 import { UserNotification } from './user_notifications/user_notifications.entity';
-import { NotificationGateway } from './notification.gateway';
+import { NotificationsGateway } from './notification.gateway';
 import { MailServiceModule } from 'src/mail-service/mail-service.module';
 
 @Module({
@@ -15,7 +15,7 @@ import { MailServiceModule } from 'src/mail-service/mail-service.module';
     MailServiceModule,
   ],
   controllers: [NotificationController],
-  providers: [NotificationService, NotificationGateway],
-  exports: [NotificationService],
+  providers: [NotificationService, NotificationsGateway],
+  exports: [NotificationService, NotificationsGateway],
 })
 export class NotificationModule {}

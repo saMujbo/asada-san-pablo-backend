@@ -8,6 +8,8 @@ import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
 import { RequestSupervisionPagination } from './dto/pagination-requesSupervisiom-meter.tdo';
 import { AuditRequestContext } from 'src/audit/audit.types';
+import { NotificationService } from 'src/notification/notification.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -18,7 +20,9 @@ export class RequestsupervisionMeterService {
     @Inject(forwardRef(() => StateRequestService))
     private readonly stateRequestSv: StateRequestService,
     @Inject(forwardRef(() => UsersService))
-    private readonly userSv: UsersService
+    private readonly userSv: UsersService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationSv: NotificationService,
   ){}
 
   private getRequestRepository(auditContext?: AuditRequestContext) {
@@ -161,19 +165,48 @@ async findOne(Id: number) {
     auditContext?: AuditRequestContext,
   ) {
     const requestSupervisionMeterRepository = this.getRequestRepository(auditContext);
-    const foundRequestSupervision = await requestSupervisionMeterRepository.findOne({where:{Id, IsActive:true}}) 
+    const foundRequestSupervision = await requestSupervisionMeterRepository.findOne({
+      where: { Id, IsActive: true },
+      relations: ['User', 'StateRequest'],
+    });
     if(!foundRequestSupervision) throw new NotFoundException(`Request with ${Id} not found`)
-  
+
     if(updateRequestsupervisionMeterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestsupervisionMeterDto.StateRequestId)
       if(!foundState){throw new NotFoundException(`state with Id ${updateRequestsupervisionMeterDto.StateRequestId} not found`)}
       foundRequestSupervision.StateRequest = foundState
     }
-    const patch: Partial<typeof foundRequestSupervision>= {};
-    if (updateRequestsupervisionMeterDto.CanComment !== undefined) patch.CanComment = updateRequestsupervisionMeterDto.CanComment
-        requestSupervisionMeterRepository.merge(foundRequestSupervision, patch);
-          return await requestSupervisionMeterRepository.save(foundRequestSupervision)
+
+    const { CanComment } = updateRequestsupervisionMeterDto;
+    applyDefinedFields(foundRequestSupervision, { CanComment });
+
+    const updatedRequest = await requestSupervisionMeterRepository.save(foundRequestSupervision);
+
+    const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
+    const normalizedState = stateName.trim().toLowerCase();
+
+    let subject = 'Actualización de solicitud de supervisión de medidor';
+    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+
+    if (['aprobado', 'aprobada'].includes(normalizedState)) {
+      subject = 'Solicitud de supervisión de medidor aprobada';
+      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+    } else if (normalizedState === 'pendiente') {
+      subject = 'Solicitud de supervisión de medidor en revisión';
+      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revisión.`;
+    } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
+      subject = 'Solicitud de supervisión de medidor rechazada';
+      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
     }
+
+    await this.notificationSv.createNotificationByUserID({
+      UserID: updatedRequest.User.Id,
+      Subject: subject,
+      Message: message,
+    });
+
+    return updatedRequest;
+  }
 
   async remove(Id: number) {
     const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({ where: { Id } })
