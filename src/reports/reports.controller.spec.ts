@@ -9,6 +9,7 @@ describe('ReportsController', () => {
   const reportsServiceMock = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findByUserId: jest.fn(),
     buildExportPdf: jest.fn(),
     buildExportExcel: jest.fn(),
     getMonthlyCounts: jest.fn(),
@@ -63,6 +64,14 @@ describe('ReportsController', () => {
     await controller.findAll(pagination as any);
 
     expect(reportsServiceMock.findAll).toHaveBeenCalledWith(pagination);
+  });
+
+  it('delegates findByUserId to the service', async () => {
+    const reports = [{ Id: 1, ReportedByUserId: 8 }];
+    reportsServiceMock.findByUserId.mockResolvedValue(reports);
+
+    await expect(controller.findByUserId('8')).resolves.toEqual(reports);
+    expect(reportsServiceMock.findByUserId).toHaveBeenCalledWith(8);
   });
 
   it('returns 400 when exportPdf receives an invalid year', async () => {

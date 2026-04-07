@@ -13,16 +13,17 @@ import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportStateEnum } from './enums/report-state.enum';
 import { ReportsService } from './reports.service';
 
-@UseGuards(TokenGuard)
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
+  @UseGuards(TokenGuard)
   @Post()
   create(@Body() createReportDto: CreateReportDto) {
     return this.reportsService.create(createReportDto);
   }
 
+  @UseGuards(TokenGuard)
   @Post(':reportId/photo')
   @ApiOperation({ summary: 'Subir o reemplazar la foto de un reporte' })
   @UseInterceptors(FileInterceptor('photo', {
@@ -41,6 +42,12 @@ export class ReportsController {
     return this.reportsService.findAll(paginationDto);
   }
 
+  @Get('user/:userId')
+  findByUserId(@Param('userId') userId: string) {
+    return this.reportsService.findByUserId(+userId);
+  }
+
+  @UseGuards(TokenGuard)
   @Get('export/pdf')
   @ApiOperation({ summary: 'Exportar PDF de reportes del mes con gráfico por ubicación' })
   async exportPdf(
@@ -65,6 +72,7 @@ export class ReportsController {
     res.send(buffer);
   }
 
+  @UseGuards(TokenGuard)
   @Get('export/excel')
   @ApiOperation({ summary: 'Exportar Excel de reportes del mes con formato legible' })
   async exportExcel(
@@ -89,6 +97,7 @@ export class ReportsController {
     res.send(buffer);
   }
 
+  @UseGuards(TokenGuard)
   @Get('stats/monthly')
   getMonthly(
     @Query('months') months?: string,
@@ -104,6 +113,7 @@ export class ReportsController {
     });
   }
 
+  @UseGuards(TokenGuard)
   @Get('stats/monthly-by-location')
   getMonthlyByLocation(
     @Query('months') months?: string,
@@ -117,11 +127,13 @@ export class ReportsController {
     });
   }
 
+  @UseGuards(TokenGuard)
   @Get('me/count')
   getMyReportsCount(@GetUser('id') userId: number) {
     return this.reportsService.getMyReportsSummary(userId);
   }
 
+  @UseGuards(TokenGuard)
   @Get('me/count-by-state')
   async getMyReportsCountByState(
     @GetUser('id') userId: number,
@@ -134,6 +146,7 @@ export class ReportsController {
   @ApiOperation({ summary: 'Obtener un reporte por ID' })
   @ApiResponse({ status: 200, description: 'Reporte encontrado exitosamente' })
   @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
+  @UseGuards(TokenGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.reportsService.findOne(+id);
@@ -143,11 +156,13 @@ export class ReportsController {
   @ApiResponse({ status: 200, description: 'Reporte actualizado exitosamente' })
   @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
   @ApiResponse({ status: 400, description: 'Datos de entrada inválidos' })
+  @UseGuards(TokenGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateReportDto: UpdateReportDto) {
     return this.reportsService.update(+id, updateReportDto);
   }
 
+  @UseGuards(TokenGuard)
   @Post(':reportId/assignments')
   assignPlumber(
     @Param('reportId') reportId: string,
@@ -162,6 +177,7 @@ export class ReportsController {
     );
   }
 
+  @UseGuards(TokenGuard)
   @Post(':reportId/state-transitions')
   changeState(
     @Param('reportId') reportId: string,
@@ -179,6 +195,7 @@ export class ReportsController {
   @ApiOperation({ summary: 'Eliminar un reporte' })
   @ApiResponse({ status: 200, description: 'Reporte eliminado exitosamente' })
   @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
+  @UseGuards(TokenGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.reportsService.remove(+id);

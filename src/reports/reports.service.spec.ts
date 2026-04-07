@@ -26,6 +26,7 @@ describe('ReportsService', () => {
   beforeEach(async () => {
     reportRepository = {
       findOne: jest.fn(),
+      find: jest.fn(),
       exists: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
@@ -36,6 +37,7 @@ describe('ReportsService', () => {
     usersRepository = {
       findOne: jest.fn(),
       findOneOrFail: jest.fn(),
+      exists: jest.fn(),
     };
     reportLocationRepository = {
       findOne: jest.fn(),
@@ -81,6 +83,7 @@ describe('ReportsService', () => {
 
   it('creates a report, stores history, emits the socket event and queues the email', async () => {
     const dto = {
+      UserId: 7,
       ReportLocationId: 2,
       ReportTypeId: 3,
       ExactLocation: 'Frente a la escuela',
@@ -172,6 +175,28 @@ describe('ReportsService', () => {
     expect(qb.andWhere).toHaveBeenCalled();
     expect(result.data).toEqual(data);
     expect(result.meta.totalItems).toBe(1);
+  });
+
+  it('returns the reports associated with a user id', async () => {
+    const reports = [
+      { Id: 1, ReportedByUserId: 7 },
+      { Id: 2, ReportedByUserId: 7 },
+    ];
+    usersRepository.exists.mockResolvedValue(true);
+    reportRepository.find.mockResolvedValue(reports);
+
+    await expect(service.findByUserId(7)).resolves.toEqual(reports);
+    expect(reportRepository.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { ReportedByUserId: 7 },
+      }),
+    );
+  });
+
+  it('throws when requesting reports for a user that does not exist', async () => {
+    usersRepository.exists.mockResolvedValue(false);
+
+    await expect(service.findByUserId(99)).rejects.toThrow(NotFoundException);
   });
 
   it('assigns a plumber and moves a pending report to in process', async () => {
