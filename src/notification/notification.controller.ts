@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { CreateImportantNotificationDto } from './dto/create-important-notification.dto';
@@ -31,6 +31,19 @@ export class NotificationController {
   @Get('me')
   async findMine(@GetUser('id') userId: number) {
     return await this.notificationService.findAllByUser(userId);
+  }
+
+  @Patch('read-all')
+  async markAllAsRead(@GetUser('id') userId: number) {
+    return await this.notificationService.markAllAsRead(userId);
+  }
+
+  @Patch(':userNotificationId/read')
+  async markAsRead(
+    @Param('userNotificationId') userNotificationId: string,
+    @GetUser('id') userId: number,
+  ) {
+    return await this.notificationService.markAsRead(+userNotificationId, userId);
   }
 
   // @Get(':id')

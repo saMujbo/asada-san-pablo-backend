@@ -175,13 +175,19 @@ export class NotificationService {
     }));
   }
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} notification`;
-  // }
+  async markAsRead(userNotificationId: number, userId: number) {
+    await this.userNotificationRepository.update(
+      { Id: userNotificationId, User_id: userId },
+      { Is_Read: true },
+    );
+  }
 
-  // update(id: number, updateNotificationDto: UpdateNotificationDto) {
-  //   return `This action updates a #${id} notification`;
-  // }
+  async markAllAsRead(userId: number) {
+    await this.userNotificationRepository.update(
+      { User_id: userId, Is_Read: false },
+      { Is_Read: true },
+    );
+  }
 
   remove(id: number) {
     return `This action removes a #${id} notification`;
