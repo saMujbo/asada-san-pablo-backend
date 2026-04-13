@@ -30,11 +30,21 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document); 
   const port = process.env.PORT ?? 3000;
-  await app.listen(port);
-  const serverUrl = await app.getUrl();
+  await app.listen(port, '0.0.0.0');
+  const localUrl = `http://localhost:${port}`;
+  const networkUrl = `http://2.24.196.166:${port}`;
+  const publicUrl = process.env.APP_URL?.replace(/\/$/, '');
 
-  Logger.log(`Servidor corriendo en ${serverUrl}`, 'Bootstrap');
-  console.log(`Servidor corriendo en: ${serverUrl}`);
-  console.log(`Swagger disponible en: ${serverUrl}/api`);
+  Logger.log(`Servidor escuchando en 0.0.0.0:${port}`, 'Bootstrap');
+  console.log(`Servidor escuchando en:   0.0.0.0:${port}`); 
+  console.log(`Servidor local: ${localUrl}`);
+  console.log(`Swagger local: ${localUrl}/api`);
+  console.log(`Servidor en red: ${networkUrl}`);
+  console.log(`Swagger en red: ${networkUrl}/api`);
+
+  if (publicUrl) {
+    console.log(`Servidor publico: ${publicUrl}`);
+    console.log(`Swagger publico: ${publicUrl}/api`);
+  }
 }
 bootstrap();
