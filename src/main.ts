@@ -3,10 +3,23 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger, ValidationPipe } from '@nestjs/common';
 
+/** Orígenes permitidos para CORS. Override con CORS_ORIGINS en .env (coma-separado). */
+function getCorsOrigins(): string[] {
+  const fromEnv = process.env.CORS_ORIGINS?.split(',').map((s) => s.trim()).filter(Boolean);
+  if (fromEnv?.length) {
+    return fromEnv;
+  }
+  return [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://redsanpbalo-frontend-abonados.vercel.app',
+  ];
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     cors: {
-      origin: 'https://redsanpbalo-frontend-abonados.vercel.app',
+      origin: 'http://localhost:5173',
       credentials: true,
     },
   });
