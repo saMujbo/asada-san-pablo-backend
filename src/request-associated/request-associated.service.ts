@@ -6,8 +6,10 @@ import { RequestAssociated } from './entities/request-associated.entity';
 import { Repository } from 'typeorm';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
-import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestAssociatedPagination } from './dto/pagination-request-associated.dtp';
+import { AuditRequestContext } from 'src/audit/audit.types';
+import { NotificationService } from 'src/notification/notification.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -18,9 +20,14 @@ export class RequestAssociatedService {
     @Inject(forwardRef(()=> StateRequestService))
     private readonly stateRequestSv: StateRequestService,
     @Inject(forwardRef(()=> UsersService))
-    private readonly userSerive:UsersService
-    
+    private readonly userSv:UsersService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationSv: NotificationService,
   ){}
+
+  private getRequestRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(RequestAssociated) ?? this.requestAssociatedRepo;
+  }
 
   // Método público para contar las solicitudes pendientes asociadas
   async countPendingRequests(): Promise<number> {
@@ -45,38 +52,13 @@ export class RequestAssociatedService {
   }
 
   async create(createRequestAssociatedDto: CreateRequestAssociatedDto) {
-  if (!createRequestAssociatedDto.IDcard) {
-    throw new BadRequestException('Debe ingresar una cédula válida.');
-  }
-
-  const user = await this.userSerive.findByIdCardRaw(createRequestAssociatedDto.IDcard); // método que vimos antes
-
-  if (!user) {
-    throw new BadRequestException('No se encontró ningún usuario con esa cédula.');
-  }
-
-  const isAbonado = user.Roles?.some(
-    (r) => r.Rolname?.toUpperCase() === 'ABONADO'
-  );
-  if (!isAbonado) {
-    throw new BadRequestException('El usuario no tiene rol ABONADO.');
-  }
-
-  const state =  await this.stateRequestSv.findDefaultState();
-
-  if (!state) {
-    throw new BadRequestException('No se encontró un estado válido para la solicitud.');
-  }
-
+  const UserSv = await this.userSv.findOne(createRequestAssociatedDto.UserId);
+  const StateRequestSv = await this.stateRequestSv.findDefaultState();
   const request = this.requestAssociatedRepo.create({
-    IDcard:createRequestAssociatedDto.IDcard,
-    Name: createRequestAssociatedDto.Name,
-    Justificattion:createRequestAssociatedDto.Justification,
-    Surname1: createRequestAssociatedDto.Surname1,
-    Surname2: createRequestAssociatedDto.Surname2,
+    Justification:createRequestAssociatedDto.Justification,
     NIS:createRequestAssociatedDto.NIS,
-    User: user,
-    StateRequest: state,
+    User: UserSv,
+    StateRequest: StateRequestSv,
   });
 
   return await this.requestAssociatedRepo.save(request);
@@ -86,7 +68,8 @@ export class RequestAssociatedService {
     return await this.requestAssociatedRepo.find({
       where:{IsActive:true},relations:[
         'User',
-        'StateRequest'
+        'StateRequest',
+        'RequestAssociatedFile',
       ]
     })
   }
@@ -94,13 +77,21 @@ async search({
   page = 1,
   limit = 10,
   q,
+  UserName,
   StateRequestId,
   State,     // si lo sigues usando en el endpoint general
   userId,    // <-- viene solo desde /me/search (inyectado)
-}: RequestAssociatedPagination & { userId?: number; q?: string }) {
+}: RequestAssociatedPagination & { userId?: number; q?: string; UserName?: string }) {
   const pageNum = Math.max(1, Number(page) || 1);
   const take = Math.min(100, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * take;
+
+  const stateRequestIdNum =
+      StateRequestId !== undefined && StateRequestId !== null
+        ? Number(StateRequestId)
+        : undefined;
+                                                                                                                             
+    const searchText = (q ?? UserName ?? '').trim().toLowerCase();
 
   const qb = this.requestAssociatedRepo
     .createQueryBuilder('req')
@@ -111,11 +102,15 @@ async search({
     .skip(skip)
     .take(take);
 
-  // isActive: si viene State en el search general, conviértelo;
-  // si viene userId (me/search) y no se especificó nada, por defecto solo activos.
+
   let isActiveFilter: boolean | undefined = undefined;
   if (State !== undefined && State !== null && State !== '') {
-    isActiveFilter = typeof State === 'string' ? State.toLowerCase() === 'true' : !!State;
+    const normalizedState = String(State).trim().toLowerCase();
+    if (['true', '1', 'activo', 'active', 'si', 'sí'].includes(normalizedState)) {
+      isActiveFilter = true;
+    } else if (['false', '0', 'inactivo', 'inactive', 'no'].includes(normalizedState)) {
+      isActiveFilter = false;
+    }
   } else if (typeof userId === 'number') {
     isActiveFilter = true; // default para "mis solicitudes"
   }
@@ -123,8 +118,8 @@ async search({
     qb.andWhere('req.IsActive = :isActive', { isActive: isActiveFilter });
   }
 
-  if (typeof StateRequestId === 'number') {
-    qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
+  if (typeof stateRequestIdNum === 'number' && !Number.isNaN(stateRequestIdNum)) {
+    qb.andWhere('req.StateRequestId = :stateId', { stateId: stateRequestIdNum });
   }
 
   if (typeof userId === 'number') {
@@ -158,30 +153,59 @@ async search({
     return foundRequestAssociated;
   }
 
-  async update(Id: number, updateRequestAssociatedDto:UpdateRequestAssociatedDto) {
-    const foundRequestAssociated = await this.requestAssociatedRepo.findOne({where:{Id}})
+  async update(
+    Id: number,
+    updateRequestAssociatedDto:UpdateRequestAssociatedDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const requestAssociatedRepository = this.getRequestRepository(auditContext);
+    const foundRequestAssociated = await requestAssociatedRepository.findOne({
+      where: { Id },
+      relations: ['User', 'StateRequest'],
+    });
     if(!foundRequestAssociated){throw new NotFoundException(`Request with ${Id} not found`) }
 
-    if (updateRequestAssociatedDto.StateRequestId !== undefined && updateRequestAssociatedDto.StateRequestId !== null) {
+    if (updateRequestAssociatedDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestAssociatedDto.StateRequestId);
-      if (!foundState) {
-        throw new NotFoundException(`state with Id ${updateRequestAssociatedDto.StateRequestId} not found`);
-      }
+      if (!foundState) {throw new NotFoundException(`state with Id ${updateRequestAssociatedDto.StateRequestId} not found`);}
       foundRequestAssociated.StateRequest = foundState;
     }
 
-    if (updateRequestAssociatedDto.CanComment !== undefined && updateRequestAssociatedDto.CanComment !== null) {
-      foundRequestAssociated.CanComment = updateRequestAssociatedDto.CanComment;
+    const { CanComment } = updateRequestAssociatedDto;
+    applyDefinedFields(foundRequestAssociated, { CanComment });
+
+    const updatedRequest = await requestAssociatedRepository.save(foundRequestAssociated);
+
+    const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
+    const normalizedState = stateName.trim().toLowerCase();
+
+    let subject = 'Actualización de solicitud de asociado';
+    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+
+    if (['aprobado', 'aprobada'].includes(normalizedState)) {
+      subject = 'Solicitud de asociado aprobada';
+      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+    } else if (normalizedState === 'pendiente') {
+      subject = 'Solicitud de asociado en revisión';
+      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revisión.`;
+    } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
+      subject = 'Solicitud de asociado rechazada';
+      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
     }
 
-    await this.requestAssociatedRepo.save(foundRequestAssociated);
-    return foundRequestAssociated;
+    await this.notificationSv.createNotificationByUserID({
+      UserID: updatedRequest.User.Id,
+      Subject: subject,
+      Message: message,
+    });
+
+    return updatedRequest;
   }
 
   async remove(Id: number) {
     const foundRequestAssociated = await this.requestAssociatedRepo.findOne({ where: { Id } })
     if (!foundRequestAssociated) {
-      throw new NotFoundException(`Requestwith Id ${Id} not found`);
+      throw new NotFoundException(`Request with Id ${Id} not found`);
     }
     foundRequestAssociated.IsActive = false;
     

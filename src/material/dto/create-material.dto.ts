@@ -1,9 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString } from "class-validator";
+import { IsNotEmpty, IsString } from "class-validator";
 
 
 export class CreateMaterialDto {
-        @ApiProperty()
-        @IsString()
-        Name:string;
+    @ApiProperty({example: 'Acero'})
+    @IsString({message: 'El nombre del material debe ser una cadena de texto'})
+    @IsNotEmpty({message: 'El nombre del material es requerido'})
+    Name:string;
 }

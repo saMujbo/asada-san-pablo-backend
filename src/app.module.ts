@@ -18,9 +18,9 @@ import { ProjectStateModule } from './project/project-state/project-state.module
 import { ProjectProjectionModule } from './project-projection/project-projection.module';
 import { ProductDetailModule } from './product/product-detail/product-detail.module';
 import { ActualExpenseModule } from './actual-expense/actual-expense.module';
-import { AgentSupplierModule } from './agent_supplier/agent_supplier.module';
-import { LegalSupplierModule } from './legal-supplier/legal-supplier.module';
-import { PhysicalSupplierModule } from './physical-supplier/physical-supplier.module';
+import { AgentSupplierModule } from './supplier/legal-supplier/agent_supplier/agent_supplier.module';
+import { LegalSupplierModule } from './supplier/legal-supplier/legal-supplier.module';
+import { PhysicalSupplierModule } from './supplier/physical-supplier/physical-supplier.module';
 import { RequesAvailabilityWaterModule } from './reques-availability-water/reques-availability-water.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { DropboxModule } from './dropbox/dropbox.module';
@@ -43,6 +43,9 @@ import { CommentChangeNameMeterModule } from './CommentRequest/comment-change-na
 import { CommentChangeMeterModule } from './CommentRequest/comment-change-meter/comment-change-meter.module';
 import { CommentSupervisionMeterModule } from './CommentRequest/comment-supervision-meter/comment-supervision-meter.module';
 import { SupplierModule } from './supplier/supplier.module';
+import { Not } from 'typeorm';
+import { NotificationModule } from './notification/notification.module';
+import { AuditModule } from './audit/audit.module';
 
 
 
@@ -109,6 +112,8 @@ import { SupplierModule } from './supplier/supplier.module';
     CommentChangeMeterModule,
     CommentSupervisionMeterModule,
     SupplierModule,
+    NotificationModule,
+    AuditModule,
   ],
 })
 export class AppModule {}

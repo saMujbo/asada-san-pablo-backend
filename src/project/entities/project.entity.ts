@@ -26,6 +26,12 @@ export class Project {
     @Column({ type: 'text', nullable: true })
     SpaceOfDocument: string | null;
 
+    @Column({ type: 'text', nullable: true })
+    CoverImagePath: string | null;
+
+    @Column({ type: 'text', nullable: true })
+    CoverImageUrl: string | null;
+
     @Column({default: false})
     CanComment: boolean;
 

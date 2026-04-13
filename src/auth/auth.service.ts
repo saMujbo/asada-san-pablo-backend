@@ -9,11 +9,10 @@ import { RolesService } from 'src/roles/roles.service';
 import { UsersService } from 'src/users/users.service';
 import { ConfigService } from '@nestjs/config';
 import { MailServiceService } from 'src/mail-service/mail-service.service';
-import { ChangepasswordDto } from './dto/changePassword.dto';
 import { resetPasswordDto } from './dto/resetPassword.dto';
 import { AdminCreateUserDto } from 'src/users/dto/admin-user.dto';
 import { generateRandomPassword } from 'src/utils/passwordrandom';
-import { Roles } from './auth-roles/roles.decorator';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 
 @Injectable()
@@ -42,10 +41,10 @@ export class AuthService {
     }
     const hashed= await bcrypt.hash(Password,10);
 
-    const defaultRole = await this.roleService.findOne(2);
+    const defaultRole = await this.roleService.findByName('INVITADO');
 
     if (!defaultRole) {
-      throw new Error('❌ Rol por defecto "GUEST" no existe en la base de datos');
+      throw new Error('❌ Rol por defecto "INVITADO" no existe en la base de datos');
     }
 
     const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
@@ -64,7 +63,10 @@ export class AuthService {
     return newUser;
   }
 
-  async adminCreateUser(adminCreateUserDto: AdminCreateUserDto){
+  async adminCreateUser(
+    adminCreateUserDto: AdminCreateUserDto,
+    auditContext?: AuditRequestContext,
+  ){
     const { roleIds, ...rest } = adminCreateUserDto;
 
     // 2) Roles a asignar
@@ -81,7 +83,7 @@ export class AuthService {
       ...rest,
       Password: hashed,
       Roles: roles, // <- lo correcto
-    });
+    }, auditContext);
 
     // 5) Enviar correo (si falla, no rompas la creación)
     const url = `${this.configService.get<string>('FrontEndBaseURL')}/login`;
@@ -168,7 +170,11 @@ export class AuthService {
     };
   }
 
-  async resetPassword(userId: number, dto: resetPasswordDto) {
+  async resetPassword(
+    userId: number,
+    dto: resetPasswordDto,
+    auditContext?: AuditRequestContext,
+  ) {
     const { NewPassword, ConfirmPassword } = dto;
 
     if (NewPassword !== ConfirmPassword) {
@@ -181,10 +187,15 @@ export class AuthService {
     }
 
     // Aquí hashea y actualiza la contraseña
-    return this.userService.updatePassword(userId, NewPassword);
+    return this.userService.updatePassword(userId, NewPassword, auditContext);
   }
 
-  async changePassword(UserId: number, OldPassword: string, NewPassword: string){
+  async changePassword(
+    UserId: number,
+    OldPassword: string,
+    NewPassword: string,
+    auditContext?: AuditRequestContext,
+  ){
     const userToEdit = await this.userService.findOne(UserId)
 
     if (!userToEdit) {
@@ -197,6 +208,6 @@ export class AuthService {
     if(!IsCorrectPassword){
       throw new UnauthorizedException('Contraseña actual invalida');
     }
-    return this.userService.updatePassword(UserId,NewPassword);
+    return this.userService.updatePassword(UserId,NewPassword, auditContext);
   }
 }

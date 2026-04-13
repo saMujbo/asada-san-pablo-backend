@@ -7,40 +7,68 @@ import { ForgotPassword } from 'src/auth/dto/forgotPassword-auth.dto';
 import { RolesService } from 'src/roles/roles.service';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { string } from 'yargs';
 import { UpdateRolesUserDto } from './dto/updateRoles-user.dto';
 import { UpdateEmailDto } from './dto/updateEmail-user';
-import { use } from 'passport';
 import { changeState } from 'src/utils/changeState';
 import { UpdateMeDto } from './dto/updateMeDto';
 import { PaginationDto } from './dto/pagination.dto';
-import { AdminCreateUserDto } from './dto/admin-user.dto';
+import { DropboxService } from 'src/dropbox/dropbox.service';
+import { AuditRequestContext } from 'src/audit/audit.types';
+
+const PROFILE_PHOTO_FOLDER = 'profile-photos';
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_PROFILE_PHOTO_SIZE = 5 * 1024 * 1024; // 5 MB
 
 @Injectable()
 export class UsersService {
-  constructor (
-      @InjectRepository(User)
-      private readonly userRepo: Repository<User>,
-      private readonly rolesService: RolesService,
-  ){}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private readonly rolesService: RolesService,
+    private readonly dropboxService: DropboxService,
+  ) {}
 
-  async createRegister(createUserDto: CreateUserDto) {
-  
-    const newUser = await this.userRepo.create(createUserDto); 
-    return await this.userRepo.save(newUser);
+  private getUserRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(User) ?? this.userRepo;
   }
 
-  async create(createUserDto: CreateUserDto) {
+  async createRegister( 
+    createUserDto: CreateUserDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const userRepository = this.getUserRepository(auditContext);
+  
+    const newUser = userRepository.create(createUserDto);
+    return await userRepository.save(newUser);
+  }
+
+  async create(createUserDto: CreateUserDto, auditContext?: AuditRequestContext) {
+    const userRepository = this.getUserRepository(auditContext);
     const {Password, ...rest}= createUserDto;
     const hashed= await bcrypt.hash(Password,10);
 
-    const newUser = await this.userRepo.create({...rest,Password:hashed}); 
-    return await this.userRepo.save(newUser);
+    const newUser = userRepository.create({...rest,Password:hashed});
+    return await userRepository.save(newUser);
+  }
+
+  async findAllWithoutRelations() {
+    return await this.userRepo.find();
   }
 
   async findAll() {
     return await this.userRepo.find({
       relations: ['Roles'], // Carga los roles asociados
+    });
+  }
+
+  async findByRole(roleName: string) {
+    return await this.userRepo.find({
+      relations: ['Roles'], // Carga los roles asociados
+      where: {
+        Roles: {
+          Rolname: roleName
+        }
+      }
     });
   }
 
@@ -92,11 +120,11 @@ export class UsersService {
   }
 
   async findOne(Id: number) {
-      const found = await this.userRepo.findOne({ where: { Id, IsActive: true }, relations: ['Roles'] });
+    const found = await this.userRepo.findOne({ where: { Id }, relations: ['Roles'] });
 
-      if (!found) throw new ConflictException(`User with Id ${Id} not found`);
+    if (!found) throw new ConflictException(`User with Id ${Id} not found`);
 
-      return found;
+    return found;
   }
 
   async findByEmail(Email: string) {
@@ -113,50 +141,93 @@ export class UsersService {
   }
 
 
-  async update(Id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.userRepo.findOne({ where:{ Id } });
+async update(
+  Id: number,
+  dto: UpdateUserDto,
+  auditContext?: AuditRequestContext,
+) {
+  const userRepository = this.getUserRepository(auditContext);
 
-    if (!user) {throw new ConflictException(`User with Id ${Id} not found`);}
+  const user = await userRepository.findOne({
+    where: { Id },
+    relations: ['Roles'],
+  });
 
-    const { roleIds, ...rest } = updateUserDto;
+  if (!user) {
+    throw new NotFoundException(`User with Id ${Id} not found`);
+  }
 
-    // 2) Roles a asignar
-    const roles = roleIds?.length
-      ? await this.rolesService.findAllByIDs(roleIds)
-      : [await this.rolesService.findDefaultRole()];
+  const {
+    Email,
+    PhoneNumber,
+    Address,
+    Birthdate,
+    IsActive,
+    Nis,
+    roleIds,
+  } = dto;
 
-    if(updateUserDto.Nis !== undefined && updateUserDto.Nis != null) user.Nis = updateUserDto.Nis;
-    if(updateUserDto.Email !== undefined && updateUserDto.Email != null && updateUserDto.Email !== '') user.Email = updateUserDto.Email;
-    if(updateUserDto.PhoneNumber !== undefined && updateUserDto.PhoneNumber != null && updateUserDto.PhoneNumber !== '') user.PhoneNumber = updateUserDto.PhoneNumber;
-    if(updateUserDto.Address !== undefined && updateUserDto.Address != null && updateUserDto.Address !== '') user.Address = updateUserDto.Address;
-    if(updateUserDto.Birthdate !== undefined) user.Birthdate = updateUserDto.Birthdate as any;
-    if(updateUserDto.IsActive !== undefined && updateUserDto.IsActive != null) user.IsActive = updateUserDto.IsActive;
+  // Campos simples
+  if (Email !== undefined) user.Email = Email;
+  if (PhoneNumber !== undefined) user.PhoneNumber = PhoneNumber;
+  if (Address !== undefined) user.Address = Address;
+  if (Birthdate !== undefined) user.Birthdate = Birthdate as any;
+  if (IsActive !== undefined) user.IsActive = IsActive;
+  if (Nis !== undefined) user.Nis = Nis as any;
+
+  // Roles (solo si vienen)
+  if (roleIds !== undefined) {
+    const roles = await Promise.all(
+      roleIds.map(async (id) => {
+        const role = await this.rolesService.findOne(id);
+        if (!role) {
+          throw new NotFoundException(`Role with Id ${id} not found`);
+        }
+        return role;
+      }),
+    );
     user.Roles = roles;
-    
-    return await this.userRepo.save(user);
+  }
+
+  const saved = await userRepository.save(user);
+
+  // devolver con relaciones
+  return await userRepository.findOne({
+    where: { Id: saved.Id },
+    relations: ['Roles'],
+  });
 }
 
-  async remove(Id: number) {
-    const user = await this.userRepo.findOneBy({ Id });
+  async remove(Id: number, auditContext?: AuditRequestContext) {
+    const userRepository = this.getUserRepository(auditContext);
+    const user = await userRepository.findOneBy({ Id });
 
     if (!user) {
       throw new ConflictException(`User with Id ${Id} not found`);
     }
     user.IsActive = false;
-    return await this.userRepo.save(user);
+    return await userRepository.save(user);
   }
   
-  async reactive(Id: number){
-    const updateActive = await this.findOne(Id);
+  async reactive(Id: number, auditContext?: AuditRequestContext){
+    const userRepository = this.getUserRepository(auditContext);
+    const updateActive = await userRepository.findOneBy({ Id });
+    if (!updateActive) {
+      throw new ConflictException(`User with Id ${Id} not found`);
+    }
     changeState(updateActive.IsActive);
 
-    return await this.userRepo.save(updateActive);
+    return await userRepository.save(updateActive);
   }
 
-  async removeRolesFromUser(updateRoles:UpdateRolesUserDto){ 
+  async removeRolesFromUser(
+    updateRoles:UpdateRolesUserDto,
+    auditContext?: AuditRequestContext,
+  ){
+      const userRepository = this.getUserRepository(auditContext);
       const { Id, RoleId } = updateRoles;
 
-      const user = await this.userRepo.findOne({
+      const user = await userRepository.findOne({
         where: { Id : Id },
         relations: ['Roles']
       });
@@ -169,17 +240,21 @@ export class UsersService {
       }
       user.Roles = user.Roles.filter(r => r.Id !== RoleId);
 
-      await this.userRepo.save(user);
+      await userRepository.save(user);
       return {
         message: `Role ${role.Rolname} removed from user ${user.Id}`,
         user,
       };
   }
 
-  async AddRolesFromUser(updateRoles:UpdateRolesUserDto){
+  async AddRolesFromUser(
+    updateRoles:UpdateRolesUserDto,
+    auditContext?: AuditRequestContext,
+  ){
+    const userRepository = this.getUserRepository(auditContext);
     const { Id, RoleId } = updateRoles;
 
-    const user = await this.userRepo.findOne({
+    const user = await userRepository.findOne({
       where: { Id : Id },
       relations: ['Roles'],
     });
@@ -197,7 +272,7 @@ export class UsersService {
     user.Roles.push(role);
     // if (!user.Roles.find(r => r.Id === RoleId)) {
     // user.Roles.push(role); // agrega el rol solo si no lo tiene
-    await this.userRepo.save(user);
+    await userRepository.save(user);
 
     return {
       message: `Role ${role.Rolname} uptade from user ${user.Id}`,
@@ -209,11 +284,22 @@ export class UsersService {
     return await bcrypt.hash(password, salt);
   }
 
-  async updatePassword(UserId:number, NewPassword: string){
+  async updatePassword(
+    UserId:number,
+    NewPassword: string,
+    auditContext?: AuditRequestContext,
+  ){
+    const userRepository = this.getUserRepository(auditContext);
     try{  
-      const user = await this.findOne(UserId);
+      const user = await userRepository.findOne({
+        where: { Id: UserId },
+        relations: ['Roles'],
+      });
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado!');
+      }
       user.Password = await this.hashPassword(NewPassword,10);
-      return await this.userRepo.save(user);
+      return await userRepository.save(user);
     } catch (error){
       throw new InternalServerErrorException({
         message:
@@ -233,26 +319,52 @@ export class UsersService {
     return false;
   }
 
-  async updateMe(Id: number, dto: UpdateMeDto) {
-    const user = await this.userRepo.findOne({ where: { Id } });
+  async updateMe(
+    Id: number,
+    dto: UpdateMeDto,
+    file?: Express.Multer.File,
+    auditContext?: AuditRequestContext,
+  ) {
+    const userRepository = this.getUserRepository(auditContext);
+    const user = await userRepository.findOne({ where: { Id } });
 
     if (!user) {
       throw new ConflictException(`User with Id ${Id} not found`);
     }
 
+    if (file) {
+      if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+        throw new BadRequestException(
+          `Tipo de archivo no permitido. Use: ${ALLOWED_MIME_TYPES.join(', ')}`,
+        );
+      }
+      if (file.size > MAX_PROFILE_PHOTO_SIZE) {
+        throw new BadRequestException('La foto no puede superar 5 MB');
+      }
+      const buffer = (file as any).buffer as Buffer;
+      if (!buffer?.length) {
+        throw new BadRequestException('El archivo no pudo leerse correctamente');
+      }
+      const ext = file.originalname?.split('.').pop()?.toLowerCase() || 'jpg';
+      const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+      const dropboxPath = `/${PROFILE_PHOTO_FOLDER}/${Id}/${Date.now()}.${safeExt}`;
+      await this.dropboxService.ensureFolder(`/${PROFILE_PHOTO_FOLDER}/${Id}`);
+      await this.dropboxService.uploadBuffer(buffer, dropboxPath);
+      const photoUrl = await this.dropboxService.getFileSharedLink(dropboxPath);
+      user.ProfilePhoto = photoUrl;
+    }
+
     if (dto.Address !== undefined && dto.Address != null && dto.Address !== '') user.Address = dto.Address;
     if (dto.PhoneNumber !== undefined && dto.PhoneNumber != null && dto.PhoneNumber !== '') user.PhoneNumber = dto.PhoneNumber;
     if (dto.Birthdate !== undefined) user.Birthdate = dto.Birthdate as any;
-    
-    const saved = await this.userRepo.save(user);
 
-    // Re-carga con relaciones si quieres devolver Roles
-    const withRelations = await this.userRepo.findOne({
+    const saved = await userRepository.save(user);
+
+    const withRelations = await userRepository.findOne({
       where: { Id: saved.Id },
       relations: ['Roles'],
     });
 
-    // Sanea antes de retornar (por si tu entidad expone Password)
     if (withRelations && (withRelations as any).Password !== undefined) {
       delete (withRelations as any).Password;
     }
@@ -260,8 +372,13 @@ export class UsersService {
     return withRelations ?? saved;
   }
 
-  async updateMyEmail(Id: number, { OldEmail, NewEmail }: UpdateEmailDto) {
-    const user = await this.userRepo.findOne({ where: { Id } });
+  async updateMyEmail(
+    Id: number,
+    { OldEmail, NewEmail }: UpdateEmailDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const userRepository = this.getUserRepository(auditContext);
+    const user = await userRepository.findOne({ where: { Id } });
     if (!user) throw new NotFoundException('User not found');
 
     const current = (user.Email ?? '').trim().toLowerCase();
@@ -277,7 +394,7 @@ export class UsersService {
     if (exists) throw new ConflictException('Email already in use');
 
     user.Email = next;
-    await this.userRepo.save(user);
+    await userRepository.save(user);
     return { message: 'Email updated', email: user.Email };
   }
 

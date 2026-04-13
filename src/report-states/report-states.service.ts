@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ReportState } from './entities/report-state.entity';
 import { ReportsService } from 'src/reports/reports.service';
+import { ReportStateEnum } from 'src/reports/enums/report-state.enum';
 
 @Injectable()
 export class ReportStatesService {
@@ -47,19 +48,6 @@ export class ReportStatesService {
   }
 
   async countReportsInProcess(): Promise<number> {
-    // Busca el estado "En Proceso" (case-insensitive y solo activos)
-    const enProceso = await this.reportStateRepository
-      .createQueryBuilder('s')
-      .where('s.IsActive = :act', { act: true })
-      .andWhere('LOWER(TRIM(s.Name)) = LOWER(TRIM(:name))', { name: 'En Proceso' })
-      .select(['s.IdReportState'])
-      .getOne();
-
-    if (!enProceso) {
-      // si no existe, devolvemos 0 para no romper el dashboard
-      return 0;
-    }
-
-    return this.reportsService.countByState(enProceso.IdReportState);
+    return this.reportsService.countByState(ReportStateEnum.EN_PROCESO);
   }
 }

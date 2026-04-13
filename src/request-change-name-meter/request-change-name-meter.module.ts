@@ -7,6 +7,7 @@ import { UsersModule } from 'src/users/users.module';
 import { StateRequestModule } from 'src/state-request/state-request.module';
 import { RequestChangeNameMeterFileModule } from 'src/request-change-name-meter-file/request-change-name-meter-file.module';
 import { CommentChangeNameMeterModule } from 'src/CommentRequest/comment-change-name-meter/comment-change-name-meter.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   imports:[
@@ -14,7 +15,8 @@ import { CommentChangeNameMeterModule } from 'src/CommentRequest/comment-change-
         forwardRef(()=> UsersModule),
         forwardRef(() => StateRequestModule),
         forwardRef(()=>RequestChangeNameMeterFileModule),
-        forwardRef(()=>CommentChangeNameMeterModule)
+        forwardRef(()=>CommentChangeNameMeterModule),
+        forwardRef(() => NotificationModule),
   ],
   controllers: [RequestChangeNameMeterController],
   providers: [RequestChangeNameMeterService],

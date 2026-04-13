@@ -4,11 +4,17 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project } from './entities/project.entity';
 import { Repository } from 'typeorm';
+import * as PDFDocument from 'pdfkit';
+import { extname } from 'path';
 import { hasNonEmptyString, isValidDate } from 'src/utils/validation.utils';
 import { ProjectPaginationDto } from './dto/pagination-project.dto';
 import { ProjectStateService } from './project-state/project-state.service';
 import { UsersService } from 'src/users/users.service';
 import { TotalActualExpenseService } from 'src/total-actual-expense/total-actual-expense.service';
+import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
+import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
+import { DropboxService } from 'src/dropbox/dropbox.service';
+import { slug } from 'src/utils/slug.util';
 
 @Injectable()
 export class ProjectService {
@@ -20,10 +26,63 @@ export class ProjectService {
     private readonly userSv: UsersService,
     @Inject(forwardRef(() => TotalActualExpenseService))
     private readonly totalAESv: TotalActualExpenseService,
+    private readonly dropbox: DropboxService,
   ){}
+
+  private buildBasePath(project: Project) {
+    if (project.SpaceOfDocument) {
+      return project.SpaceOfDocument.startsWith('/') ? project.SpaceOfDocument : `/${project.SpaceOfDocument}`;
+    }
+
+    return `/Proyectos/${slug(project.Name)}`;
+  }
+
+  private async ensureProjectBaseFolder(project: Project) {
+    const basePath = this.buildBasePath(project);
+    await this.dropbox.ensureFolder(basePath);
+
+    if (!project.SpaceOfDocument) {
+      project.SpaceOfDocument = basePath;
+      await this.projectRepo.save(project);
+    }
+
+    return basePath;
+  }
+
+  private async getProjectCoverBuffer(project: Project): Promise<Buffer | null> {
+    const sourceUrl = project.CoverImagePath
+      ? (await this.dropbox.getTempLink(project.CoverImagePath)).link
+      : project.CoverImageUrl;
+
+    if (!sourceUrl) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(sourceUrl);
+      if (!response.ok) {
+        return null;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch {
+      return null;
+    }
+  }
 
   async create(createProjectDto: CreateProjectDto) {
     const { ProjectStateId, UserId,...rest } = createProjectDto;
+
+    const normalizedName = rest.Name.trim().toLowerCase();
+    const existingProject = await this.projectRepo
+      .createQueryBuilder('project')
+      .where('LOWER(project.Name) = :name', { name: normalizedName })
+      .getOne();
+
+    if (existingProject) {
+      throw new ConflictException('Ya existe un proyecto con ese nombre.');
+    }
 
     if (rest.InnitialDate && rest.EndDate) {
       const ini = new Date(rest.InnitialDate);
@@ -65,12 +124,18 @@ export class ProjectService {
     ] });
   }
   
-  async search({ page = 1, limit = 10, name, state, projectState}:ProjectPaginationDto){
-    const pageNum = Math.max(1, Number(page)||1);
-    const take = Math.min(100, Math.max(1,Number(limit)||10));
-    const skip = (pageNum -1)* take;
+  async search({
+    page = 1,
+    limit = 10,
+    name,
+    projectState,
+  }: ProjectPaginationDto): Promise<PaginatedResponse<Project>> {
+    const pageNum = Math.max(1, Number(page) || 1);
+    const take = Math.min(100, Math.max(1, Number(limit) || 10));
+    const skip = (pageNum - 1) * take;
 
-    const qb = this.projectRepo.createQueryBuilder('project')
+    const qb = this.projectRepo
+      .createQueryBuilder('project')
       .leftJoinAndSelect('project.ProjectState', 'ProjectState')
       .leftJoinAndSelect('project.User', 'User')
       .leftJoinAndSelect('project.TraceProject', 'TraceProject')
@@ -99,27 +164,21 @@ export class ProjectService {
       });
     }
 
-    if (state) {
-      qb.andWhere('project.IsActive = :state', { state });
-    }
-
     if (projectState) {
       qb.andWhere('project.ProjectState = :projectState', { projectState });
     }
 
     qb.orderBy('project.Name', 'ASC');
-        const [data, total] = await qb.getManyAndCount();
+    const [data, totalItems] = await qb.getManyAndCount();
 
     return {
       data,
-      meta: {
-        total,
+      meta: buildPaginationMeta({
+        totalItems,
         page: pageNum,
         limit: take,
-        pageCount: Math.max(1, Math.ceil(total / take)),
-        hasNextPage: pageNum * take < total,
-        hasPrevPage: pageNum > 1,
-      },
+        itemCount: data.length,
+      }),
     };
   }
 
@@ -151,6 +210,255 @@ export class ProjectService {
     
     if(!foundProject) throw new NotFoundException(`Project with Id ${Id} not found`);
     return foundProject;
+  }
+
+  async buildProjectPdf(Id: number): Promise<{ buffer: Buffer; filename: string }> {
+    const project = await this.findOne(Id);
+    const projectCoverBuffer = await this.getProjectCoverBuffer(project);
+
+    const stripHtml = (value?: string | null) =>
+      (value ?? '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+        .replace(/<li>/gi, '• ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim();
+
+    const formatDate = (value?: Date | string | null) => {
+      if (!value) return '—';
+      const dt = new Date(value);
+      return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('es-CR');
+    };
+
+    const safeName = (project.Name ?? `proyecto-${Id}`)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9-_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
+
+    const filename = `${safeName || `proyecto-${Id}`}.pdf`;
+
+    const userName =
+      [project.User?.Name, project.User?.Surname1, project.User?.Surname2]
+        .filter(Boolean)
+        .join(' ')
+        .trim() || '—';
+
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve({ buffer: Buffer.concat(chunks), filename }));
+      doc.on('error', reject);
+
+      const ensureSpace = (required = 80) => {
+        if (doc.y + required > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage();
+        }
+      };
+
+      const section = (title: string) => {
+        ensureSpace(36);
+        doc.moveDown(0.4);
+        doc.font('Helvetica-Bold').fontSize(13).fillColor('#091540').text(title);
+        doc.moveDown(0.2);
+        doc.strokeColor('#D9E0EA').lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+        doc.moveDown(0.5);
+      };
+
+      const line = (label: string, value: string) => {
+        ensureSpace(20);
+        doc.font('Helvetica-Bold').fontSize(10).fillColor('#111827').text(`${label}: `, { continued: true });
+        doc.font('Helvetica').fillColor('#374151').text(value || '—');
+      };
+
+      const paragraph = (value?: string | null, fallback = '—') => {
+        ensureSpace(36);
+        doc.font('Helvetica').fontSize(10).fillColor('#374151').text(stripHtml(value) || fallback, {
+          lineGap: 2,
+        });
+        doc.moveDown(0.6);
+      };
+
+      const renderCoverImage = () => {
+        if (!projectCoverBuffer) {
+          return;
+        }
+
+        ensureSpace(220);
+
+        try {
+          const x = doc.page.margins.left;
+          const y = doc.y;
+          const maxWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+          const maxHeight = 210;
+
+          doc.image(projectCoverBuffer, x, y, {
+            fit: [maxWidth, maxHeight],
+            align: 'center',
+            valign: 'center',
+          });
+          doc.moveDown(0.2);
+          doc.y = y + maxHeight + 16;
+        } catch {
+          // Si PDFKit no logra interpretar la imagen, seguimos generando el PDF sin portada.
+        }
+      };
+
+      doc.font('Helvetica-Bold').fontSize(18).fillColor('#091540').text('Reporte de Proyecto', {
+        align: 'center',
+      });
+      doc.moveDown(0.4);
+      doc.font('Helvetica').fontSize(11).fillColor('#374151').text(project.Name ?? `Proyecto ${project.Id}`, {
+        align: 'center',
+      });
+      doc.moveDown(1);
+
+      renderCoverImage();
+
+      section('Informacion general');
+      line('ID', String(project.Id ?? '—'));
+      line('Nombre', project.Name ?? '—');
+      line('Ubicacion', project.Location ?? '—');
+      line('Fecha de inicio', formatDate(project.InnitialDate));
+      line('Fecha de fin', formatDate(project.EndDate));
+      line('Estado', project.ProjectState?.Name ?? '—');
+      line('Encargado', userName);
+
+      section('Objetivo');
+      paragraph(project.Objective, 'Sin objetivo registrado.');
+
+      section('Descripcion');
+      paragraph(project.Description, 'Sin descripcion registrada.');
+
+      if (stripHtml(project.Observation)) {
+        section('Observaciones');
+        paragraph(project.Observation);
+      }
+
+      if (project.ProjectProjection) {
+        section('Proyeccion');
+
+        if (stripHtml(project.ProjectProjection.Observation)) {
+          paragraph(project.ProjectProjection.Observation);
+        }
+
+        const projectedDetails = project.ProjectProjection.ProductDetails ?? [];
+        if (projectedDetails.length === 0) {
+          paragraph('', 'Sin productos proyectados.');
+        } else {
+          projectedDetails.forEach((detail) => {
+            ensureSpace(24);
+            const productName = detail.Product?.Name ?? 'Producto';
+            const unit = detail.Product?.UnitMeasure?.Name ?? 'unidad';
+            const category = detail.Product?.Category?.Name ?? '—';
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#111827').text(productName);
+            doc.font('Helvetica').fontSize(10).fillColor('#374151').text(
+              `Cantidad proyectada: ${detail.Quantity ?? 0} ${unit} | Categoria: ${category}`,
+            );
+            doc.moveDown(0.4);
+          });
+        }
+      }
+
+      section('Seguimientos');
+      const traces = (project.TraceProject ?? []).filter((trace) => trace?.IsActive !== false);
+      if (traces.length === 0) {
+        paragraph('', 'Sin seguimientos registrados.');
+      } else {
+        traces.forEach((trace, index) => {
+          ensureSpace(48);
+          doc.font('Helvetica-Bold').fontSize(11).fillColor('#111827').text(
+            `${index + 1}. ${trace.Name || 'Seguimiento'}`,
+          );
+          doc.font('Helvetica').fontSize(10).fillColor('#374151').text(`Fecha: ${formatDate((trace as any).date)}`);
+          if (stripHtml(trace.Observation)) {
+            paragraph(trace.Observation, '');
+          } else {
+            doc.moveDown(0.4);
+          }
+
+          const details = trace.ActualExpense?.ProductDetails ?? [];
+          details.forEach((detail) => {
+            ensureSpace(18);
+            const productName = detail.Product?.Name ?? 'Producto';
+            const unit = detail.Product?.UnitMeasure?.Name ?? 'unidad';
+            doc.font('Helvetica').fontSize(9).fillColor('#4B5563').text(
+              `• ${productName}: ${detail.Quantity ?? 0} ${unit}`,
+            );
+          });
+          doc.moveDown(0.5);
+        });
+      }
+
+      doc.end();
+    });
+  }
+
+  async uploadCoverImage(Id: number, file: Express.Multer.File) {
+    const project = await this.findOne(Id);
+
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('No se recibió ningún archivo para la portada.');
+    }
+
+    if (!file.mimetype?.startsWith('image/')) {
+      throw new BadRequestException('La portada debe ser una imagen válida.');
+    }
+
+    const basePath = await this.ensureProjectBaseFolder(project);
+    const coverFolder = `${basePath}/Portada`;
+    await this.dropbox.ensureFolder(coverFolder);
+
+    const rawName = file.originalname?.replace(/\.[^.]+$/, '') || `portada-${project.Id}`;
+    const extension = extname(file.originalname || '').toLowerCase() || '.jpg';
+    const safeName = slug(rawName) || `portada-${project.Id}`;
+    const destinationPath = `${coverFolder}/${Date.now()}-${safeName}${extension}`;
+
+    if (project.CoverImagePath) {
+      try {
+        await this.dropbox.delete(project.CoverImagePath);
+      } catch {
+        // Si el archivo anterior ya no existe en Dropbox, no bloqueamos el reemplazo.
+      }
+    }
+
+    const uploaded = await this.dropbox.uploadBuffer(file.buffer, destinationPath);
+    const storedPath = uploaded.path_lower ?? destinationPath.toLowerCase();
+    const coverUrl = await this.dropbox.getFileSharedLink(storedPath);
+
+    project.CoverImagePath = storedPath;
+    project.CoverImageUrl = coverUrl;
+
+    return this.projectRepo.save(project);
+  }
+
+  async removeCoverImage(Id: number) {
+    const project = await this.findOne(Id);
+
+    if (project.CoverImagePath) {
+      try {
+        await this.dropbox.delete(project.CoverImagePath);
+      } catch {
+        // Si ya no existe en Dropbox, limpiamos igualmente la referencia local.
+      }
+    }
+
+    project.CoverImagePath = null;
+    project.CoverImageUrl = null;
+
+    await this.projectRepo.save(project);
+    return { ok: true };
   }
 
   async update(Id: number, updateProjectDto: UpdateProjectDto) {
@@ -206,7 +514,7 @@ export class ProjectService {
   }
 
   async updateProject(project: Project) {
-    this.projectRepo.save(project);
+    return await this.projectRepo.save(project);
   }
 
   async remove(Id: number) {
@@ -217,7 +525,7 @@ export class ProjectService {
   }
 
   async isOnProjectState(Id: number) {
-    const hasActiveProjectState = await this.projectRepo.exist({
+    const hasActiveProjectState = await this.projectRepo.exists({
       where: { ProjectState: { Id }, IsActive: true },
     });
     return hasActiveProjectState;

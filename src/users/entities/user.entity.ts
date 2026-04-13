@@ -3,6 +3,7 @@ import { CommentAvailabilityWater } from "src/CommentRequest/comment-availabilit
 import { CommentChangeMeter } from "src/CommentRequest/comment-change-meter/entities/comment-change-meter.entity";
 import { CommentChangeNameMeter } from "src/CommentRequest/comment-change-name-meter/entities/comment-change-name-meter.entity";
 import { CommentSupervisionMeter } from "src/CommentRequest/comment-supervision-meter/entities/comment-supervision-meter.entity";
+import { UserNotification } from "src/notification/user_notifications/user_notifications.entity";
 import { Project } from "src/project/entities/project.entity";
 import { Report } from "src/reports/entities/report.entity";
 import { RequesAvailabilityWater } from "src/reques-availability-water/entities/reques-availability-water.entity";
@@ -21,13 +22,13 @@ export class User {
     @Column({ unique: true })
     IDcard: string;
     
-    @Column()
+    @Column({ type: 'text' })
     Name: string;
 
-    @Column()
+    @Column({ type: 'text' })
     Surname1: string;
 
-    @Column()
+    @Column({ type: 'text' })
     Surname2: string;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
@@ -92,6 +93,9 @@ export class User {
     @OneToMany(()=>CommentSupervisionMeter,(comment)=>comment.User)
     CommentsSupervisionMeter?:CommentSupervisionMeter[];
 
-    @OneToMany(()=>Report,(report)=>report.User)
+    @OneToMany(()=>Report,(report)=>report.ReportedBy)
     Reports?:Report[];
+
+    @OneToMany(() => UserNotification, (userNotification) => userNotification.User)
+    UserNotifications?: UserNotification[];
 }

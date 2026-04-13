@@ -6,8 +6,10 @@ import { RequestSupervisionMeter } from './entities/requestsupervision-meter.ent
 import { Repository } from 'typeorm';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
-import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestSupervisionPagination } from './dto/pagination-requesSupervisiom-meter.tdo';
+import { AuditRequestContext } from 'src/audit/audit.types';
+import { NotificationService } from 'src/notification/notification.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -18,8 +20,14 @@ export class RequestsupervisionMeterService {
     @Inject(forwardRef(() => StateRequestService))
     private readonly stateRequestSv: StateRequestService,
     @Inject(forwardRef(() => UsersService))
-    private readonly userSv: UsersService
+    private readonly userSv: UsersService,
+    @Inject(forwardRef(() => NotificationService))
+    private readonly notificationSv: NotificationService,
   ){}
+
+  private getRequestRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(RequestSupervisionMeter) ?? this.requestSupervisionMeterRepo;
+  }
 
   async countPendingRequests(): Promise<number> {
     const pendingState = await this.requestSupervisionMeterRepo
@@ -76,6 +84,11 @@ async search({
   const take = Math.min(100, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * take;
 
+  const stateRequestIdNum =
+    StateRequestId !== undefined && StateRequestId !== null
+      ? Number(StateRequestId)
+      : undefined;
+
   const qb = this.requestSupervisionMeterRepo
     .createQueryBuilder('req')
     .leftJoinAndSelect('req.User', 'user')
@@ -88,7 +101,12 @@ async search({
   // si viene userId (me/search) y no se especificó nada, por defecto solo activos.
   let isActiveFilter: boolean | undefined = undefined;
   if (State !== undefined && State !== null && State !== '') {
-    isActiveFilter = typeof State === 'string' ? State.toLowerCase() === 'true' : !!State;
+    const normalizedState = String(State).trim().toLowerCase();
+    if (['true', '1', 'activo', 'active', 'si', 'sí'].includes(normalizedState)) {
+      isActiveFilter = true;
+    } else if (['false', '0', 'inactivo', 'inactive', 'no'].includes(normalizedState)) {
+      isActiveFilter = false;
+    }
   } else if (typeof userId === 'number') {
     isActiveFilter = true; // default para "mis solicitudes"
   }
@@ -96,8 +114,8 @@ async search({
     qb.andWhere('req.IsActive = :isActive', { isActive: isActiveFilter });
   }
 
-  if (typeof StateRequestId === 'number') {
-    qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
+  if (typeof stateRequestIdNum === 'number' && !Number.isNaN(stateRequestIdNum)) {
+    qb.andWhere('req.StateRequestId = :stateId', { stateId: stateRequestIdNum });
   }
 
   if (typeof userId === 'number') {
@@ -124,31 +142,71 @@ async search({
   };
 }
 
-  async findOne(Id: number) {
-    const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({
-      where:{IsActive:true},relations:[
-        'StateRequest',
-        'User',]});
-      if(!foundRequestSupervision)throw new NotFoundException(`Request with ${Id} not foun`)
-    return foundRequestSupervision;
+async findOne(Id: number) {
+  const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({
+    where: { 
+      Id: Id,           
+      IsActive: true   
+    },
+    relations: [
+      'StateRequest',
+      'User',
+    ]
+  });
+  if (!foundRequestSupervision) {
+    throw new NotFoundException(`Request with ID ${Id} not found`);
   }
+  return foundRequestSupervision;
+}
 
-  async update(Id: number, updateRequestsupervisionMeterDto: UpdateRequestsupervisionMeterDto) {
-    const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({where:{Id, IsActive:true}}) 
+  async update(
+    Id: number,
+    updateRequestsupervisionMeterDto: UpdateRequestsupervisionMeterDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const requestSupervisionMeterRepository = this.getRequestRepository(auditContext);
+    const foundRequestSupervision = await requestSupervisionMeterRepository.findOne({
+      where: { Id, IsActive: true },
+      relations: ['User', 'StateRequest'],
+    });
     if(!foundRequestSupervision) throw new NotFoundException(`Request with ${Id} not found`)
-  
-    if(updateRequestsupervisionMeterDto.StateRequestId != undefined && updateRequestsupervisionMeterDto.StateRequestId != null) {
+
+    if(updateRequestsupervisionMeterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestsupervisionMeterDto.StateRequestId)
       if(!foundState){throw new NotFoundException(`state with Id ${updateRequestsupervisionMeterDto.StateRequestId} not found`)}
       foundRequestSupervision.StateRequest = foundState
     }
 
-    if (updateRequestsupervisionMeterDto.CanComment !== undefined && updateRequestsupervisionMeterDto.CanComment !== null) {
-      foundRequestSupervision.CanComment = updateRequestsupervisionMeterDto.CanComment;
+    const { CanComment } = updateRequestsupervisionMeterDto;
+    applyDefinedFields(foundRequestSupervision, { CanComment });
+
+    const updatedRequest = await requestSupervisionMeterRepository.save(foundRequestSupervision);
+
+    const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
+    const normalizedState = stateName.trim().toLowerCase();
+
+    let subject = 'Actualización de solicitud de supervisión de medidor';
+    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+
+    if (['aprobado', 'aprobada'].includes(normalizedState)) {
+      subject = 'Solicitud de supervisión de medidor aprobada';
+      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+    } else if (normalizedState === 'pendiente') {
+      subject = 'Solicitud de supervisión de medidor en revisión';
+      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revisión.`;
+    } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
+      subject = 'Solicitud de supervisión de medidor rechazada';
+      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
     }
 
-    return await this.requestSupervisionMeterRepo.save(foundRequestSupervision)
-}
+    await this.notificationSv.createNotificationByUserID({
+      UserID: updatedRequest.User.Id,
+      Subject: subject,
+      Message: message,
+    });
+
+    return updatedRequest;
+  }
 
   async remove(Id: number) {
     const foundRequestSupervision = await this.requestSupervisionMeterRepo.findOne({ where: { Id } })

@@ -6,7 +6,7 @@ export class Service {
     Id: number;
     
     @Column()
-    Icon: string;
+    Icon: string; // definir tipo de dato
     
     @Column()
     Title: string;

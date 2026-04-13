@@ -6,7 +6,7 @@ export class FAQ {
     Id: number;
 
     @Column()
-    Question: string;
+    Question: string; // falta definir tipos de datos
     
     @Column({ type: 'text' })
     Answer: string;

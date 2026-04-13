@@ -1,5 +1,5 @@
-import { LegalSupplier } from "src/legal-supplier/entities/legal-supplier.entity";
-import { PhysicalSupplier } from "src/physical-supplier/entities/physical-supplier.entity";
+import { LegalSupplier } from "src/supplier/legal-supplier/entities/legal-supplier.entity";
+import { PhysicalSupplier } from "src/supplier/physical-supplier/entities/physical-supplier.entity";
 import { ProductSupplier } from "src/product/entities/product-supplier.entity";
 import { Entity, PrimaryGeneratedColumn, Index, Column, OneToOne, OneToMany } from "typeorm";
 

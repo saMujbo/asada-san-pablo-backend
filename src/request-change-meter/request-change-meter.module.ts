@@ -7,6 +7,7 @@ import { UsersModule } from 'src/users/users.module';
 import { StateRequestModule } from 'src/state-request/state-request.module';
 import { CommentChangeMeter } from 'src/CommentRequest/comment-change-meter/entities/comment-change-meter.entity';
 import { CommentChangeMeterModule } from 'src/CommentRequest/comment-change-meter/comment-change-meter.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   imports:[
@@ -14,6 +15,7 @@ import { CommentChangeMeterModule } from 'src/CommentRequest/comment-change-mete
     forwardRef(()=> UsersModule),
     forwardRef(() => StateRequestModule),
     forwardRef(() => CommentChangeMeterModule),
+    forwardRef(() => NotificationModule),
   ],
   controllers: [RequestChangeMeterController],
   providers: [RequestChangeMeterService],

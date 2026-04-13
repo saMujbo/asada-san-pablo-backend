@@ -19,13 +19,13 @@ export class RequestSupervisionMeter {
             }
     }
 
-    @Column()
+    @Column({ type: 'text' })
     Location:string;
 
     @Column()
     NIS: number;
 
-    @Column()
+    @Column({ type: 'text' })
     Justification:string;
 
     @Column({default: true})
@@ -44,6 +44,7 @@ export class RequestSupervisionMeter {
     @JoinColumn({name: 'StateRequestId'})
     StateRequest: StateRequest;
 
-    @OneToMany(()=>CommentSupervisionMeter,(commentSupervisionMeter)=>commentSupervisionMeter.requestsupervisionMeter)
-    commentSupervisionMeter: CommentSupervisionMeter;
+    @OneToMany(()=>CommentSupervisionMeter,(commentSupervisionMeter)=>commentSupervisionMeter.requestsupervisionMeter,
+    {cascade:true})
+    commentSupervisionMeter: CommentSupervisionMeter[];
 }

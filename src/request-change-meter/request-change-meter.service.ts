@@ -4,14 +4,14 @@ import { UpdateRequestChangeMeterDto } from './dto/update-request-change-meter.d
 import { InjectRepository } from '@nestjs/typeorm';
 import { RequestChangeMeter } from './entities/request-change-meter.entity';
 import { Repository } from 'typeorm';
-import { create } from 'domain';
 import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
-import { number } from 'yargs';
 import { CreateRequestChangeMeterDto } from './dto/create-request-change-meter.dto';
-import { StateRequest } from 'src/state-request/entities/state-request.entity';
-import { hasNonEmptyString } from 'src/utils/validation.utils';
 import { RequestChangeMeterPagination } from './dto/pagination-request-change-meter.dto';
+import { request } from 'http';
+import { AuditRequestContext } from 'src/audit/audit.types';
+import { NotificationService } from 'src/notification/notification.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -22,8 +22,14 @@ export class RequestChangeMeterService {
     @Inject(forwardRef(()=> StateRequestService))
       private readonly stateRequestSv: StateRequestService,
     @Inject(forwardRef(()=> UsersService))
-      private readonly userSerive:UsersService
+      private readonly userSerive:UsersService,
+    @Inject(forwardRef(() => NotificationService))
+      private readonly notificationSv: NotificationService,
   ){}
+
+  private getRequestRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(RequestChangeMeter) ?? this.requestChangeMeterRepo;
+  }
 
   // Método público para contar las solicitudes pendientes de cambio de medidor
   async countPendingRequests(): Promise<number> {
@@ -79,6 +85,11 @@ async search({
   const take = Math.min(100, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * take;
 
+  const stateRequestIdNum =
+    StateRequestId !== undefined && StateRequestId !== null
+      ? Number(StateRequestId)
+      : undefined;
+
   const qb = this.requestChangeMeterRepo
     .createQueryBuilder('req')
     .leftJoinAndSelect('req.User', 'user')
@@ -91,7 +102,12 @@ async search({
   // si viene userId (me/search) y no se especificó nada, por defecto solo activos.
   let isActiveFilter: boolean | undefined = undefined;
   if (State !== undefined && State !== null && State !== '') {
-    isActiveFilter = typeof State === 'string' ? State.toLowerCase() === 'true' : !!State;
+    const normalizedState = String(State).trim().toLowerCase();
+    if (['true', '1', 'activo', 'active', 'si', 'sí'].includes(normalizedState)) {
+      isActiveFilter = true;
+    } else if (['false', '0', 'inactivo', 'inactive', 'no'].includes(normalizedState)) {
+      isActiveFilter = false;
+    }
   } else if (typeof userId === 'number') {
     isActiveFilter = true; // default para "mis solicitudes"
   }
@@ -99,8 +115,8 @@ async search({
     qb.andWhere('req.IsActive = :isActive', { isActive: isActiveFilter });
   }
 
-  if (typeof StateRequestId === 'number') {
-    qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
+  if (typeof stateRequestIdNum === 'number' && !Number.isNaN(stateRequestIdNum)) {
+    qb.andWhere('req.StateRequestId = :stateId', { stateId: stateRequestIdNum });
   }
 
   if (typeof userId === 'number') {
@@ -135,22 +151,53 @@ async search({
     return foundRequestChangeMeter;
   }
 
-  async update(Id: number, updateRequestChangeMeterDto: UpdateRequestChangeMeterDto) {
-    const foundRequestChangeMeter = await this.requestChangeMeterRepo.findOne({ where: { Id } });
+  async update(
+    Id: number,
+    updateRequestChangeMeterDto: UpdateRequestChangeMeterDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const requestChangeMeterRepository = this.getRequestRepository(auditContext);
+    const foundRequestChangeMeter = await requestChangeMeterRepository.findOne({
+      where: { Id },
+      relations: ['User', 'StateRequest'],
+    });
     if(!foundRequestChangeMeter) throw new NotFoundException(`Request with ${Id} not found`);
-      
-    if(updateRequestChangeMeterDto.StateRequestId != undefined && updateRequestChangeMeterDto.StateRequestId != null) {
+
+    if(updateRequestChangeMeterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestChangeMeterDto.StateRequestId)
       if(!foundState){throw new NotFoundException(`state with Id ${updateRequestChangeMeterDto.StateRequestId} not found`)}
       foundRequestChangeMeter.StateRequest = foundState;
     }
 
-    if (updateRequestChangeMeterDto.CanComment !== undefined && updateRequestChangeMeterDto.CanComment !== null) {
-      foundRequestChangeMeter.CanComment = updateRequestChangeMeterDto.CanComment;
+    const { CanComment } = updateRequestChangeMeterDto;
+    applyDefinedFields(foundRequestChangeMeter, { CanComment });
+
+    const updatedRequest = await requestChangeMeterRepository.save(foundRequestChangeMeter);
+
+    const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
+    const normalizedState = stateName.trim().toLowerCase();
+
+    let subject = 'Actualización de solicitud de cambio de medidor';
+    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+
+    if (['aprobado', 'aprobada'].includes(normalizedState)) {
+      subject = 'Solicitud de cambio de medidor aprobada';
+      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+    } else if (normalizedState === 'pendiente') {
+      subject = 'Solicitud de cambio de medidor en revisión';
+      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revisión.`;
+    } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
+      subject = 'Solicitud de cambio de medidor rechazada';
+      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
     }
 
-    await this.requestChangeMeterRepo.save(foundRequestChangeMeter);
-    return foundRequestChangeMeter;
+    await this.notificationSv.createNotificationByUserID({
+      UserID: updatedRequest.User.Id,
+      Subject: subject,
+      Message: message,
+    });
+
+    return updatedRequest;
   }
 
   async remove(Id: number) {

@@ -8,13 +8,12 @@ export class Material {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column()
+    @Column({ type: 'varchar', length: 160 })
     Name: string;
 
-    @Column({ default: true })
+    @Column({ type: 'boolean', default: true })
     IsActive: boolean;
 
-    // Lado inverso: un material está asociado a muchos productos
     @OneToMany(() => Product, (product) => product.Material)
     Products: Product[];
 }

@@ -11,22 +11,22 @@ import {
     OneToMany,
 } from "typeorm";
 import { ProductDetail } from "../product-detail/entities/product-detail.entity";
-import { LegalSupplier } from "src/legal-supplier/entities/legal-supplier.entity";
-import { PhysicalSupplier } from "src/physical-supplier/entities/physical-supplier.entity";
+import { LegalSupplier } from "src/supplier/legal-supplier/entities/legal-supplier.entity";
+import { PhysicalSupplier } from "src/supplier/physical-supplier/entities/physical-supplier.entity";
 import { ProductSupplier } from "./product-supplier.entity";
 @Entity()
 export class Product {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column()
+    @Column({ type: 'varchar', length: 150 })
     Name: string;
 
-    @Column()
+    @Column({ type: 'varchar', length: 150 })
     Type: string;
 
-    @Column()
-    Observation: string;
+    @Column({ type: 'varchar', length: 150, nullable: true })
+    Observation: string;//faltan agregar tipos de datos 
 
     @Column({ default: true })
     IsActive: boolean;

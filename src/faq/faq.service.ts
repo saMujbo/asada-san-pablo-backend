@@ -1,10 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateFAQDto } from './dto/create-faq.dto';
 import { UpdateFAQDto } from './dto/update-faq.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FAQ } from './entities/faq.entity';
 import { Repository } from 'typeorm';
-import { MaterialPaginationDto } from 'src/material/dto/pagination-material.st';
 import { FAQPaginationDto } from './dto/pagination-faq.dto';
 
 @Injectable()
@@ -69,14 +68,36 @@ export class FaqService {
     return faqFound;
   }
 
-  async update(id: number, updateFaqDto: UpdateFAQDto) {
-    const faq = await this.findOne(id);
+async update(Id: number, updateFaqDto: UpdateFAQDto) {
+  const foundFaq = await this.faqRepo.findOne({ where: { Id } });
 
-    this.faqRepo.merge(faq, updateFaqDto);
-    await this.faqRepo.save(faq);
-    
-    return faq;
+  if (!foundFaq) {
+    throw new ConflictException(`FAQ with Id ${Id} not found`);
   }
+
+  if (
+    updateFaqDto.Question !== undefined &&
+    updateFaqDto.Question != null &&
+    updateFaqDto.Question !== ''
+  ) {
+    foundFaq.Question = updateFaqDto.Question;
+  }
+
+  if (
+    updateFaqDto.Answer !== undefined &&
+    updateFaqDto.Answer != null &&
+    updateFaqDto.Answer !== ''
+  ) {
+    foundFaq.Answer = updateFaqDto.Answer;
+  }
+
+  if (updateFaqDto.IsActive !== undefined && updateFaqDto.IsActive != null) {
+    foundFaq.IsActive = updateFaqDto.IsActive;
+  }
+
+  return await this.faqRepo.save(foundFaq);
+}
+
 
   async remove(id: number) {
     const faq = await this.findOne(id);

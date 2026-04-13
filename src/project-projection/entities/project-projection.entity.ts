@@ -7,7 +7,7 @@ export class ProjectProjection {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column()
+    @Column({ type: 'text', nullable: true })
     Observation: string;
 
     @OneToMany(() => ProductDetail, (projectDetail) => projectDetail.ProjectProjection,{

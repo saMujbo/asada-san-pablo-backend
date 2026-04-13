@@ -7,6 +7,7 @@ import { ProductModule } from 'src/product/product.module';
 import { ProjectStateModule } from './project-state/project-state.module';
 import { UsersModule } from 'src/users/users.module';
 import { TotalActualExpenseModule } from 'src/total-actual-expense/total-actual-expense.module';
+import { DropboxModule } from 'src/dropbox/dropbox.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { TotalActualExpenseModule } from 'src/total-actual-expense/total-actual-
     forwardRef(() => ProjectStateModule),
     forwardRef(() => TotalActualExpenseModule),
     ProductModule,
-    UsersModule
+    UsersModule,
+    DropboxModule,
   ],
   controllers: [ProjectController],
   providers: [ProjectService],

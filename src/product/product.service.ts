@@ -9,10 +9,12 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductPaginationDto } from './dto/productPaginationDto';
 import { changeState } from 'src/utils/changeState';
-import { LegalSupplierService } from 'src/legal-supplier/legal-supplier.service';
-import { PhysicalSupplierService } from 'src/physical-supplier/physical-supplier.service';
+import { LegalSupplierService } from 'src/supplier/legal-supplier/legal-supplier.service';
+import { PhysicalSupplierService } from 'src/supplier/physical-supplier/physical-supplier.service';
 import { ProductSupplier } from './entities/product-supplier.entity';
 import { SupplierService } from 'src/supplier/supplier.service';
+import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
+import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
 
 @Injectable()
 export class ProductService {
@@ -109,19 +111,21 @@ export class ProductService {
   }
 
   // products.service.ts
-  async search({
-    page = 1,
-    limit = 10,
-    name,
-    categoryId,
-    materialId,
-    unitId,
-    supplierId,
-    state
-  }: ProductPaginationDto) {
-    const pageNum = Math.max(1, Number(page) || 1);
-    const take = Math.min(100, Math.max(1, Number(limit) || 10));
-    const skip = (pageNum - 1) * take;
+  async search(dto: ProductPaginationDto): Promise<PaginatedResponse<Product>> {
+    const page = Math.max(1, Number(dto.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(dto.limit) || 10));
+    const skip = (page - 1) * limit;
+    const {
+      q,
+      name,
+      categoryId,
+      materialId,
+      unitId,
+      supplierId,
+      state,
+      sortBy = 'name',
+      sortDir = 'ASC',
+    } = dto;
 
     const qb = this.productRepo
       .createQueryBuilder('product')
@@ -130,58 +134,70 @@ export class ProductService {
       .leftJoinAndSelect('product.UnitMeasure', 'unit')
       .leftJoinAndSelect('product.ProductSuppliers', 'product_suppliers')
       .leftJoinAndSelect('product_suppliers.Supplier', 'supplier')
+      .distinct(true)
       .skip(skip)
-      .take(take);
+      .take(limit);
 
-    // Filtro por texto: Name / Type / Observation (case-insensitive)
-    if (name?.trim()) {
-      const n = name.trim().toLowerCase();
+    const searchTerm = q?.trim() || name?.trim();
+    if (searchTerm) {
+      const term = `%${searchTerm.toLowerCase().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
       qb.andWhere(
-        `(LOWER(product.Name) LIKE :n
-          OR LOWER(product.Type) LIKE :n
-          OR LOWER(product.Observation) LIKE :n)`,
-        { n: `%${n}%` }
+        `(LOWER(product.Name) LIKE :term
+          OR LOWER(product.Type) LIKE :term
+          OR LOWER(product.Observation) LIKE :term)`,
+        { term }
       );
-      // En Postgres podrías usar ILIKE:
-      // qb.andWhere(`product.Name ILIKE :n OR product.Type ILIKE :n OR product.Observation ILIKE :n`, { n: `%${name.trim()}%` });
     }
 
-    // Filtros por FK (usa los aliases unidos para mayor portabilidad)
     if (typeof categoryId === 'number') {
       qb.andWhere('category.Id = :categoryId', { categoryId });
-      // Alternativa si prefieres filtrar por la FK directa:
-      // qb.andWhere('product.CategoryId = :categoryId', { categoryId });
     }
     if (typeof materialId === 'number') {
       qb.andWhere('material.Id = :materialId', { materialId });
-      // Alternativa: qb.andWhere('product.MaterialId = :materialId', { materialId });
     }
     if (typeof unitId === 'number') {
       qb.andWhere('unit.Id = :unitId', { unitId });
-      // Alternativa: qb.andWhere('product.UnitMeasureId = :unitId', { unitId });
     }
     if (typeof supplierId === 'number') {
       qb.andWhere('supplier.Id = :supplierId', { supplierId });
-      // Alternativa: qb.andWhere('product.UnitMeasureId = :unitId', { unitId });
     }
-    if(state){
-      qb.andWhere('product.IsActive = :state',{state})
-  }
-    qb.orderBy('product.Name', 'ASC');
-    // qb.distinct(true); // actívalo si en el futuro agregas joins 1:N que dupliquen filas
+    if (state !== undefined) {
+      qb.andWhere('product.IsActive = :state', { state });
+    }
 
-    const [data, total] = await qb.getManyAndCount();
+    const supplierSortSubquery = qb.subQuery()
+      .select('MIN(sortSupplier.Name)')
+      .from(ProductSupplier, 'sortProductSupplier')
+      .leftJoin('sortProductSupplier.Supplier', 'sortSupplier')
+      .where('sortProductSupplier.ProductId = product.Id')
+      .getQuery();
+
+    switch (sortBy) {
+      case 'category':
+        qb.orderBy('category.Name', sortDir).addOrderBy('product.Name', 'ASC');
+        break;
+      case 'supplier':
+        qb.orderBy(supplierSortSubquery, sortDir).addOrderBy('product.Name', 'ASC');
+        break;
+      case 'type':
+        qb.orderBy('product.Type', sortDir).addOrderBy('product.Name', 'ASC');
+        break;
+      case 'name':
+      default:
+        qb.orderBy('product.Name', sortDir);
+        break;
+    }
+
+    const [data, totalItems] = await qb.getManyAndCount();
 
     return {
       data,
-      meta: {
-        total,
-        page: pageNum,
-        limit: take,
-        pageCount: Math.max(1, Math.ceil(total / take)),
-        hasNextPage: pageNum * take < total,
-        hasPrevPage: pageNum > 1,
-      },
+      meta: buildPaginationMeta({
+        totalItems,
+        page,
+        limit,
+        itemCount: data.length,
+      }),
     };
   }
 

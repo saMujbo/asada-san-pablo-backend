@@ -7,6 +7,9 @@ import { Category } from './entities/category.entity';
 import { CategoriesPaginationDto } from './dto/categoriesPaginationDto';
 import { changeState } from 'src/utils/changeState';
 import { ProductService } from 'src/product/product.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
+import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
+import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
 
 @Injectable()
 export class CategoriesService {
@@ -17,50 +20,56 @@ export class CategoriesService {
         private readonly productSv: ProductService,
   ){}
 
-  async create(createObjectCategory: CreateCategoryDto) {
-    const newCategory = this.categoryRepo.create(createObjectCategory);
-    return await this.categoryRepo.save(newCategory);
-  }
+  async create(createCategoryDto: CreateCategoryDto) {
+    const categoryRepo = await this.categoryRepo.findOne({ where: { Name: createCategoryDto.Name } });
 
-  async findAll() {
-    return await this.categoryRepo.find({ where: { IsActive: true } });
-  }
-
-  async search({ page = 1, limit = 10, name, state }: CategoriesPaginationDto) {
-    const pageNum = Math.max(1, Number(page) || 1);
-    const take = Math.min(100, Math.max(1, Number(limit) || 10));
-    const skip = (pageNum - 1) * take;
-
-    const qb = this.categoryRepo.createQueryBuilder('category')
-      .skip(skip)
-      .take(take);
-
-    if (name?.trim()) {
-      qb.andWhere('LOWER(category.Name) LIKE :name', {
-        name: `%${name.trim().toLowerCase()}%`,
-      });
+    if (categoryRepo) {
+      throw new ConflictException(`Category with Name ${createCategoryDto.Name} already exists`);
     }
 
-    // se aplica solo si viene definido (true o false)
-    if (state) {
+    const newCategory = this.categoryRepo.create(createCategoryDto);
+    return await this.categoryRepo.save(newCategory);
+  } 
+
+  async search(dto: CategoriesPaginationDto): Promise<PaginatedResponse<Category>> {
+    const page = Math.max(1, Number(dto.page) ?? 1);
+    const limit = Math.min(100, Math.max(1, Number(dto.limit) ?? 10));
+    const skip = (page - 1) * limit;
+    const { q, state, sortDir = 'ASC' } = dto;
+
+    const qb = this.categoryRepo
+      .createQueryBuilder('category')
+      .skip(skip)
+      .take(limit)
+      .orderBy('category.Name', sortDir ?? 'ASC');
+
+    if (q?.trim()) {
+      const term = `%${q.trim().toLowerCase().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+      qb.andWhere(
+        '(LOWER(category.Name) LIKE :term OR LOWER(category.Description) LIKE :term)',
+        { term },
+      );
+    }
+
+    if (state !== undefined) {
       qb.andWhere('category.IsActive = :state', { state });
     }
 
-    qb.orderBy('category.Name', 'ASC');
-
-    const [data, total] = await qb.getManyAndCount();
+    const [data, totalItems] = await qb.getManyAndCount();
 
     return {
       data,
-      meta: {
-        total,
-        page: pageNum,
-        limit: take,
-        pageCount: Math.max(1, Math.ceil(total / take)),
-        hasNextPage: pageNum * take < total,
-        hasPrevPage: pageNum > 1,
-      },
+      meta: buildPaginationMeta({
+        totalItems,
+        page,
+        limit,
+        itemCount: data.length,
+      }),
     };
+  }
+
+  async findAll() {
+    return await this.categoryRepo.find({ order: { Name: 'ASC' }, where: { IsActive: true } });
   }
 
   async findOne(Id: number) {
@@ -88,12 +97,11 @@ export class CategoriesService {
       );
     }
 
-    if (updateObjectCategory.Name !== undefined && updateObjectCategory.Name != null && 
-      updateObjectCategory.Name !== '') foundCategory.Name = updateObjectCategory.Name;
-    if (updateObjectCategory.Description !== undefined && updateObjectCategory.Description != null && 
-      updateObjectCategory.Description !== '') foundCategory.Description = updateObjectCategory.Description;
-    if (updateObjectCategory.IsActive !== undefined && updateObjectCategory.IsActive != null) 
-      foundCategory.IsActive = updateObjectCategory.IsActive;
+    const { Name, Description, IsActive } = updateObjectCategory;
+
+    applyDefinedFields(foundCategory, {
+      Name, Description, IsActive
+    });
 
     return await this.categoryRepo.save(foundCategory);
   }
@@ -114,8 +122,13 @@ export class CategoriesService {
   }
 
   async reactivate(Id: number) {
-    const updateActive = await this.findOne(Id);
-    changeState(updateActive.IsActive);
+    const updateActive = await this.categoryRepo.findOne({ where: { Id } });
+
+    if (!updateActive) {
+      throw new ConflictException(`Category with Id ${Id} not found`);
+    }
+
+    updateActive.IsActive = changeState(updateActive.IsActive);
   
     return await this.categoryRepo.save(updateActive);
   }

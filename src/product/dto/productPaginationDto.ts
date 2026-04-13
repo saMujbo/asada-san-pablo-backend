@@ -1,25 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type, Transform } from 'class-transformer';
-import { IsInt, Min, Max, IsOptional, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString } from 'class-validator';
+import { PaginationQueryDto } from 'src/common/pagination/dto/pagination-query.dto';
 
-export class ProductPaginationDto {
-    @ApiPropertyOptional({ default: 1, minimum: 1 })
-    @Type(() => Number)
-    @IsInt()
-    @Min(1)
-    page: number = 1;
-
-    @ApiPropertyOptional({ default: 10, minimum: 1, maximum: 100 })
-    @Type(() => Number)
-    @IsInt()
-    @Min(1)
-    @Max(100)
-    limit: number = 10;
-
-    @ApiPropertyOptional({ description: 'Filtro por nombre o apellidos (LIKE)' })
+export class ProductPaginationDto extends PaginationQueryDto {
+    @ApiPropertyOptional({ description: 'Filtro por texto. Compatible con el front actual.' })
     @IsOptional()
     @IsString()
-    // convierte "" en undefined y hace trim
     @Transform(({ value }) => {
         if (typeof value !== 'string') return undefined;
         const v = value.trim();
@@ -27,11 +14,15 @@ export class ProductPaginationDto {
     })
     name?: string;
 
+    @ApiPropertyOptional({ description: 'Campo por el cual ordenar: name, type, category o supplier' })
+    @IsOptional()
+    @IsIn(['name', 'type', 'category', 'supplier'])
+    sortBy?: 'name' | 'type' | 'category' | 'supplier';
+
     @ApiPropertyOptional({ description: 'ID de categoria para filtrar' })
     @IsOptional()
     @Type(() => Number)
     @IsInt()
-    // convierte "" en undefined
     @Transform(({ value }) => (value === '' || value === null ? undefined : value))
     categoryId?: number;
 
@@ -39,7 +30,6 @@ export class ProductPaginationDto {
     @IsOptional()
     @Type(() => Number)
     @IsInt()
-    // convierte "" en undefined
     @Transform(({ value }) => (value === '' || value === null ? undefined : value))
     materialId?: number;
 
@@ -47,7 +37,6 @@ export class ProductPaginationDto {
     @IsOptional()
     @Type(() => Number)
     @IsInt()
-    // convierte "" en undefined
     @Transform(({ value }) => (value === '' || value === null ? undefined : value))
     unitId?: number;
 
@@ -55,13 +44,16 @@ export class ProductPaginationDto {
     @IsOptional()
     @Type(() => Number)
     @IsInt()
-    // convierte "" en undefined
     @Transform(({ value }) => (value === '' || value === null ? undefined : value))
     supplierId?: number;
 
-
-    @ApiPropertyOptional({description: 'Filtro por estado (true o false)'})
+    @ApiPropertyOptional({ description: 'Filtro por estado activo (true o false)' })
     @IsOptional()
-    @IsString()
-    state?: string;
+    @Transform(({ value }) => {
+        if (value === 'true' || value === true) return true;
+        if (value === 'false' || value === false) return false;
+        return undefined;
+    })
+    @IsBoolean()
+    state?: boolean;
 }

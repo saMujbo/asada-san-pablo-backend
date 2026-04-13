@@ -7,16 +7,18 @@ export class CommentSupervisionMeter {
         @PrimaryGeneratedColumn()
         Id: number;
         
-        @Column()
+        @Column({ type: 'text' })
         Subject: string;
         
-        @Column()
+        @Column({ type: 'text' })
         Comment: string;
         
         @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
         createdAt: Date;
 
-        @ManyToOne(()=>RequestSupervisionMeter,(RSP)=>RSP)
+        @ManyToOne(()=>RequestSupervisionMeter,
+        (requestSupervisionMeter)=>requestSupervisionMeter.commentSupervisionMeter)
+
         @JoinColumn({ name: 'RequestSupervisionMeterId' })
         requestsupervisionMeter: RequestSupervisionMeter;
 

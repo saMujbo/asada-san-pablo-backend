@@ -7,8 +7,8 @@ import { ProductSupplier } from './entities/product-supplier.entity';
 import { CategoriesModule } from 'src/categories/categories.module';
 import { MaterialModule } from 'src/material/material.module';
 import { UnitMeasureModule } from 'src/unit_measure/unit_measure.module';
-import { LegalSupplierModule } from 'src/legal-supplier/legal-supplier.module';
-import { PhysicalSupplierModule } from 'src/physical-supplier/physical-supplier.module';
+import { LegalSupplierModule } from 'src/supplier/legal-supplier/legal-supplier.module';
+import { PhysicalSupplierModule } from 'src/supplier/physical-supplier/physical-supplier.module';
 import { SupplierModule } from 'src/supplier/supplier.module';
 
 @Module({

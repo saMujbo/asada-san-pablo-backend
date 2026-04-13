@@ -6,6 +6,8 @@ import { RequestAssociatedPagination } from './dto/pagination-request-associated
 import { TokenGuard } from 'src/auth/guards/token.guard';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { PaginationMyRequestsAssociatedDto } from './dto/pagination-my-requestassociated.dto';
+import { GetAuditContext } from 'src/audit/audit.decorator';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 @Controller('request-associated')
 export class RequestAssociatedController {
@@ -51,9 +53,14 @@ export class RequestAssociatedController {
     return this.requestAssociatedService.findOne(id);
   }
 
+  @UseGuards(TokenGuard)
   @Put(':id')
-  update(@Param('id') id: number, @Body() updateRequestAssociatedDto: UpdateRequestAssociatedDto) {
-    return this.requestAssociatedService.update(id, updateRequestAssociatedDto);
+  update(
+    @Param('id') id: number,
+    @Body() updateRequestAssociatedDto: UpdateRequestAssociatedDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return this.requestAssociatedService.update(id, updateRequestAssociatedDto, auditContext);
   }
 
   @Delete(':id')

@@ -5,6 +5,8 @@ import { UpdateRequestChangeNameMeterDto } from './dto/update-request-change-nam
 import { RequestChangeNameMeterPagination } from './dto/pagination-request-change-name-meter.dt';
 import { GetUser } from 'src/auth/get-user.decorator';
 import { TokenGuard } from 'src/auth/guards/token.guard';
+import { GetAuditContext } from 'src/audit/audit.decorator';
+import { AuditRequestContext } from 'src/audit/audit.types';
 
 @Controller('request-change-name-meter')
 export class RequestChangeNameMeterController {
@@ -51,9 +53,14 @@ export class RequestChangeNameMeterController {
     return this.requestChangeNameMeterService.findOne(id);
   }
 
+  @UseGuards(TokenGuard)
   @Put(':id')
-  update(@Param('id') id: number, @Body() updateRequestChangeNameMeterDto: UpdateRequestChangeNameMeterDto) {
-    return this.requestChangeNameMeterService.update(id, updateRequestChangeNameMeterDto);
+  update(
+    @Param('id') id: number,
+    @Body() updateRequestChangeNameMeterDto: UpdateRequestChangeNameMeterDto,
+    @GetAuditContext() auditContext?: AuditRequestContext,
+  ) {
+    return this.requestChangeNameMeterService.update(id, updateRequestChangeNameMeterDto, auditContext);
   }
 
   @Delete(':id')

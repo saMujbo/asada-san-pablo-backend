@@ -8,6 +8,9 @@ import { StateRequestService } from 'src/state-request/state-request.service';
 import { UsersService } from 'src/users/users.service';
 import { RequestChangeNameMeterPagination } from './dto/pagination-request-change-name-meter.dt';
 import { Project } from 'src/project/entities/project.entity';
+import { AuditRequestContext } from 'src/audit/audit.types';
+import { NotificationService } from 'src/notification/notification.service';
+import { applyDefinedFields } from 'src/utils/validation.utils';
 
 type MonthlyPoint = { year: string; month: string; count: string };
 @Injectable()
@@ -18,8 +21,14 @@ export class RequestChangeNameMeterService {
     @Inject(forwardRef(()=> StateRequestService))
         private readonly stateRequestSv: StateRequestService,
     @Inject(forwardRef(()=> UsersService))
-        private readonly userSerive:UsersService
+        private readonly userSerive:UsersService,
+    @Inject(forwardRef(() => NotificationService))
+        private readonly notificationSv: NotificationService,
   ){}
+
+  private getRequestRepository(auditContext?: AuditRequestContext) {
+    return auditContext?.queryRunner.manager.getRepository(RequestChangeNameMeter) ?? this.requestChangeNameMeterRepo;
+  }
 
   // Método público para contar las solicitudes pendientes de cambio de nombre de medidor
   async countPendingRequests(): Promise<number> {
@@ -77,6 +86,11 @@ async search({
   const take = Math.min(100, Math.max(1, Number(limit) || 10));
   const skip = (pageNum - 1) * take;
 
+  const stateRequestIdNum =
+    StateRequestId !== undefined && StateRequestId !== null
+      ? Number(StateRequestId)
+      : undefined;
+
   const qb = this.requestChangeNameMeterRepo
     .createQueryBuilder('req')
     .leftJoinAndSelect('req.User', 'user')
@@ -90,7 +104,12 @@ async search({
   // si viene userId (me/search) y no se especificó nada, por defecto solo activos.
   let isActiveFilter: boolean | undefined = undefined;
   if (State !== undefined && State !== null && State !== '') {
-    isActiveFilter = typeof State === 'string' ? State.toLowerCase() === 'true' : !!State;
+    const normalizedState = String(State).trim().toLowerCase();
+    if (['true', '1', 'activo', 'active', 'si', 'sí'].includes(normalizedState)) {
+      isActiveFilter = true;
+    } else if (['false', '0', 'inactivo', 'inactive', 'no'].includes(normalizedState)) {
+      isActiveFilter = false;
+    }
   } else if (typeof userId === 'number') {
     isActiveFilter = true; // default para "mis solicitudes"
   }
@@ -98,8 +117,8 @@ async search({
     qb.andWhere('req.IsActive = :isActive', { isActive: isActiveFilter });
   }
 
-  if (typeof StateRequestId === 'number') {
-    qb.andWhere('req.StateRequestId = :stateId', { stateId: StateRequestId });
+  if (typeof stateRequestIdNum === 'number' && !Number.isNaN(stateRequestIdNum)) {
+    qb.andWhere('req.StateRequestId = :stateId', { stateId: stateRequestIdNum });
   }
 
   if (typeof userId === 'number') {
@@ -135,31 +154,63 @@ async search({
     return foundRequestChangeNameMeter;
   }
 
-  async update(Id: number, updateRequestChangeNameMeterDto: UpdateRequestChangeNameMeterDto) {
-    const foundRequestChangeNameMeter = await this.requestChangeNameMeterRepo.findOne({where:{Id}});
+  async update(
+    Id: number,
+    updateRequestChangeNameMeterDto: UpdateRequestChangeNameMeterDto,
+    auditContext?: AuditRequestContext,
+  ) {
+    const requestChangeNameMeterRepository = this.getRequestRepository(auditContext);
+    const foundRequestChangeNameMeter = await requestChangeNameMeterRepository.findOne({
+      where: { Id },
+      relations: ['User', 'StateRequest'],
+    });
     if(!foundRequestChangeNameMeter)  throw new NotFoundException(`Request with ${Id} not found`)
 
-    if(updateRequestChangeNameMeterDto.StateRequestId != undefined && updateRequestChangeNameMeterDto.StateRequestId != null) {
+    if(updateRequestChangeNameMeterDto.StateRequestId != null) {
       const foundState = await this.stateRequestSv.findOne(updateRequestChangeNameMeterDto.StateRequestId)
       if(!foundState){throw new NotFoundException(`state with Id ${updateRequestChangeNameMeterDto.StateRequestId} not found`)}
       foundRequestChangeNameMeter.StateRequest = foundState
     }
 
-    if (updateRequestChangeNameMeterDto.CanComment !== undefined && updateRequestChangeNameMeterDto.CanComment !== null) {
-      foundRequestChangeNameMeter.CanComment = updateRequestChangeNameMeterDto.CanComment;
+    const { CanComment } = updateRequestChangeNameMeterDto;
+    applyDefinedFields(foundRequestChangeNameMeter, { CanComment });
+
+    const updatedRequest = await requestChangeNameMeterRepository.save(foundRequestChangeNameMeter);
+
+    const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
+    const normalizedState = stateName.trim().toLowerCase();
+
+    let subject = 'Actualización de solicitud de cambio de nombre de medidor';
+    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+
+    if (['aprobado', 'aprobada'].includes(normalizedState)) {
+      subject = 'Solicitud de cambio de nombre de medidor aprobada';
+      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+    } else if (normalizedState === 'pendiente') {
+      subject = 'Solicitud de cambio de nombre de medidor en revisión';
+      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revisión.`;
+    } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
+      subject = 'Solicitud de cambio de nombre de medidor rechazada';
+      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
     }
 
-    return await this.requestChangeNameMeterRepo.save(foundRequestChangeNameMeter);
+    await this.notificationSv.createNotificationByUserID({
+      UserID: updatedRequest.User.Id,
+      Subject: subject,
+      Message: message,
+    });
+
+    return updatedRequest;
   }
 
   async remove(Id: number) {
-    const foundRequestChangeNameMeterr = await this.requestChangeNameMeterRepo.findOne({ where: { Id } })
-    if (!foundRequestChangeNameMeterr) {
+    const foundRequestChangeNameMeter = await this.requestChangeNameMeterRepo.findOne({ where: { Id } })
+    if (!foundRequestChangeNameMeter) {
       throw new NotFoundException(`Request with Id ${Id} not found`);
     }
-    foundRequestChangeNameMeterr.IsActive = false;
+    foundRequestChangeNameMeter.IsActive = false;
     
-    return await this.requestChangeNameMeterRepo.save(foundRequestChangeNameMeterr); 
+    return await this.requestChangeNameMeterRepo.save(foundRequestChangeNameMeter); 
   }
 
     async updateRequestChangeNameMeter(RequestchangeNameMeter: RequestChangeNameMeter) {

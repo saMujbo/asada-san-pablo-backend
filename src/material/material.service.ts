@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,6 +7,9 @@ import { Repository } from 'typeorm';
 import { changeState } from 'src/utils/changeState';
 import { ProductService } from 'src/product/product.service';
 import { MaterialPaginationDto } from './dto/pagination-material.st';
+import { applyDefinedFields } from 'src/utils/validation.utils';
+import { buildPaginationMeta } from 'src/common/pagination/pagination.util';
+import { PaginatedResponse } from 'src/common/pagination/types/paginated-response';
 
 @Injectable()
 export class MaterialService {
@@ -18,50 +21,55 @@ export class MaterialService {
   ){}
 
   async create(createMaterialDto: CreateMaterialDto) {
-    const newMaterial = await this.materialRepo.create(createMaterialDto)
+    const materialRepo = await this.materialRepo.findOne({ where: { Name: createMaterialDto.Name } });
 
-    return await this.materialRepo.save(newMaterial)
+    if (materialRepo) {
+      throw new ConflictException(`Material with Name ${createMaterialDto.Name} already exists`);
+    }
+
+    const newMaterial = await this.materialRepo.create(createMaterialDto);
+
+    return await this.materialRepo.save(newMaterial);
   }
 
   async findAll() {
     return await this.materialRepo.find({ where: { IsActive: true } });
   }
 
-  async search({ page =1, limit = 10,name,state}:MaterialPaginationDto){
-    const pageNum = Math.max(1, Number(page)||1);
-    const take = Math.min(100, Math.max(1,Number(limit)||10));
-    const skip = (pageNum -1)* take; 
+  async search(dto: MaterialPaginationDto): Promise<PaginatedResponse<Material>> {
+    const page = Math.max(1, Number(dto.page) ?? 1);
+    const limit = Math.min(100, Math.max(1, Number(dto.limit) ?? 10));
+    const skip = (page - 1) * limit;
+    const { q, state, sortDir = 'ASC' } = dto;
 
-    const qb = this.materialRepo.createQueryBuilder('material')
-    .skip(skip)
-    .take(take);
+    const qb = this.materialRepo
+      .createQueryBuilder('material')
+      .skip(skip)
+      .take(limit)
+      .orderBy('material.Name', sortDir ?? 'ASC');
 
-        if (name?.trim()) {
-        qb.andWhere('LOWER(material.Name) LIKE :name', {
-          name: `%${name.trim().toLowerCase()}%`,
-        });
-      }
+    if (q?.trim()) {
+      const term = `%${q.trim().toLowerCase().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+      qb.andWhere('LOWER(material.Name) LIKE :term', {
+        term,
+      });
+    }
 
-      // se aplica solo si viene definido (true o false)
-      if (state) {
-        qb.andWhere('material.IsActive = :state', { state });
-      }
+    if (state !== undefined) {
+      qb.andWhere('material.IsActive = :state', { state });
+    }
 
-          qb.orderBy('material.Name', 'ASC');
+    const [data, totalItems] = await qb.getManyAndCount();
 
-      const [data, total] = await qb.getManyAndCount();
-
-      return {
-        data,
-        meta: {
-          total,
-          page: pageNum,
-          limit: take,
-          pageCount: Math.max(1, Math.ceil(total / take)),
-          hasNextPage: pageNum * take < total,
-          hasPrevPage: pageNum > 1,
-        },
-      };
+    return {
+      data,
+      meta: buildPaginationMeta({
+        totalItems,
+        page,
+        limit,
+        itemCount: data.length,
+      }),
+    };
   }
 
   async findOne(Id: number) {
@@ -69,14 +77,14 @@ export class MaterialService {
       where: { Id, IsActive: true },
     });
     
-    if(!foundMaterial) throw new NotFoundException(`Material with Id ${Id} not found`);
+    if(!foundMaterial) throw new ConflictException(`Material with Id ${Id} not found`);
     return foundMaterial;
   }
 
   async update(Id: number, updateMaterialDto: UpdateMaterialDto) {
     const updateMaterial = await this.materialRepo.findOne({where:{Id}});
 
-    if(!updateMaterial) throw new ConflictException(`Product with Id ${Id} not found`);
+    if(!updateMaterial) throw new ConflictException(`Material with Id ${Id} not found`);
 
     const hasProducts = await this.productSv.isOnMaterial(Id);
 
@@ -85,11 +93,12 @@ export class MaterialService {
         `No se puede desactivar el material ${Id} porque está asociado a al menos un producto.`
       );
     }
-    
-    if(updateMaterialDto.Name !== undefined && updateMaterialDto.Name != null && updateMaterialDto.Name != '')
-      updateMaterial.Name = updateMaterialDto.Name;
-    if (updateMaterialDto.IsActive !== undefined && updateMaterialDto.IsActive != null) 
-      updateMaterial.IsActive = updateMaterialDto.IsActive;
+
+    const { Name, IsActive } = updateMaterialDto;
+
+    applyDefinedFields(updateMaterial, {
+      Name, IsActive
+    });
     
     return await this.materialRepo.save(updateMaterial);
   }
@@ -110,9 +119,14 @@ export class MaterialService {
     return await this.materialRepo.save(material);
   }
 
-  async reactive(Id: number){
-    const updateActive = await this.findOne(Id);
-    changeState(updateActive.IsActive);
+  async reactivate(Id: number){
+    const updateActive = await this.materialRepo.findOne({ where: { Id } });
+
+    if(!updateActive) {
+      throw new ConflictException(`Material with Id ${Id} not found`);
+    }
+
+    updateActive.IsActive = changeState(updateActive.IsActive);
 
     return await this.materialRepo.save(updateActive);
   }

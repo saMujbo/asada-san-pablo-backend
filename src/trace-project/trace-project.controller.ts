@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { TraceProjectService } from './trace-project.service';
 import { CreateTraceProjectDto } from './dto/create-trace-project.dto';
 import { UpdateTraceProjectDto } from './dto/update-trace-project.dto';
@@ -13,8 +13,8 @@ export class TraceProjectController {
   }
 
   @Get()
-  findAll() {
-    return this.traceProjectService.findAll();
+  findAll(@Query('projectId') projectId?: string) {
+    return this.traceProjectService.findAll(projectId ? Number(projectId) : undefined);
   }
 
   @Get(':id')

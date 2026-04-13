@@ -6,13 +6,15 @@ import { RequestSupervisionMeter } from './entities/requestsupervision-meter.ent
 import { StateRequestModule } from 'src/state-request/state-request.module';
 import { UsersModule } from 'src/users/users.module';
 import { CommentSupervisionMeterModule } from 'src/CommentRequest/comment-supervision-meter/comment-supervision-meter.module';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
   imports:[
     TypeOrmModule.forFeature([RequestSupervisionMeter]),
     forwardRef(() => StateRequestModule),
     forwardRef(() => CommentSupervisionMeterModule),
-    forwardRef(()=>UsersModule)
+    forwardRef(()=>UsersModule),
+    forwardRef(() => NotificationModule),
   ],
   controllers: [RequestsupervisionMeterController],
   providers: [RequestsupervisionMeterService],

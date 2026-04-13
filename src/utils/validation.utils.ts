@@ -22,3 +22,33 @@ export function isValidDate(value?: Date | string | null): boolean {
     const date = value instanceof Date ? value : new Date(value);
     return !isNaN(date.getTime());
 }
+
+// import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
+import { Transform } from 'class-transformer';
+
+/**
+Transforma el valor haciendo trim() y convierte strings vacíos en undefined
+Esto asegura que @IsOptional() + @IsNotEmpty() funcionen correctamente*/
+
+export function TrimAndNullify() {
+    return Transform(({ value }) => {
+        if (typeof value !== 'string') {
+            return value;
+        }
+        const trimmed = value.trim();
+        // Convertir string vacío a undefined para que @IsOptional funcione bien
+        return trimmed.length === 0 ? undefined : trimmed;
+    });
+}
+
+/**
+Helper para aplicar solo campos definidos (ignora undefined)*/
+
+export function applyDefinedFields<T>(target: T, source: Partial<T>): void {
+    Object.keys(source).forEach(key => {
+        const value = source[key as keyof T];
+        if (value !== undefined) {
+            target[key as keyof T] = value;
+        }
+    });
+}

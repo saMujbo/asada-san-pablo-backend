@@ -7,6 +7,7 @@ import { WelcomeMailASADADto } from './dto/welcome-mail-service.dto';
 import { AdminUserMailASADADto } from './dto/admin-create-user.dto';
 import { WelcomeTempPasswordMail } from './templates/Password-defa';
 import { NewReportMail } from './templates/NewReport';
+import { IncidentNotificationMail } from './templates/IncidentNotification';
 import * as brevo from '@getbrevo/brevo';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -171,6 +172,34 @@ export class MailServiceService {
       console.log('✓ Correo de reporte enviado exitosamente');
     } catch (error) {
       console.error('Error al enviar correo de reporte:', error);
+      throw error;
+    }
+  }
+
+  async sendIncidentNotificationEmail(dto: {
+    to: string;
+    subject: string;
+    message: string;
+  }) {
+    try {
+      const sendSmtpEmail = new brevo.SendSmtpEmail();
+
+      sendSmtpEmail.sender = {
+        name: 'RedSanPablo',
+        email: this.configService.get<string>('BREVO_SENDER_EMAIL'),
+      };
+      sendSmtpEmail.to = [{ email: dto.to }];
+      sendSmtpEmail.subject = dto.subject;
+      sendSmtpEmail.htmlContent = await IncidentNotificationMail({
+        subject: dto.subject,
+        message: dto.message,
+      });
+      sendSmtpEmail.textContent = `${dto.subject}\n\n${dto.message}`;
+
+      await this.apiInstance.sendTransacEmail(sendSmtpEmail);
+      console.log(`✓ Correo de incidente enviado a ${dto.to}`);
+    } catch (error) {
+      console.error(`Error al enviar correo de incidente a ${dto.to}:`, error);
       throw error;
     }
   }

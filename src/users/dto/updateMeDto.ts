@@ -1,4 +1,4 @@
-import { IsBoolean, IsDateString,IsNotEmpty,IsOptional, IsString, Length, Matches} from 'class-validator';
+import { IsBoolean, IsDateString,IsNotEmpty,IsOptional, IsString, Length, Matches, MaxLength} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { toDateOnly } from 'src/utils/ToDateOnly';
@@ -19,5 +19,6 @@ export class UpdateMeDto{
         @ApiProperty()
         @IsOptional()
         @IsString()
+        @MaxLength(255)
         Address?: string;
 }

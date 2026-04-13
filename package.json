@@ -17,7 +17,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "seed:catalogs": "ts-node -r tsconfig-paths/register src/database/seeds/run-catalog-seeders.ts"
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
@@ -40,12 +41,14 @@
     "cloudinary": "^2.7.0",
     "dotenv": "^17.2.1",
     "dropbox": "^10.34.0",
+    "exceljs": "^4.4.0",
     "multer": "^2.0.2",
     "mysql2": "^3.14.2",
     "node-fetch": "^2.7.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "pdfkit": "^0.17.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "socket.io": "^4.8.1",
@@ -88,6 +91,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/passport-strategy": "^0.2.38",
+    "@types/pdfkit": "^0.17.5",
     "@types/qs": "^6.14.0",
     "@types/range-parser": "^1.2.7",
     "@types/socket.io": "^3.0.1",
@@ -119,6 +123,9 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

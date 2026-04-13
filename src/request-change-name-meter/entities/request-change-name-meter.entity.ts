@@ -11,7 +11,7 @@ export class RequestChangeNameMeter {
     @PrimaryGeneratedColumn()
     Id:number;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text' })
     Justification: string;
 
     @Column({ type: 'date', nullable: false })

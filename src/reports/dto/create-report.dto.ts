@@ -1,40 +1,38 @@
-// src/reports/dto/create-report.dto.ts
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsInt, IsNotEmpty, Length, Min } from 'class-validator';
 
 export class CreateReportDto {
-  @ApiProperty({ example: 'San Pablo', description: 'Location of the report' })
-  @IsString()
-  @IsNotEmpty()
-  Location: string;
+  @IsNotEmpty({ message: 'La ubicación exacta es obligatoria' })
+  @Length(1, 255, { message: 'La ubicación exacta debe tener entre 1 y 255 caracteres' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @ApiProperty({ example: 'Frente al hidrante principal, casa color azul', description: 'Referencia exacta del lugar reportado' })
+  ExactLocation: string;
 
-  @ApiProperty({ example: 'A report description', description: 'Description of the report' })
-  @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'La descripción es obligatoria' })
+  @Length(1, 255, { message: 'La descripción debe tener entre 1 y 255 caracteres' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @ApiProperty({ example: 'Fuga de agua en la tubería principal', description: 'Descripción del reporte' })
   Description: string;
 
-  @ApiProperty({ example: 1, description: 'User ID of the report creator' })
-  @IsNotEmpty()
-  @IsInt()
-  UserId: number;  // Añadir UserId al DTO
+  @IsNotEmpty({ message: 'El usuario del catálogo es obligatorio' })
+  @IsInt({ message: 'El ID del usuario debe ser un número entero' })
+  @Min(1, { message: 'El ID del usuario debe ser mayor a 0' })
+  @Transform(({ value }) => (value === '' || value === undefined ? undefined : Number(value)))
+  @ApiProperty({ example: 1, description: 'ID del usuario que reporta' })
+  UserId: number;
 
-  @ApiProperty({ example: 1, description: 'Location ID of the report' })
-  @IsNotEmpty()
-  @IsInt()
-  LocationId: number;
+  @IsNotEmpty({ message: 'La ubicación del catálogo es obligatoria' })
+  @IsInt({ message: 'El ID de la ubicación debe ser un número entero' })
+  @Min(1, { message: 'El ID de la ubicación debe ser mayor a 0' })
+  @Transform(({ value }) => (value === '' || value === undefined ? undefined : Number(value)))
+  @ApiProperty({ example: 1, description: 'ID de la ubicación del reporte (report_locations)' })
+  ReportLocationId: number;
 
-  @ApiProperty({ example: 1, description: 'Type ID of the report' })
-  @IsNotEmpty()
-  @IsInt()
+  @IsNotEmpty({ message: 'El tipo de reporte es obligatorio' })
+  @IsInt({ message: 'El ID del tipo de reporte debe ser un número entero' })
+  @Min(1, { message: 'El ID del tipo de reporte debe ser mayor a 0' })
+  @Transform(({ value }) => (value === '' || value === undefined ? undefined : Number(value)))
+  @ApiProperty({ example: 1, description: 'ID del tipo de reporte' })
   ReportTypeId: number;
-
-  @ApiPropertyOptional({ example: 1, description: 'State ID of the report' })
-  @IsOptional()
-  @IsInt()
-  ReportStateId?: number;
-
-  @ApiPropertyOptional({ example: 2, description: 'User ID of the person in charge of the report' })
-  @IsOptional()
-  @IsInt()
-  UserInChargeId?: number;
 }

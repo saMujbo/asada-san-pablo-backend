@@ -4,11 +4,17 @@ import { ProjectService } from './project.service';
 
 describe('ProjectController', () => {
   let controller: ProjectController;
+  const projectServiceMock = {};
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProjectController],
-      providers: [ProjectService],
+      providers: [
+        {
+          provide: ProjectService,
+          useValue: projectServiceMock,
+        },
+      ],
     }).compile();
 
     controller = module.get<ProjectController>(ProjectController);

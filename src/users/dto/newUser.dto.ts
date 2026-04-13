@@ -10,6 +10,7 @@ Matches,
 MinLength,
 Length,
 IsArray,
+MaxLength,
 } from 'class-validator';
 import { toDateOnly } from 'src/utils/ToDateOnly';
 
@@ -61,7 +62,7 @@ export class CreateUserDto {
 
     @ApiProperty()
     @IsString()
-    
+    @MaxLength(255)
     Address: string;
 
     @ApiProperty()
