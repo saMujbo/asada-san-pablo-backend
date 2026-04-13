@@ -22,7 +22,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,     // <- usa @Transform de los DTOs
-      whitelist: true,     // <- elimina propiedades extra
+      whitelist: true,     // <- elimina pdropiedades extra
       forbidNonWhitelisted: true,
     }),
   );
@@ -31,6 +31,10 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document); 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
-  Logger.log(`Servidor corriendo en el puerto ${port}`, 'Bootstrap');
+  const serverUrl = await app.getUrl();
+
+  Logger.log(`Servidor corriendo en ${serverUrl}`, 'Bootstrap');
+  console.log(`Servidor corriendo en: ${serverUrl}`);
+  console.log(`Swagger disponible en: ${serverUrl}/api`);
 }
 bootstrap();
