@@ -59,6 +59,7 @@ async function bootstrap() {
   console.log(`Swagger local: ${localUrl}/api`);
   console.log(`Servidor en red: ${networkUrl}`);
   console.log(`Swagger en red: ${networkUrl}/api`);
+  console.log(`Servidor publico: getCorsOrigins(): ${getCorsOrigins()}`);
 
   if (publicUrl) {
     console.log(`Servidor publico: ${publicUrl}`);
