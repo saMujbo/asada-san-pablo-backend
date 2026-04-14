@@ -5,42 +5,42 @@ import { TrimAndNullify } from 'src/utils/validation.utils';
 export class CreateLegalSupplierDto {
     @ApiProperty()
     @TrimAndNullify()
-    @IsNotEmpty()
-    @IsString()
-    @Length(3, 40)
-    LegalID: string;
+    @IsNotEmpty({ message: 'La identificacion legal es obligatoria' })
+    @IsString({ message: 'La identificacion legal debe ser un texto' })
+    @Length(3, 40, { message: 'La identificacion legal debe tener entre 3 y 40 caracteres' })
+    LegalID!: string;
 
     @ApiProperty()
     @TrimAndNullify()
-    @IsNotEmpty()
-    @IsString()
-    @Length(2, 255)
-    CompanyName: string;
+    @IsNotEmpty({ message: 'El nombre de empresa es obligatorio' })
+    @IsString({ message: 'El nombre de empresa debe ser un texto' })
+    @Length(2, 255, { message: 'El nombre de empresa debe tener entre 2 y 255 caracteres' })
+    CompanyName!: string;
 
     @ApiProperty()
     @TrimAndNullify()
-    @IsNotEmpty()
-    @IsEmail()
-    @MaxLength(255)
-    Email?: string;
+    @IsNotEmpty({ message: 'El correo es obligatorio' })
+    @IsEmail({}, { message: 'El correo no tiene un formato valido' })
+    @MaxLength(254, { message: 'El correo no puede superar los 254 caracteres' })
+    Email!: string;
 
     @ApiProperty()
     @TrimAndNullify()
-    @IsNotEmpty()
-    @IsString()
-    @MaxLength(30)
-    PhoneNumber?: string;
+    @IsNotEmpty({ message: 'El numero de telefono es obligatorio' })
+    @IsString({ message: 'El numero de telefono debe ser un texto' })
+    @MaxLength(40, { message: 'El numero de telefono no puede superar los 40 caracteres' })
+    PhoneNumber!: string;
 
     @ApiProperty()
     @TrimAndNullify()
-    @IsNotEmpty()
-    @IsString()
-    Location?: string;
+    @IsNotEmpty({ message: 'La ubicacion es obligatoria' })
+    @IsString({ message: 'La ubicacion debe ser un texto' })
+    Location!: string;
 
     @ApiProperty()
     @TrimAndNullify()
-    @IsNotEmpty()
-    @IsString()
-    @MaxLength(255)
+    @IsNotEmpty({ message: 'El sitio web es obligatorio' })
+    @IsString({ message: 'El sitio web debe ser un texto' })
+    @MaxLength(255, { message: 'El sitio web no puede superar los 255 caracteres' })
     WebSite?: string;
 }

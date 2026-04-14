@@ -11,34 +11,35 @@ export enum ProviderType {
 @Entity('supplier')
 export class Supplier {
     @PrimaryGeneratedColumn()
-    Id: number;
+    Id!: number;
 
     @Index({ unique: true })
-    @Column({ type: 'varchar', length: 40 })
-    IDcard: string;
+    @Column({ type: 'varchar', length: 40, nullable: false })
+    IDcard!: string;
 
     @Index({ unique: true })
-    @Column({ type: 'varchar', length: 255 })
-    Name: string;
+    @Column({ type: 'varchar', length: 255, nullable: false })
+    Name!: string;
 
-    @Column({ type: 'varchar', length: 160, nullable: true })
-    Email?: string;
+    @Column({ type: 'varchar', length: 254, nullable: false })
+    Email!: string;
 
-    @Column({ type: 'varchar', length: 30, nullable: true })
-    PhoneNumber?: string;
+    @Column({ type: 'varchar', length: 40, nullable: false })
+    PhoneNumber!: string;
 
-    @Column({ type: 'varchar', length: 160, nullable: true })
-    Location?: string;
+    @Column({ type: 'text', nullable: false })
+    Location!: string;
 
-    @Column({ type: 'boolean', default: true })
-    IsActive: boolean;
+    @Column({ type: 'boolean', default: true, nullable: false })
+    IsActive!: boolean;
 
     // opcional pero MUY útil para saber qué hijo usar
     @Column({
         type: 'enum',
         enum: ProviderType,
+        nullable: false
     })
-    Type: ProviderType;
+    Type!: ProviderType;
 
     @OneToOne(() => PhysicalSupplier, (p) => p.Supplier)
     PhysicalProvider?: PhysicalSupplier;
@@ -49,5 +50,5 @@ export class Supplier {
     @OneToMany(() => ProductSupplier, (ps) => ps.Supplier, {
         cascade: ['insert', 'update'],
     })
-    ProductSuppliers: ProductSupplier[];
+    ProductSuppliers?: ProductSupplier[];
 }

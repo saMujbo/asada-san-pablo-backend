@@ -5,20 +5,20 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Index, JoinColumn, O
 @Entity('physical_supplier')
 export class PhysicalSupplier {
   @PrimaryGeneratedColumn()
-  Id: number;
+  Id!: number;
 
   @OneToOne(() => Supplier, (supplier) => supplier.PhysicalProvider, {
     cascade: ['insert'],
     eager: true,
   })
   @JoinColumn({ name: 'supplierId' })
-  Supplier: Supplier;
+  Supplier!: Supplier;
 
-  @Column()
-  Surname1: string;
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  Surname1!: string;
 
-  @Column()
-  Surname2: string;
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  Surname2!: string;
 
   // 1 -> N products
   @OneToMany(() => Product, (p) => p.PhysicalSupplier, { cascade: false })
