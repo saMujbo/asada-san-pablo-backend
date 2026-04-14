@@ -155,7 +155,6 @@ export class RequesAvailabilityWaterService {
   async update(Id: number, updateRequesAvailabilityWaterDto: UpdateRequestAvailabilityWaterDto
     , auditContext?: AuditRequestContext,
   ){
-
     const requesAvailabilityWaterRepository = this.getRequestRepository(auditContext);
 
     const foundRequestAvailabilityWater = await requesAvailabilityWaterRepository.findOne({
@@ -178,18 +177,20 @@ export class RequesAvailabilityWaterService {
     const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
     const normalizedState = stateName.trim().toLowerCase();
 
-    let subject = 'Actualizacion de solicitud de disponibilidad de agua';
-    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+    const nameRequest = 'Disponibilidad de agua';
+
+    let subject = `Solicitud de ${nameRequest} en revisión`;
+    let message = `Tu solicitud de ${nameRequest} ahora se encuentra en revisión`;
 
     if (['aprobado', 'aprobada'].includes(normalizedState)) {
-      subject = 'Solicitud de disponibilidad aprobada';
-      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+      subject = `Solicitud de ${nameRequest} aprobada`;
+      message = `Tu solicitud de ${nameRequest} fue aprobada.`;
     } else if (normalizedState === 'pendiente') {
-      subject = 'Solicitud de disponibilidad en revision';
-      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revision.`;
+      subject = `Solicitud de ${nameRequest} en revisión`;
+      message = `Tu solicitud de ${nameRequest} se encuentra pendiente de revisión.`;
     } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
-      subject = 'Solicitud de disponibilidad rechazada';
-      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
+      subject = `Solicitud de ${nameRequest} rechazada`;
+      message = `Tu solicitud de ${nameRequest} fue rechazada. Para ver detalles, direjase a la sección de comentarios de la solicitud.`;
     }
 
     await this.notificationSv.createNotificationByUserID({

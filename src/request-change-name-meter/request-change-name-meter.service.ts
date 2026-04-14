@@ -180,18 +180,20 @@ async search({
     const stateName = updatedRequest.StateRequest?.Name ?? 'actualizado';
     const normalizedState = stateName.trim().toLowerCase();
 
-    let subject = 'Actualización de solicitud de cambio de nombre de medidor';
-    let message = `Tu solicitud #${updatedRequest.Id} ahora se encuentra en estado: ${stateName}.`;
+    const nameRequest = 'cambio de nombre de medidor';
+
+    let subject = `Solicitud de ${nameRequest} en revisión`;
+    let message = `Tu solicitud de ${nameRequest} ahora se encuentra en revisión`;
 
     if (['aprobado', 'aprobada'].includes(normalizedState)) {
-      subject = 'Solicitud de cambio de nombre de medidor aprobada';
-      message = `Tu solicitud #${updatedRequest.Id} fue aprobada.`;
+      subject = `Solicitud de ${nameRequest} aprobada`;
+      message = `Tu solicitud de ${nameRequest} fue aprobada.`;
     } else if (normalizedState === 'pendiente') {
-      subject = 'Solicitud de cambio de nombre de medidor en revisión';
-      message = `Tu solicitud #${updatedRequest.Id} se encuentra pendiente de revisión.`;
+      subject = `Solicitud de ${nameRequest} en revisión`;
+      message = `Tu solicitud de ${nameRequest} se encuentra pendiente de revisión.`;
     } else if (['rechazado', 'rechazada', 'denegado', 'denegada'].includes(normalizedState)) {
-      subject = 'Solicitud de cambio de nombre de medidor rechazada';
-      message = `Tu solicitud #${updatedRequest.Id} fue rechazada.`;
+      subject = `Solicitud de ${nameRequest} rechazada`;
+      message = `Tu solicitud de ${nameRequest} fue rechazada. Para ver detalles, diríjase a la sección de comentarios de la solicitud.`;
     }
 
     await this.notificationSv.createNotificationByUserID({

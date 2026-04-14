@@ -6,6 +6,8 @@ import { GetUser } from 'src/auth/get-user.decorator';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/auth-roles/roles.decorator';
+import { Role } from 'src/auth/auth-roles/roles.enum';
 
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -18,11 +20,13 @@ export class NotificationController {
     return this.notificationService.createNotificationByRole(createNotificationDto);
   }
 
+  @Roles(Role.ADMIN)
   @Post()
   create(@Body() createNotificationDto: CreateImportantNotificationDto) {
     return this.notificationService.createImportantNotification(createNotificationDto);
   }
 
+  @Roles(Role.ADMIN)
   @Get()
   findAll() {
     return this.notificationService.findAll();
