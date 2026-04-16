@@ -11,12 +11,20 @@ import {
   Length,
   IsArray,
   MaxLength,
+  IsEnum,
 } from 'class-validator';
 import { Role } from 'src/roles/entities/role.entity';
 import { toDateOnly } from 'src/utils/ToDateOnly';
 import { TrimAndNullify } from 'src/utils/validation.utils';
+import { TypeDNI } from '../enum/TypeDNI.enum';
 
 export class CreateUserDto {
+
+  @ApiProperty()
+  @IsEnum(TypeDNI)
+  @IsNotEmpty()
+  TypeDNI: TypeDNI;
+  
   @ApiProperty()
   @IsString()
   @TrimAndNullify()

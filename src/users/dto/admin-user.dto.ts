@@ -11,11 +11,17 @@
     ArrayMinSize,
     IsInt,
     IsBoolean,
+    IsEnum,
     } from 'class-validator';
     import { toDateOnly } from 'src/utils/ToDateOnly';
 import { TrimAndNullify } from 'src/utils/validation.utils';
-
+import { TypeDNI } from '../enum/TypeDNI.enum';
     export class AdminCreateUserDto {
+    @ApiProperty()
+    @IsEnum(TypeDNI)
+    @IsNotEmpty()
+    TypeDNI: TypeDNI;
+
     @ApiProperty()
     @IsString()
     @TrimAndNullify()
