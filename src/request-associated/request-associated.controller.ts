@@ -48,6 +48,11 @@ export class RequestAssociatedController {
     } as any);
   }
 
+  @Get('user/:userId')
+  findByUserId(@Param('userId') userId: string) {
+    return this.requestAssociatedService.findAllByUser(+userId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.requestAssociatedService.findOne(id);

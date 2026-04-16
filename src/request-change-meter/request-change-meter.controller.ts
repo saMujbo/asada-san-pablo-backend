@@ -49,6 +49,11 @@ export class RequestChangeMeterController {
     } as any);
   }
 
+  @Get('user/:userId')
+  findByUserId(@Param('userId') userId: string) {
+    return this.requestChangeMeterService.findAllByUser(+userId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.requestChangeMeterService.findOne(id);

@@ -50,6 +50,11 @@ export class RequesAvailabilityWaterController {
   }
 
 
+  @Get('user/:userId')
+  findByUserId(@Param('userId') userId: string) {
+    return this.requesAvailabilityWaterService.findAllByUser(+userId);
+  }
+
   @Get(':id')
   findOne(@Param('id') Id: number) {
     return this.requesAvailabilityWaterService.findOne(Id);

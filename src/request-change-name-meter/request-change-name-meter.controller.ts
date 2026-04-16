@@ -48,6 +48,11 @@ export class RequestChangeNameMeterController {
     } as any);
   }
 
+  @Get('user/:userId')
+  findByUserId(@Param('userId') userId: string) {
+    return this.requestChangeNameMeterService.findAllByUser(+userId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id:number) {
     return this.requestChangeNameMeterService.findOne(id);
