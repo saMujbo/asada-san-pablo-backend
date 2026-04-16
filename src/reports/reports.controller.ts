@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -148,8 +148,10 @@ export class ReportsController {
   @ApiResponse({ status: 404, description: 'Reporte no encontrado' })
   @UseGuards(TokenGuard)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reportsService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    const report = await this.reportsService.findOne(+id);
+    if (!report) throw new NotFoundException('Reporte no encontrado');
+    return report;
   }
 
   @ApiOperation({ summary: 'Actualizar un reporte' })
@@ -172,7 +174,7 @@ export class ReportsController {
     return this.reportsService.assignPlumber(
       +reportId,
       assignPlumberDto.plumberUserId,
-      assignPlumberDto.instructions,
+      assignPlumberDto.instructions ?? '',
       userId,
     );
   }
