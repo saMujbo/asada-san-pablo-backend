@@ -15,9 +15,7 @@ function getCorsOrigins(): string[] {
   }
   return [
     'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://redsanpbalo-frontend-abonados.vercel.app',
-    'https://asadasansanpablo-frontend-aiqkne-5d927c-2-24-196-166.traefik.me'
+    'https://redsanpablo.cloud'
   ];
 }
 
