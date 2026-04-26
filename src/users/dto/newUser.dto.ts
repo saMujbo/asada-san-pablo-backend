@@ -11,11 +11,18 @@ MinLength,
 Length,
 IsArray,
 MaxLength,
+IsEnum,
 } from 'class-validator';
 import { toDateOnly } from 'src/utils/ToDateOnly';
+import { TypeDNI } from '../enum/TypeDNI.enum';
 
     
 export class CreateUserDto {
+    @ApiProperty()
+    @IsEnum(TypeDNI)
+    @IsNotEmpty()
+    TypeDNI: TypeDNI;
+    
     @ApiProperty()
     @IsString()
     @IsNotEmpty()

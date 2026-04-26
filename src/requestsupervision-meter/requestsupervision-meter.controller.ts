@@ -48,6 +48,11 @@ export class RequestsupervisionMeterController {
     } as any);
   }
 
+  @Get('user/:userId')
+  findByUserId(@Param('userId') userId: string) {
+    return this.requestsupervisionMeterService.findAllByUser(+userId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.requestsupervisionMeterService.findOne(id);

@@ -6,14 +6,14 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Index, OneToOne, Joi
 @Entity('legal_supplier')
 export class LegalSupplier {
     @PrimaryGeneratedColumn()
-    Id: number;
+    Id!: number;
 
     @OneToOne(() => Supplier, (supplier) => supplier.LegalProvider, {
         cascade: ['insert'], // si quieres que se guarde junto
         eager: true,
     })
     @JoinColumn({ name: 'supplierId' })
-    Supplier: Supplier;
+    Supplier!: Supplier;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
     WebSite?: string;

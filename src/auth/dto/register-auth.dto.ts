@@ -1,6 +1,7 @@
-import { IsArray,IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import { IsArray,IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
+import { TypeDNI } from "src/users/enum/TypeDNI.enum";
 
 /**
  * Normaliza fechas a 'YYYY-MM-DD'
@@ -26,6 +27,11 @@ function toDateOnly(input: unknown): string {
 }
 
 export class RegisterAuth{ 
+    @ApiProperty({ enum: TypeDNI })
+    @IsEnum(TypeDNI)
+    @IsNotEmpty()
+    TypeDNI: TypeDNI;
+
     @ApiProperty()
     @IsString()
     @IsNotEmpty()

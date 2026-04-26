@@ -13,11 +13,15 @@ import { RequestChangeNameMeter } from "src/request-change-name-meter/entities/r
 import { RequestSupervisionMeter } from "src/requestsupervision-meter/entities/requestsupervision-meter.entity";
 import { Role } from "src/roles/entities/role.entity";
 import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { TypeDNI } from "../enum/TypeDNI.enum";
 
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
     Id:number;
+
+    @Column({ type: 'enum', enum: TypeDNI, nullable: true, default: TypeDNI.Cedula })
+    TypeDNI: TypeDNI;
 
     @Column({ unique: true })
     IDcard: string;

@@ -984,7 +984,7 @@ export class ReportsService {
     return this.loadReport(reportId);
   }
 
-  async assignPlumber(reportId: number, plumberUserId: number, instructions: string, assignedByUserId: number) {
+  async assignPlumber(reportId: number, plumberUserId: number, instructions: string | undefined, assignedByUserId: number) {
     const report = await this.reportRepository.findOne({ where: { Id: reportId } });
     if (!report) {
       throw new NotFoundException('Reporte no encontrado');
@@ -1001,7 +1001,7 @@ export class ReportsService {
 
     report.PlumberUserId = plumberUserId;
     report.AssignedByUserId = assignedByUserId;
-    report.Instructions = instructions;
+    report.Instructions = instructions ?? null;
 
     if (report.ReportState === ReportStateEnum.PENDIENTE) {
       const previousState = report.ReportState;

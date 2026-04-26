@@ -13,6 +13,7 @@ import { resetPasswordDto } from './dto/resetPassword.dto';
 import { AdminCreateUserDto } from 'src/users/dto/admin-user.dto';
 import { generateRandomPassword } from 'src/utils/passwordrandom';
 import { AuditRequestContext } from 'src/audit/audit.types';
+import { TypeDNI } from 'src/users/enum/TypeDNI.enum';
 
 
 @Injectable()
@@ -47,7 +48,7 @@ export class AuthService {
       throw new Error('❌ Rol por defecto "INVITADO" no existe en la base de datos');
     }
 
-    const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole]});
+    const newUser = this.userService.createRegister({...rest, Password:hashed, Roles: [defaultRole], TypeDNI: createAuthDto.TypeDNI});
     const url = `${await this.configService.get('FrontEndBaseURL')}/login`;
     try {
     await this.mailClient.sendWelcomeEmail({
