@@ -1,6 +1,11 @@
 import { webcrypto } from 'crypto';
-// @ts-ignore
-globalThis.crypto = webcrypto;
+
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, 'crypto', {
+    value: webcrypto,
+    configurable: true,
+  });
+}
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';

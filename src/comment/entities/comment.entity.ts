@@ -7,8 +7,8 @@ export class Comment {
     @PrimaryGeneratedColumn()
     Id: number;
 
-    @Column({ type: 'text' })
-    Message: string; // falta definir tipos de datos 
+    @Column({ type: 'varchar', length: 300, nullable: true })
+    Message: string | null; // falta definir tipos de datos 
 
     @Column({
     name: 'created_at',
