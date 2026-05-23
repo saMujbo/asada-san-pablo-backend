@@ -13,16 +13,34 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger, ValidationPipe } from '@nestjs/common';
 
 /** Orígenes permitidos para CORS. Override con CORS_ORIGINS en .env (coma-separado). */
-function getCorsOrigins(): string[] {
+// function getCorsOrigins(): string[] {
+//   const fromEnv = process.env.CORS_ORIGINS?.split(',').map((s) => s.trim()).filter(Boolean);
+//   if (fromEnv?.length) {
+//     return fromEnv;
+//   }
+//   return [
+//     'http://localhost:5173',
+//     'https://redsanpablo.cloud'
+//   ];
+// }
+
+function getCorsOrigins(): Array<string | RegExp> {
   const fromEnv = process.env.CORS_ORIGINS?.split(',').map((s) => s.trim()).filter(Boolean);
   if (fromEnv?.length) {
     return fromEnv;
   }
   return [
     'http://localhost:5173',
-    'https://redsanpablo.cloud'
+    'https://redsanpablo.cloud',
+    // Flutter Web (puertos dinámicos)
+    /^http:\/\/localhost:\d+$/,
+    /^http:\/\/127\.0\.0\.1:\d+$/,
+    // Android
+    'http://10.0.2.2:*',
+    /^http:\/\/192\.168\..*:\d+$/,
   ];
 }
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
