@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Length, MaxLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Length, MaxLength } from 'class-validator';
 import { TrimAndNullify } from 'src/utils/validation.utils';
 
 export class CreateLegalSupplierDto {
@@ -39,7 +39,7 @@ export class CreateLegalSupplierDto {
 
     @ApiProperty()
     @TrimAndNullify()
-    @IsNotEmpty({ message: 'El sitio web es obligatorio' })
+    @IsOptional()
     @IsString({ message: 'El sitio web debe ser un texto' })
     @MaxLength(255, { message: 'El sitio web no puede superar los 255 caracteres' })
     WebSite?: string;
