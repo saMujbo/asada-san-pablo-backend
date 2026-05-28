@@ -165,9 +165,10 @@ export class PhysicalSupplierService {
     if (hasProducts) {
       throw new BadRequestException(
         `No se puede desactivar el proveedor ${Id} porque está asociado a al menos un producto.`
-      );
+      );  
     }
     supplierFound.Supplier.IsActive = false;
-    return await this.physicalSupplierRepo.save(supplierFound);
+    await this.supplierRepo.save(supplierFound.Supplier);
+    return;
   }
 }

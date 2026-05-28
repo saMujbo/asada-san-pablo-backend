@@ -164,6 +164,8 @@ export class LegalSupplierService {
     }
     supplierFound.Supplier.IsActive = false;
     
-    return await this.legalSupplierRepo.save(supplierFound);
+    await this.supplierRepo.save(supplierFound.Supplier);
+    return; // Retorna sin cuerpo, indicando que la operación fue exitosa
+    // return await this.legalSupplierRepo.save(supplierFound);
   }
 }
