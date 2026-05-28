@@ -1,3 +1,12 @@
+import { webcrypto } from 'crypto';
+
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, 'crypto', {
+    value: webcrypto,
+    configurable: true,
+  });
+}
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -11,8 +20,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 //   }
 //   return [
 //     'http://localhost:5173',
-//     'http://127.0.0.1:5173',
-//     'https://redsanpbalo-frontend-abonados.vercel.app',
+//     'https://redsanpablo.cloud'
 //   ];
 // }
 
@@ -23,8 +31,7 @@ function getCorsOrigins(): Array<string | RegExp> {
   }
   return [
     'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://redsanpbalo-frontend-abonados.vercel.app',
+    'https://redsanpablo.cloud',
     // Flutter Web (puertos dinámicos)
     /^http:\/\/localhost:\d+$/,
     /^http:\/\/127\.0\.0\.1:\d+$/,
@@ -73,6 +80,7 @@ async function bootstrap() {
   console.log(`Swagger local: ${localUrl}/api`);
   console.log(`Servidor en red: ${networkUrl}`);
   console.log(`Swagger en red: ${networkUrl}/api`);
+  console.log(`Servidor publico: getCorsOrigins(): ${getCorsOrigins()}`);
 
   if (publicUrl) {
     console.log(`Servidor publico: ${publicUrl}`);

@@ -18,7 +18,7 @@ export interface NotificationSummaryPayload {
 
 @WebSocketGateway({
 	cors: {
-		origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+		origin: process.env.FrontEndBaseURL || 'http://localhost:5173',
 		credentials: true,
 	},
 })
