@@ -30,27 +30,27 @@ export class RegisterAuth{
     @ApiProperty({ enum: TypeDNI })
     @IsEnum(TypeDNI)
     @IsNotEmpty()
-    TypeDNI: TypeDNI;
+    TypeDNI!: TypeDNI;
 
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    IDcard: string;
+    IDcard!: string;
 
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    Name: string;
+    Name!: string;
     
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    Surname1: string;
+    Surname1!: string;
     
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    Surname2: string;
+    Surname2!: string;
     
     @ApiProperty()
     @IsOptional()
@@ -60,35 +60,35 @@ export class RegisterAuth{
     @ApiProperty()
     @IsEmail()
     @IsNotEmpty()
-    Email: string;
+    Email!: string;
     
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
    // @Matches(/^[0-9]{8}$/, { message: 'PhoneNumber debe tener 8 dígitos numéricos' })
-    PhoneNumber: string;
+    PhoneNumber!: string;
     
     @ApiProperty()
     @Transform(({ value }) => toDateOnly(value))
     @Matches(/^\d{4}-\d{2}-\d{2}$/, {
         message: 'Birthdate debe ser YYYY-MM-DD',
     })
-    Birthdate: string;
+    Birthdate!: string;
 
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    Address: string;
+    Address!: string;
 
     @ApiProperty()
     @IsNotEmpty()
-    @MinLength(6)
-    @MaxLength(12)
-    Password: string;
+    @MinLength(8)
+    @MaxLength(128)
+    Password!: string;
 
     @ApiProperty()
     @IsNotEmpty()
-    @MinLength(4)
-    @MaxLength(12)
-    ConfirmPassword: string;
+    @MinLength(8)
+    @MaxLength(128)
+    ConfirmPassword!: string;
 }
