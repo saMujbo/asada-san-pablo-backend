@@ -169,15 +169,15 @@ export class ProjectService {
     }
 
     qb.orderBy('project.Name', 'ASC');
-    const [data, totalItems] = await qb.getManyAndCount();
+    const [data, total] = await qb.getManyAndCount();
 
     return {
       data,
       meta: buildPaginationMeta({
-        totalItems,
+        total,
         page: pageNum,
         limit: take,
-        itemCount: data.length,
+        pageCount: data.length,
       }),
     };
   }

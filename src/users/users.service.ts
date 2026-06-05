@@ -74,7 +74,6 @@ export class UsersService {
 
   async search({ page, limit, name, roleId, state }: PaginationDto) {
     const skip = (page - 1) * limit;
-
     const qb = this.userRepo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.Roles', 'role')
@@ -303,7 +302,7 @@ async update(
     } catch (error){
       throw new InternalServerErrorException({
         message:
-          'Error al actualizar la contraseña del usuario: ' + error.message,
+          'Error al actualizar la contraseña del usuario: '
       });
     }
   }

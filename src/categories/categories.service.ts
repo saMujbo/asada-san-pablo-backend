@@ -55,15 +55,15 @@ export class CategoriesService {
       qb.andWhere('category.IsActive = :state', { state });
     }
 
-    const [data, totalItems] = await qb.getManyAndCount();
+    const [data, total] = await qb.getManyAndCount();
 
     return {
       data,
       meta: buildPaginationMeta({
-        totalItems,
+        total,
         page,
         limit,
-        itemCount: data.length,
+        pageCount: data.length,
       }),
     };
   }

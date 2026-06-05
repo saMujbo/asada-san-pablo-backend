@@ -2,20 +2,19 @@
 import { PaginationMeta } from './types/paginated-response';
 
 export function buildPaginationMeta(params: {
-    totalItems: number;
+    total: number;
     page: number;
     limit: number;
-    itemCount: number;
+    pageCount: number;
 }): PaginationMeta {
-    const { totalItems, page, limit, itemCount } = params;
-    const totalPages = Math.max(1, Math.ceil(totalItems / limit));
+    const { total, page, limit} = params;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
 
     return {
-        totalItems,
-        itemCount,
-        itemsPerPage: limit,
-        totalPages,
-        currentPage: page,
+        total,   
+        page,
+        limit,
+        pageCount: totalPages,
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
     };

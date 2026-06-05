@@ -355,15 +355,15 @@ export class ReportsService {
       qb.andWhere('report.CreatedAt <= :endDate', { endDate: to });
     }
 
-    const [data, totalItems] = await qb.getManyAndCount();
+    const [data, total] = await qb.getManyAndCount();
 
     return {
       data,
       meta: buildPaginationMeta({
-        totalItems,
+        total,
         page,
         limit,
-        itemCount: data.length,
+        pageCount: data.length,
       }),
     };
   }
