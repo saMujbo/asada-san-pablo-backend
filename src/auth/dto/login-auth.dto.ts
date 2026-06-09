@@ -8,7 +8,6 @@ export class LoginAuthDto{
 
     @ApiProperty()
     @MinLength(4)
-    @MaxLength(12)
     Password:string;
 }
 
